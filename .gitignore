@@ -9,6 +9,7 @@ coverage/
 reports/
 allure-results/
 storage/
+!apps/api/src/storage/
 *.tsbuildinfo
 .DS_Store
 storage-e2e/
