@@ -54,6 +54,7 @@ jobs:
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/wishbook_meta_e2e
       TAPSTEP_TOKEN: ${{ secrets.TAPSTEP_TOKEN }}
+      TAPSTEP_NO_SANDBOX: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
