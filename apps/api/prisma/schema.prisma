@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BookStatus {
+  queued
+  story
+  hero
+  pages
+  pdf
+  done
+  failed
+}
+
+model Book {
+  id             String     @id @default(cuid())
+  status         BookStatus @default(queued)
+  progress       Int        @default(0)
+  /// The child profile the parent submitted (ChildProfile in @wishbook/shared).
+  child          Json
+  language       String
+  title          String?
+  heroDescription String?
+  /// Muse Image response id of the hero character sheet; pages chain from it.
+  heroResponseId String?
+  heroImagePath  String?
+  /// BookPage[]: { page, text, scenePrompt, imagePath }
+  pages          Json       @default("[]")
+  pdfPath        String?
+  error          String?
+  /// Model spend for this book, in US dollars.
+  costUsd        Float      @default(0)
+  /// Anonymous visitor key the free limit is counted against.
+  clientKey      String
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([clientKey])
+}

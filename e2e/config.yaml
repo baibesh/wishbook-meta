@@ -1,0 +1,14 @@
+# tapstep workspace for WishBook. Run: tapstep test --config e2e/config.yaml [--env-set ci]
+flows: ["flows/**"]
+defaultEnvironment: local
+env:
+  WEB: http://localhost:3000
+  API: http://localhost:4000/api
+environments:
+  local:
+    TARGET: local
+  ci:
+    TARGET: ci
+report:
+  format: html
+  output: ../reports

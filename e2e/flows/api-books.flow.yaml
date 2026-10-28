@@ -1,0 +1,50 @@
+# API contract: create a book, poll until it is generated, fetch an illustration.
+device: none
+db: ${DATABASE_URL}
+params:
+  DATABASE_URL:
+    required: true
+    description: Postgres DSN of the e2e database (e2e/.env)
+env:
+  childName: "Api ${Date.now()}"
+http:
+  baseUrl: ${API}
+  headers:
+    X-Client-Key: e2e-api
+commands:
+  - request:
+      method: POST
+      url: /books
+      json: { child: { name: "" } }
+      assert: { status: 400 }
+  - request:
+      method: POST
+      url: /books
+      json:
+        child: { name: "${childName}", age: 7, gender: boy, interests: [футбол], city: Астана, language: kk }
+      extract: { bookId: "$.id" }
+      assert:
+        status: 201
+        json: { "$.status": queued }
+  - request:
+      url: /books/${bookId}
+      retryUntil:
+        status: 200
+        json: { "$.status": done, "$.progress": 100 }
+      timeout: 30000
+  - request:
+      url: /books/${bookId}
+      extract: { imageUrl: "$.pages[0].imageUrl" }
+      assert:
+        json: { "$.title": { contains: "сапар" }, "$.pages[3].page": 4 }
+  - request:
+      url: ${WEB}${imageUrl}
+      assert: { status: 200 }
+  - sql:
+      query: "select \"clientKey\", language from \"Book\" where id = $1"
+      params: ["${bookId}"]
+      readOnly: true
+      assert:
+        first: { clientKey: e2e-api, language: kk }
+after:
+  - sql: { exec: "delete from \"Book\" where child->>'name' = $1", params: ["${childName}"] }

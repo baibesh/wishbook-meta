@@ -1,0 +1,15 @@
+.ref/
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+.next/
+coverage/
+reports/
+allure-results/
+storage/
+*.tsbuildinfo
+.DS_Store
+storage-e2e/
+e2e/*.log

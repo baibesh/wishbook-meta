@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+  checks: write
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TAPSTEP_URL: https://s3.tapstep.dev/tapstep-cli/tapstep-latest-linux-x86_64.tar.gz
+
+jobs:
+  check:
+    name: Typecheck, lint, unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test
+      - name: Install tapstep
+        run: curl -fsSL "$TAPSTEP_URL" | sudo tar -xz -C /usr/local/bin tapstep
+      - name: Validate E2E flows
+        run: tapstep validate e2e/flows
+
+  e2e:
+    name: E2E (tapstep, mock models)
+    needs: check
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: wishbook_meta_e2e
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/wishbook_meta_e2e
+      TAPSTEP_TOKEN: ${{ secrets.TAPSTEP_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Create schema
+        run: pnpm --filter @wishbook/api exec prisma db push --skip-generate
+      - name: Start web + API (MODELS=mock)
+        run: ./e2e/start-stack.sh
+      - name: Install tapstep
+        run: curl -fsSL "$TAPSTEP_URL" | sudo tar -xz -C /usr/local/bin tapstep
+      - uses: actions/cache@v4
+        with:
+          path: ~/.tapstep/browsers
+          key: tapstep-browsers-${{ runner.os }}
+      - name: Run flows
+        run: |
+          set +e
+          tapstep test e2e/flows --config e2e/config.yaml --env-set ci --browser managed \
+            -e DATABASE_URL="$DATABASE_URL" --report junit --output reports/junit.xml
+          code=$?
+          # 1 = a flow failed (the product is red); 2 = tapstep could not run (infra).
+          if [ "$code" -eq 2 ]; then echo "::error::tapstep could not run the flows (infra, not product)"; fi
+          exit "$code"
+      - name: Test report
+        if: always()
+        uses: mikepenz/action-junit-report@v5
+        with:
+          report_paths: reports/junit.xml
+          check_name: E2E flows
+      - name: Upload evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-evidence
+          path: |
+            reports/
+            e2e/*.log

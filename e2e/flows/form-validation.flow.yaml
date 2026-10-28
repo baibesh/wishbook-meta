@@ -1,0 +1,9 @@
+# The form refuses to start a book without the required answers.
+appId: ${WEB}
+tags: [smoke, form]
+commands:
+  - launchApp: { appId: "${WEB}", clearState: true }
+  - tapOn: { testId: create-book }
+  - assertVisible: "Введите имя"
+  - assertVisible: "Назовите хотя бы одно увлечение"
+  - assertUrl: { equals: "${WEB}/" }
