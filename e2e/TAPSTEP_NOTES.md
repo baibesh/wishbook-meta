@@ -10,3 +10,6 @@ Things noticed while using tapstep on WishBook. Version: 0.13.11.
    the steps.
 3. **Viewport warning in a headless run:** "the browser window could not grow to the 1280x800
    viewport (screen too small?)" shows on a MacBook screen even though the run is headless.
+4. **`TAPSTEP_NO_SANDBOX=1` is needed on a plain `ubuntu-latest` runner, not only in containers.**
+   The docs mention it for containers; on GitHub's Ubuntu runner AppArmor blocks Chromium's sandbox
+   too. Worth saying in the CI section, or detecting it and printing the fix.
