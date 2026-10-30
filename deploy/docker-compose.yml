@@ -1,4 +1,5 @@
-# Production stack. On the server: docker compose -f deploy/docker-compose.yml up -d --build
+# Production stack. Images are built by the Images workflow and published to GHCR; on the server:
+#   docker compose -f deploy/docker-compose.yml pull && docker compose -f deploy/docker-compose.yml up -d
 # Only the web app is published, on 127.0.0.1; the host's nginx terminates TLS in front of it.
 name: fabulka
 
@@ -18,6 +19,7 @@ services:
       retries: 10
 
   api:
+    image: ghcr.io/baibesh/fabulka-api:${IMAGE_TAG:-latest}
     build:
       context: ..
       dockerfile: apps/api/Dockerfile
@@ -33,6 +35,7 @@ services:
         condition: service_healthy
 
   web:
+    image: ghcr.io/baibesh/fabulka-web:${IMAGE_TAG:-latest}
     build:
       context: ..
       dockerfile: apps/web/Dockerfile
