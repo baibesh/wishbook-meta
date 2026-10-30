@@ -1,0 +1,37 @@
+# Visitors from countries where Meta's models may not be offered are turned away (HTTP 451),
+# straight at the API and through the web app's proxy, which is the path production traffic takes.
+device: none
+commands:
+  # Russia (Yandex DNS): a Restricted Territory.
+  - request:
+      url: ${API}/templates
+      headers: { X-Real-IP: 77.88.8.8 }
+      assert:
+        status: 451
+        json: { "$.code": region_unavailable, "$.country": RU }
+  # India: Muse Image is not available there.
+  - request:
+      method: POST
+      url: ${API}/books
+      headers: { X-Real-IP: 49.44.0.1 }
+      json: { child: { name: Test, age: 5, gender: boy, interests: [мячи], city: Delhi } }
+      assert: { status: 451, json: { "$.country": IN } }
+  # The same block reached through Next.js, as a browser would.
+  - request:
+      url: ${WEB}/api/templates
+      headers: { X-Real-IP: 178.124.134.106 }
+      assert: { status: 451, json: { "$.country": BY } }
+  # Kazakhstan and the United States are fine.
+  - request:
+      url: ${WEB}/api/templates
+      headers: { X-Real-IP: 212.116.234.61 }
+      assert: { status: 200 }
+  - request:
+      url: ${API}/templates
+      headers: { X-Real-IP: 8.8.8.8 }
+      assert: { status: 200 }
+  # Monitoring still reaches the health check.
+  - request:
+      url: ${API}/health
+      headers: { X-Real-IP: 77.88.8.8 }
+      assert: { status: 200 }

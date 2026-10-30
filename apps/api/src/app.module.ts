@@ -1,9 +1,12 @@
 import { Controller, Get, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { resolve } from 'node:path';
 import { BooksController } from './books/books.controller';
 import { BooksService } from './books/books.service';
+import { GeoGuard } from './geo/geo.guard';
+import { GeoService } from './geo/geo.service';
 import { MetaModule } from './meta/meta.module';
 import { OrdersController } from './orders/orders.controller';
 import { OrdersService } from './orders/orders.service';
@@ -43,6 +46,13 @@ class HealthController {
     OrdersController,
     TemplatesController,
   ],
-  providers: [BooksService, QuotaService, OrdersService, TemplatesService],
+  providers: [
+    GeoService,
+    { provide: APP_GUARD, useClass: GeoGuard },
+    BooksService,
+    QuotaService,
+    OrdersService,
+    TemplatesService,
+  ],
 })
 export class AppModule {}

@@ -6,6 +6,7 @@ import { CheckCircle2, Circle, CreditCard, Home, Printer, Truck } from "lucide-r
 import { use } from "react";
 import { getOrder } from "@/lib/api";
 import { formatKzt } from "@/lib/format";
+import { ErrorNotice } from "./error-notice";
 
 const STAGES: Record<OrderStatus, { label: string; icon: typeof Circle }> = {
   paid: { label: "Оплачен", icon: CreditCard },
@@ -22,7 +23,7 @@ export function OrderView({ params }: { params: Promise<{ id: string }> }) {
     refetchInterval: (query) => (query.state.data?.status === "delivered" ? false : 2000),
   });
 
-  if (error) return <p role="alert" className="text-red-600">{error.message}</p>;
+  if (error) return <ErrorNotice error={error} />;
   if (!order) return <p className="text-muted">Загружаем…</p>;
 
   const current = ORDER_STATUSES.indexOf(order.status);

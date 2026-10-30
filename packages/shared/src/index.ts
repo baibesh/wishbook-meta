@@ -177,6 +177,8 @@ export type Quota = z.infer<typeof QuotaSchema>;
 export const LIMIT_REACHED = "limit_reached";
 /** Body of a 503 from POST /books when the service-wide daily cap is hit. */
 export const DAILY_CAP_REACHED = "daily_cap_reached";
+/** Body of a 451 from any route: the visitor is in a country where Meta's models may not be offered. */
+export const REGION_UNAVAILABLE = "region_unavailable";
 
 // ---- Printed book orders -------------------------------------------------------
 

@@ -14,3 +14,4 @@ storage/
 .DS_Store
 storage-e2e/
 e2e/*.log
+apps/api/geoip/

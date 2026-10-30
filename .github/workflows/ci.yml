@@ -72,6 +72,8 @@ jobs:
           key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - name: Install Chromium for PDF rendering
         run: pnpm --filter @wishbook/api exec playwright install --with-deps chromium
+      - name: Download the GeoIP country database
+        run: pnpm --filter @wishbook/api geoip
       - name: Create schema
         run: pnpm --filter @wishbook/api exec prisma db push --skip-generate
       - name: Start web + API (MODELS=mock)

@@ -4,7 +4,8 @@ RUN npm install -g pnpm@12.4.1
 WORKDIR /app
 COPY . .
 RUN pnpm install --frozen-lockfile --filter @wishbook/api... \
- && pnpm --filter @wishbook/api build
+ && pnpm --filter @wishbook/api build \
+ && pnpm --filter @wishbook/api geoip
 WORKDIR /app/apps/api
 ENV NODE_ENV=production PORT=4000 STORAGE_DIR=/data/storage
 EXPOSE 4000

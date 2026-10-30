@@ -28,6 +28,8 @@ services:
     environment:
       DATABASE_URL: postgresql://fabulka:${POSTGRES_PASSWORD}@db:5432/fabulka
       STORAGE_DIR: /data/storage
+      # Turn away visitors from countries where Meta's models may not be offered (apps/api/src/geo).
+      GEO_BLOCK: "true"
     volumes:
       - storage:/data/storage
     depends_on:

@@ -5,12 +5,13 @@ import { methodology } from "@wishbook/shared";
 import { use } from "react";
 import { getTemplate } from "@/lib/api";
 import { BookForm } from "./book-form";
+import { ErrorNotice } from "./error-notice";
 
 export function TemplateView({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const { data: template, error } = useQuery({ queryKey: ["template", slug], queryFn: () => getTemplate(slug) });
 
-  if (error) return <p role="alert" className="text-red-600">{error.message}</p>;
+  if (error) return <ErrorNotice error={error} />;
   if (!template) return <p className="text-muted">Загружаем…</p>;
   const method = methodology(template.methodology);
 

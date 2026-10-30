@@ -32,6 +32,17 @@ CI never call the API.
   Almaty and Astana, 1 500 ₸ elsewhere. Payment is a demo and the print → ship → deliver timeline is
   simulated (`ORDER_STAGE_MS` per stage).
 
+## Where it is available
+
+The service follows Meta's [Geographic Use Policy](https://dev.meta.ai/legal/geographic-use-policy):
+the backend runs in Kazakhstan, where Meta has enabled the Model API, and visitors from the
+policy's Restricted Territories (Russia, Belarus, China, Iran and the others) and from India,
+where Muse Image is not available, get HTTP 451 before any model is called
+(`apps/api/src/geo`, `GEO_BLOCK=true`). The visitor's country comes from the
+[DB-IP](https://db-ip.com) country database (CC BY 4.0), downloaded with
+`pnpm --filter @wishbook/api geoip`. A country database cannot single out the Crimea, Donetsk
+and Luhansk regions, so those are not blocked by IP.
+
 ## Stack
 
 - `apps/web`: Next.js 16, Tailwind 4, TanStack Query, react-hook-form + zod, lucide-react

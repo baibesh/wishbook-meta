@@ -5,13 +5,14 @@ import { methodology } from "@wishbook/shared";
 import { Wand2 } from "lucide-react";
 import Link from "next/link";
 import { listTemplates } from "@/lib/api";
+import { ErrorNotice } from "./error-notice";
 
 const card = "flex flex-col overflow-hidden rounded-3xl border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-md";
 
 export function Catalog() {
   const { data: templates, error } = useQuery({ queryKey: ["templates"], queryFn: listTemplates });
 
-  if (error) return <p role="alert" className="text-red-600">{error.message}</p>;
+  if (error) return <ErrorNotice error={error} />;
 
   return (
     <ul data-testid="catalog" className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

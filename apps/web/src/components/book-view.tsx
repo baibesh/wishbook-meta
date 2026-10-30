@@ -7,6 +7,7 @@ import Link from "next/link";
 import { use } from "react";
 import { getBook } from "@/lib/api";
 import { formatKzt } from "@/lib/format";
+import { ErrorNotice } from "./error-notice";
 
 const STAGE_LABELS: Record<BookStatus, string> = {
   queued: "В очереди",
@@ -28,7 +29,7 @@ export function BookView({ params }: { params: Promise<{ id: string }> }) {
     refetchInterval: (query) => (finished(query.state.data?.status) ? false : 1000),
   });
 
-  if (error) return <p role="alert" className="text-red-600">{error.message}</p>;
+  if (error) return <ErrorNotice error={error} />;
   if (!book) return <p className="text-muted">Загружаем…</p>;
 
   return (
