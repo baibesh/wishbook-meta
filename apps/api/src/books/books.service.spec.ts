@@ -3,7 +3,7 @@ import { MockGateway } from '../meta/mock.gateway';
 import type { PdfService } from '../pdf/pdf.service';
 import type { PrismaService } from '../prisma/prisma.service';
 import type { StorageService } from '../storage/storage.service';
-import { BooksService } from './books.service';
+import { BooksService, petInScene } from './books.service';
 
 const child = {
   name: 'Арман',
@@ -55,5 +55,14 @@ describe('BooksService', () => {
     process.off('unhandledRejection', unhandled);
     expect(updateMany).toHaveBeenCalled();
     expect(unhandled).not.toHaveBeenCalled();
+  });
+});
+
+describe('petInScene', () => {
+  it('draws the pet only where the scene names it', () => {
+    expect(petInScene('the hero and the pet run in the park')).toBe(true);
+    expect(petInScene('The pet sleeps at home')).toBe(true);
+    expect(petInScene('the hero paints at a kindergarten table')).toBe(false);
+    expect(petInScene('the hero sees a carpet')).toBe(false);
   });
 });

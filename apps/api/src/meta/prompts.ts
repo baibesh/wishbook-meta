@@ -34,10 +34,12 @@ Return only JSON of this exact shape:
   sentence, or null when there is no pet.
 - "scene_prompt" is in English: what the illustration shows on that page. Name the hero
   as "the hero" and the pet as "the pet"; describe the place and action, not the style.
+  Mention the pet only in scenes the pet is actually in.
   Any other character that appears on more than one page is described with the exact same
   words (species, colors, distinctive details) in every scene_prompt it appears in.
 - "talk_questions" are 3 to 5 short questions, in the book's language, that the parent asks
-  the child after reading, of the kinds the user lists.`;
+  the child after reading, of the kinds the user lists. They speak to the child as "you"
+  with the grammatical gender of the child (Russian "ты хотела" for a girl, "ты хотел" for a boy).`;
 
 /** What a story is written from: the child, the method and, optionally, the parent's theme. */
 export interface StoryBrief {

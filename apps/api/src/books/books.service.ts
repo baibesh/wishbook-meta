@@ -128,7 +128,7 @@ export class BooksService {
       const image = await this.models.drawPage(
         page.scenePrompt,
         anchorRef,
-        withPet,
+        withPet && petInScene(page.scenePrompt),
       );
       costUsd += image.costUsd;
       page.imagePath = await this.storage.save(
@@ -214,6 +214,11 @@ export class BooksService {
       createdAt: row.createdAt.toISOString(),
     };
   }
+}
+
+/** Pointing Muse Image at the pet sheet on every page draws the pet into scenes it is not in. */
+export function petInScene(scenePrompt: string): boolean {
+  return /\bthe pet\b/i.test(scenePrompt);
 }
 
 function json(value: unknown): Prisma.InputJsonValue {
