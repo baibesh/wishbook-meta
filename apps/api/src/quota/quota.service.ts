@@ -88,6 +88,23 @@ export class QuotaService {
     }
   }
 
+  /** Books started today against each daily cap. */
+  async caps() {
+    const since = startOfDay();
+    const [regular, demo] = await Promise.all([
+      this.prisma.book.count({
+        where: { demo: false, createdAt: { gte: since } },
+      }),
+      this.prisma.book.count({
+        where: { demo: true, createdAt: { gte: since } },
+      }),
+    ]);
+    return {
+      regular: { used: regular, limit: this.dailyCap },
+      demo: { used: demo, limit: this.demoDailyCap },
+    };
+  }
+
   /** Demo payment: records one more book for the visitor without charging anything. */
   async buyBook(clientKey: string): Promise<Quota> {
     await this.prisma.credit.create({
@@ -97,7 +114,7 @@ export class QuotaService {
   }
 }
 
-function startOfDay(): Date {
+export function startOfDay(): Date {
   const date = new Date();
   date.setUTCHours(0, 0, 0, 0);
   return date;

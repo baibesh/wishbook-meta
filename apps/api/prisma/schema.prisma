@@ -50,6 +50,8 @@ model Book {
   clientKey       String
   /// Set when the book was made with a demo code: it does not count against the visitor.
   demo            Boolean       @default(false)
+  /// Visitor's country (ISO code) when blocking by country is on; shows demand in the admin.
+  country         String?
   orders          Order[]
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
@@ -87,7 +89,16 @@ model Order {
   booksKzt      Int
   deliveryKzt   Int
   totalKzt      Int
+  /// Set by hand in the admin (ORDER_STATUSES); until then the stage follows the demo timer.
+  status        String?
   createdAt     DateTime @default(now())
+}
+
+/// Service-wide switches changed in the admin, such as pausing generation.
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
 }
 
 /// A catalog book: a plot written by an author that each child's story is adapted from.

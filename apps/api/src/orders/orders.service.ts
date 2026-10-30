@@ -8,8 +8,10 @@ import type { Book as BookRow, Order as OrderRow } from '@prisma/client';
 import {
   orderPrice,
   orderStatusAt,
+  type AdminOrder,
   type CreateOrderInput,
   type Order,
+  type OrderStatus,
 } from '@wishbook/shared';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -57,12 +59,42 @@ export class OrdersService {
     return this.toDto(row, row.book);
   }
 
+  /** All orders, newest first, with what the admin needs to ship them. */
+  async list(): Promise<AdminOrder[]> {
+    const rows = await this.prisma.order.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { book: true },
+      take: 200,
+    });
+    return rows.map((row) => this.adminDto(row, row.book));
+  }
+
+  /** Sets the stage by hand; from then on the demo timer no longer moves it. */
+  async setStatus(id: string, status: OrderStatus): Promise<AdminOrder> {
+    const row = await this.prisma.order
+      .update({ where: { id }, data: { status }, include: { book: true } })
+      .catch(() => {
+        throw new NotFoundException(`order ${id} not found`);
+      });
+    return this.adminDto(row, row.book);
+  }
+
+  private adminDto(row: OrderRow, book: BookRow): AdminOrder {
+    return {
+      ...this.toDto(row, book),
+      phone: row.phone,
+      manual: row.status !== null,
+    };
+  }
+
   private toDto(row: OrderRow, book: BookRow): Order {
     return {
       id: row.id,
       bookId: row.bookId,
       bookTitle: book.title,
-      status: orderStatusAt(Date.now() - row.createdAt.getTime(), this.stageMs),
+      status:
+        (row.status as OrderStatus | null) ??
+        orderStatusAt(Date.now() - row.createdAt.getTime(), this.stageMs),
       recipientName: row.recipientName,
       city: row.city,
       address: row.address,

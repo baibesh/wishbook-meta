@@ -1,10 +1,12 @@
 import { createParamDecorator, type ExecutionContext } from '@nestjs/common';
 import type { Request } from 'express';
+import { clientIp } from '../geo/geo.guard';
 
 /** Who is asking: the anonymous key the web app keeps in localStorage, else the IP. */
 export interface Client {
   key: string;
   demoCode: string | undefined;
+  ip: string;
 }
 
 export const CurrentClient = createParamDecorator(
@@ -17,6 +19,7 @@ export const CurrentClient = createParamDecorator(
     return {
       key: header('x-client-key') ?? request.ip ?? 'unknown',
       demoCode: header('x-demo-code'),
+      ip: clientIp(request),
     };
   },
 );

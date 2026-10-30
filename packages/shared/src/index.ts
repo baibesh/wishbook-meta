@@ -249,3 +249,106 @@ export function orderStatusAt(elapsedMs: number, stageMs: number): OrderStatus {
   const index = Math.min(Math.floor(elapsedMs / stageMs), ORDER_STATUSES.length - 1);
   return ORDER_STATUSES[Math.max(index, 0)];
 }
+
+// ---- Admin ---------------------------------------------------------------------
+
+/** Body of a 503 from POST /books while generation is paused in the admin. */
+export const GENERATION_PAUSED = "generation_paused";
+
+export const AdminLoginSchema = z.object({
+  email: z.string().trim().min(1),
+  password: z.string().min(1),
+});
+export type AdminLogin = z.infer<typeof AdminLoginSchema>;
+
+export const PauseSchema = z.object({ paused: z.boolean() });
+
+export const AdminStatsSchema = z.object({
+  paused: z.boolean(),
+  books: z.object({
+    total: z.number().int(),
+    today: z.number().int(),
+    byStatus: z.record(z.string(), z.number().int()),
+    /** Done out of finished (done + failed), 0..1; null before any book finishes. */
+    successRate: z.number().nullable(),
+    /** Average seconds from order to finished PDF. */
+    avgSeconds: z.number().nullable(),
+  }),
+  spend: z.object({ totalUsd: z.number(), todayUsd: z.number(), budgetUsd: z.number() }),
+  caps: z.object({
+    regular: z.object({ used: z.number().int(), limit: z.number().int() }),
+    demo: z.object({ used: z.number().int(), limit: z.number().int() }),
+  }),
+  sales: z.object({
+    orders: z.number().int(),
+    ordersKzt: z.number().int(),
+    purchases: z.number().int(),
+    purchasesKzt: z.number().int(),
+  }),
+  countries: z.array(z.object({ country: z.string(), books: z.number().int() })),
+  templates: z.array(z.object({ slug: z.string().nullable(), title: z.string(), books: z.number().int() })),
+});
+export type AdminStats = z.infer<typeof AdminStatsSchema>;
+
+export const AdminBookRowSchema = z.object({
+  id: z.string(),
+  title: z.string().nullable(),
+  status: BookStatusSchema,
+  childName: z.string(),
+  language: LanguageSchema,
+  methodology: MethodologySlugSchema,
+  template: z.string().nullable(),
+  country: z.string().nullable(),
+  demo: z.boolean(),
+  costUsd: z.number(),
+  orders: z.number().int(),
+  createdAt: z.string(),
+});
+export type AdminBookRow = z.infer<typeof AdminBookRowSchema>;
+
+export const AdminBookSchema = BookSchema.extend({
+  child: ChildProfileSchema,
+  theme: z.string().nullable(),
+  answers: AnswersSchema.nullable(),
+  country: z.string().nullable(),
+  demo: z.boolean(),
+  costUsd: z.number(),
+  clientKey: z.string(),
+});
+export type AdminBook = z.infer<typeof AdminBookSchema>;
+
+export const AdminOrderSchema = OrderSchema.extend({
+  phone: z.string(),
+  /** True when the status was set by hand rather than by the demo timer. */
+  manual: z.boolean(),
+});
+export type AdminOrder = z.infer<typeof AdminOrderSchema>;
+
+export const UpdateOrderStatusSchema = z.object({ status: OrderStatusSchema });
+
+export const AdminTemplateSchema = TemplateSchema.extend({
+  published: z.boolean(),
+  sortOrder: z.number().int(),
+  theme: z.string(),
+  plot: z.array(z.string()),
+  stylePrompt: z.string().nullable(),
+  books: z.number().int(),
+});
+export type AdminTemplate = z.infer<typeof AdminTemplateSchema>;
+
+export const UpdateTemplateSchema = z
+  .object({
+    title: z.string().trim().min(1).max(120),
+    summary: z.string().trim().min(1).max(400),
+    ageMin: z.number().int().min(2).max(10),
+    ageMax: z.number().int().min(2).max(10),
+    methodology: MethodologySlugSchema,
+    theme: z.string().trim().min(3).max(300),
+    plot: z.array(z.string().trim().min(3).max(300)).min(3).max(12),
+    questions: z.array(TemplateQuestionSchema).max(8),
+    stylePrompt: z.string().trim().max(400).nullable(),
+    published: z.boolean(),
+    sortOrder: z.number().int(),
+  })
+  .partial();
+export type UpdateTemplate = z.infer<typeof UpdateTemplateSchema>;

@@ -61,7 +61,7 @@ export class ApiError extends Error {
   }
 }
 
-async function request(path: string, init?: RequestInit): Promise<unknown> {
+export async function request(path: string, init?: RequestInit): Promise<unknown> {
   const code = demoCode();
   const response = await fetch(path, {
     ...init,

@@ -34,8 +34,8 @@ interface StoredPage {
 }
 
 /** The row with the catalog book slug the DTO needs. */
-type BookWithTemplate = BookRow & { template: { slug: string } | null };
-const withTemplate = { template: { select: { slug: true } } } as const;
+export type BookWithTemplate = BookRow & { template: { slug: string } | null };
+export const withTemplate = { template: { select: { slug: true } } } as const;
 
 /** What generation needs besides the story brief. */
 interface Job {
@@ -67,6 +67,7 @@ export class BooksService {
     input: CreateBookInput,
     clientKey: string,
     demo: boolean,
+    country: string | null = null,
   ): Promise<Book> {
     const { child } = input;
     const job = input.template
@@ -91,6 +92,7 @@ export class BooksService {
         answers: input.answers,
         clientKey,
         demo,
+        country,
       },
       include: withTemplate,
     });
@@ -268,7 +270,7 @@ export class BooksService {
     }
   }
 
-  private toDto(row: BookWithTemplate): Book {
+  toDto(row: BookWithTemplate): Book {
     const pages = row.pages as unknown as StoredPage[];
     return {
       id: row.id,

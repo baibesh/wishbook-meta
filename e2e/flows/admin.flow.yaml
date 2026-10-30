@@ -1,0 +1,55 @@
+# The admin: closed without a session, sign-in, dashboard, and the pause that stops new books.
+appId: ${WEB}
+tags: [smoke, admin]
+db: ${DATABASE_URL}
+params:
+  DATABASE_URL:
+    required: true
+    description: Postgres DSN of the e2e database (e2e/.env)
+commands:
+  # No session: the API refuses, the page sends you to sign in.
+  - request:
+      url: ${API}/admin/stats
+      assert: { status: 401 }
+  - launchApp: { appId: "${WEB}", clearState: true }
+  - openLink: "${WEB}/admin"
+  - waitForVisible: { testId: admin-login }
+  - assertUrl: { equals: "${WEB}/admin/login" }
+
+  - tapOn: { testId: admin-email }
+  - inputText: "admin@e2e.test"
+  - tapOn: { testId: admin-password }
+  - inputText: "wrong-password"
+  - tapOn: { testId: admin-submit }
+  - assertVisible: "Неверная почта или пароль"
+
+  - tapOn: { testId: admin-password }
+  - eraseText: 40
+  - inputText: "e2e-admin-password"
+  - tapOn: { testId: admin-submit }
+  - waitForVisible: { testId: pause-card }
+  - assertVisible: "Генерация работает"
+  - assertVisible: "Спрос по странам"
+
+  # Pause: new books are refused until it is lifted.
+  - tapOn: { testId: pause-toggle }
+  - waitForVisible: "Генерация на паузе"
+  - request:
+      method: POST
+      url: ${API}/books
+      headers: { X-Client-Key: e2e-admin-paused }
+      json: { child: { name: Пауза, age: 5, gender: girl, interests: [мячи], city: Алматы } }
+      assert: { status: 503, json: { "$.code": generation_paused } }
+  - tapOn: { testId: pause-toggle }
+  - waitForVisible: "Генерация работает"
+
+  # The other sections open.
+  - tapOn: { testId: admin-nav-books }
+  - waitForVisible: { testId: books-table }
+  - tapOn: { testId: admin-nav-catalog }
+  - waitForVisible: { testId: catalog-table }
+  - assertVisible: "Тайна снежного барса"
+  - tapOn: { testId: admin-nav-orders }
+  - waitForVisible: { testId: orders-table }
+after:
+  - sql: { exec: "delete from \"Setting\" where key = 'generation_paused'" }

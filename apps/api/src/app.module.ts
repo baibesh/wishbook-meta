@@ -3,6 +3,9 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { resolve } from 'node:path';
+import { AdminAuthService } from './admin/admin-auth.service';
+import { AdminAuthController, AdminController } from './admin/admin.controller';
+import { AdminService } from './admin/admin.service';
 import { BooksController } from './books/books.controller';
 import { BooksService } from './books/books.service';
 import { GeoGuard } from './geo/geo.guard';
@@ -14,6 +17,7 @@ import { PdfModule } from './pdf/pdf.service';
 import { PrismaModule } from './prisma/prisma.service';
 import { QuotaController } from './quota/quota.controller';
 import { QuotaService } from './quota/quota.service';
+import { SettingsService } from './settings/settings.service';
 import { StorageModule } from './storage/storage.service';
 import { TemplatesController } from './templates/templates.controller';
 import { TemplatesService } from './templates/templates.service';
@@ -45,6 +49,8 @@ class HealthController {
     QuotaController,
     OrdersController,
     TemplatesController,
+    AdminAuthController,
+    AdminController,
   ],
   providers: [
     GeoService,
@@ -53,6 +59,9 @@ class HealthController {
     QuotaService,
     OrdersService,
     TemplatesService,
+    SettingsService,
+    AdminAuthService,
+    AdminService,
   ],
 })
 export class AppModule {}
