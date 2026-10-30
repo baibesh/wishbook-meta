@@ -23,16 +23,21 @@ export interface GeneratedStory {
 export interface ModelGateway {
   writeStory(brief: StoryBrief): Promise<GeneratedStory>;
   /** The hero character sheet every page is anchored on. */
-  drawHero(heroDescription: string): Promise<GeneratedImage>;
+  drawHero(heroDescription: string, style?: string): Promise<GeneratedImage>;
   /** The pet character sheet, chained from the hero sheet so both stay in the conversation. */
-  drawPet(petDescription: string, heroRef: string): Promise<GeneratedImage>;
+  drawPet(
+    petDescription: string,
+    heroRef: string,
+    style?: string,
+  ): Promise<GeneratedImage>;
   /**
    * One page illustration, chained from the last character sheet (`anchorRef`) so the
-   * child and the pet stay on-model.
+   * child and the pet stay on-model. `style` replaces the default art style (catalog books).
    */
   drawPage(
     scenePrompt: string,
     anchorRef: string,
     withPet: boolean,
+    style?: string,
   ): Promise<GeneratedImage>;
 }

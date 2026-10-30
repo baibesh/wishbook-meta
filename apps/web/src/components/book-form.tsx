@@ -2,10 +2,17 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { LIMIT_REACHED } from "@wishbook/shared";
+import {
+  LIMIT_REACHED,
+  METHODOLOGIES,
+  answersProblem,
+  fitsAge,
+  type MethodologySlug,
+  type Template,
+} from "@wishbook/shared";
 import { BookOpen, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { ApiError, createBook, getQuota } from "@/lib/api";
 import { Paywall } from "./paywall";
@@ -18,20 +25,39 @@ const FormSchema = z.object({
   pet: z.string().trim().max(60),
   city: z.string().trim().min(1, "Введите город").max(60),
   language: z.enum(["ru", "kk"]),
+  /** "" lets the API pick a method by age. */
+  methodology: z.string(),
+  theme: z.string().trim().max(200),
+  answers: z.record(z.string(), z.string()),
 });
 type FormValues = z.infer<typeof FormSchema>;
 
-const AGES = Array.from({ length: 9 }, (_, i) => String(i + 2));
+const ages = (min: number, max: number) => Array.from({ length: max - min + 1 }, (_, i) => String(i + min));
 
 const field = "w-full rounded-xl border border-border bg-card px-4 py-3 outline-none focus:border-accent";
 const label = "flex flex-col gap-1.5 text-sm font-semibold";
 
-export function BookForm() {
+/** A book of your own, or, with `template`, a catalog book with its questions. */
+export function BookForm({ template }: { template?: Template }) {
   const router = useRouter();
+  const ageOptions = template ? ages(template.ageMin, template.ageMax) : ages(2, 10);
   const form = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
-    defaultValues: { name: "", age: "5", gender: "girl", interests: "", pet: "", city: "Алматы", language: "ru" },
+    defaultValues: {
+      name: "",
+      age: ageOptions.includes("5") ? "5" : ageOptions[0],
+      gender: "girl",
+      interests: "",
+      pet: "",
+      city: "Алматы",
+      language: "ru",
+      methodology: "",
+      theme: "",
+      answers: {},
+    },
   });
+  const age = Number(useWatch({ control: form.control, name: "age" }));
+  const methods = METHODOLOGIES.filter((m) => fitsAge(m.slug, age));
   const errors = form.formState.errors;
   const queryClient = useQueryClient();
   const quota = useQuery({ queryKey: ["quota"], queryFn: getQuota });
@@ -39,20 +65,34 @@ export function BookForm() {
   const create = useMutation({
     mutationFn: (values: FormValues) =>
       createBook({
-        name: values.name,
-        age: Number(values.age),
-        gender: values.gender,
-        interests: values.interests.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 5),
-        pet: values.pet || undefined,
-        city: values.city,
-        language: values.language,
+        child: {
+          name: values.name,
+          age: Number(values.age),
+          gender: values.gender,
+          interests: values.interests.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 5),
+          pet: values.pet || undefined,
+          city: values.city,
+          language: values.language,
+        },
+        ...(template
+          ? { template: template.slug, answers: values.answers }
+          : {
+              methodology: methods.some((m) => m.slug === values.methodology)
+                ? (values.methodology as MethodologySlug)
+                : undefined,
+              theme: values.theme || undefined,
+            }),
       }),
     onSuccess: (book) => {
       void queryClient.invalidateQueries({ queryKey: ["quota"] });
       router.push(`/books/${book.id}`);
     },
   });
-  const submit = form.handleSubmit((values) => create.mutate(values));
+  const submit = form.handleSubmit((values) => {
+    const problem = template && answersProblem(template.questions, values.answers);
+    if (problem) return form.setError("root.answers", { message: problem });
+    create.mutate(values);
+  });
   const limitReached = create.error instanceof ApiError && create.error.code === LIMIT_REACHED;
 
   return (
@@ -71,7 +111,7 @@ export function BookForm() {
       <label className={label}>
         Возраст
         <select data-testid="child-age" className={field} {...form.register("age")}>
-          {AGES.map((age) => (
+          {ageOptions.map((age) => (
             <option key={age} value={age}>
               {age}
             </option>
@@ -115,6 +155,63 @@ export function BookForm() {
         <input data-testid="child-city" className={field} {...form.register("city")} />
         {errors.city && <span className="text-red-600">{errors.city.message}</span>}
       </label>
+
+      {template ? (
+        <fieldset data-testid="template-questions" className="grid gap-5 sm:col-span-2 sm:grid-cols-2">
+          <legend className="mb-3 text-lg font-bold">Пара вопросов для этой книги</legend>
+          {template.questions.map((q) => (
+            <label key={q.key} className={label}>
+              {q.label}
+              {!q.required && <span className="font-normal text-muted">(необязательно)</span>}
+              {q.kind === "choice" ? (
+                <select data-testid={`answer-${q.key}`} className={field} {...form.register(`answers.${q.key}`)}>
+                  <option value="">—</option>
+                  {q.options?.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  data-testid={`answer-${q.key}`}
+                  className={field}
+                  placeholder={q.placeholder}
+                  {...form.register(`answers.${q.key}`)}
+                />
+              )}
+            </label>
+          ))}
+          {errors.root?.answers && (
+            <p role="alert" className="text-red-600 sm:col-span-2">
+              {errors.root.answers.message}
+            </p>
+          )}
+        </fieldset>
+      ) : (
+        <>
+          <label className={`${label} sm:col-span-2`}>
+            О чём книга (необязательно)
+            <input
+              data-testid="book-theme"
+              className={field}
+              placeholder="первый день в детском саду, боится темноты, скоро родится братик"
+              {...form.register("theme")}
+            />
+          </label>
+          <label className={`${label} sm:col-span-2`}>
+            Методика
+            <select data-testid="book-methodology" className={field} {...form.register("methodology")}>
+              <option value="">Подобрать по возрасту</option>
+              {methods.map((m) => (
+                <option key={m.slug} value={m.slug}>
+                  {m.name} — {m.summary}
+                </option>
+              ))}
+            </select>
+          </label>
+        </>
+      )}
 
       <div className="flex flex-col gap-2 sm:col-span-2">
         <button

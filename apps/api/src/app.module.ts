@@ -12,6 +12,8 @@ import { PrismaModule } from './prisma/prisma.service';
 import { QuotaController } from './quota/quota.controller';
 import { QuotaService } from './quota/quota.service';
 import { StorageModule } from './storage/storage.service';
+import { TemplatesController } from './templates/templates.controller';
+import { TemplatesService } from './templates/templates.service';
 
 @Controller('health')
 class HealthController {
@@ -39,7 +41,8 @@ class HealthController {
     BooksController,
     QuotaController,
     OrdersController,
+    TemplatesController,
   ],
-  providers: [BooksService, QuotaService, OrdersService],
+  providers: [BooksService, QuotaService, OrdersService, TemplatesService],
 })
 export class AppModule {}

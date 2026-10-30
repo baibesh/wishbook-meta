@@ -1,4 +1,4 @@
-# The core path: a parent fills in the form and gets a finished book (mock models).
+# A book of your own: a parent fills in the form and gets a finished book (mock models).
 appId: ${WEB}
 tags: [smoke, book]
 db: ${DATABASE_URL}
@@ -10,25 +10,30 @@ env:
   childName: "Айгерим ${Date.now()}"
 commands:
   - launchApp: { appId: "${WEB}", clearState: true }
+  - tapOn: { testId: create-own }
   - tapOn: { testId: child-name }
   - inputText: "${childName}"
   - tapOn: { testId: child-interests }
   - inputText: "космос, лошади"
   - tapOn: { testId: child-pet }
   - inputText: "кот Барсик"
+  - tapOn: { testId: book-theme }
+  - inputText: "боится темноты"
   - tapOn: { testId: create-book }
   - waitForVisible: { text: "Книга готова", timeout: 30000 }
   - assertVisible: { contains: "${childName} и звёздное путешествие" }
   - assertVisible: { testId: hero-image }
   - assertVisible: { testId: download-pdf }
+  - assertVisible: { testId: talk-questions }
   - sql:
       query: >-
-        select status::text as status, jsonb_array_length(pages) as pages, "costUsd" as cost, "pdfPath" is not null as pdf
+        select status::text as status, jsonb_array_length(pages) as pages, "costUsd" as cost, "pdfPath" is not null as pdf,
+        methodology, theme, "templateId" is null as own
         from "Book" where child->>'name' = $1
       params: ["${childName}"]
       readOnly: true
       assert:
         rows: 1
-        first: { status: done, pages: 4, cost: 0, pdf: true }
+        first: { status: done, pages: 4, cost: 0, pdf: true, methodology: adventure-quest, theme: "боится темноты", own: true }
 after:
   - sql: { exec: "delete from \"Book\" where child->>'name' = $1", params: ["${childName}"] }

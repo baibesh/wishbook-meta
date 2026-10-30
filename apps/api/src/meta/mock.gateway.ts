@@ -35,13 +35,19 @@ function placeholder(label: string, color: string): Buffer {
 export class MockGateway implements ModelGateway {
   constructor(private readonly delayMs: number) {}
 
-  async writeStory({ child, pageCount }: StoryBrief): Promise<GeneratedStory> {
+  async writeStory({
+    child,
+    pageCount,
+    template,
+  }: StoryBrief): Promise<GeneratedStory> {
     await sleep(this.delayMs);
     const kk = child.language === 'kk';
     const story: Story = {
-      title: kk
-        ? `${child.name} және жұлдызды сапар`
-        : `${child.name} и звёздное путешествие`,
+      title: template
+        ? `${child.name}: ${template.title}`
+        : kk
+          ? `${child.name} және жұлдызды сапар`
+          : `${child.name} и звёздное путешествие`,
       hero_description: `a ${child.age}-year-old ${child.gender} with dark hair, yellow raincoat, red boots`,
       pet_description: child.pet ? 'a small ginger cat with white paws' : null,
       pages: Array.from({ length: pageCount }, (_, i) => ({

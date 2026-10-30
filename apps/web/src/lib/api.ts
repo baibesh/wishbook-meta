@@ -2,11 +2,15 @@ import {
   BookSchema,
   OrderSchema,
   QuotaSchema,
+  TemplateSchema,
+  TemplateSummarySchema,
   type Book,
-  type ChildProfile,
+  type CreateBookInput,
   type CreateOrderInput,
   type Order,
   type Quota,
+  type Template,
+  type TemplateSummary,
 } from "@wishbook/shared";
 
 const CLIENT_KEY = "wishbook.clientKey";
@@ -77,8 +81,16 @@ async function request(path: string, init?: RequestInit): Promise<unknown> {
   return body;
 }
 
-export async function createBook(child: ChildProfile): Promise<Book> {
-  return BookSchema.parse(await request("/api/books", { method: "POST", body: JSON.stringify({ child }) }));
+export async function createBook(input: CreateBookInput): Promise<Book> {
+  return BookSchema.parse(await request("/api/books", { method: "POST", body: JSON.stringify(input) }));
+}
+
+export async function listTemplates(): Promise<TemplateSummary[]> {
+  return TemplateSummarySchema.array().parse(await request("/api/templates"));
+}
+
+export async function getTemplate(slug: string): Promise<Template> {
+  return TemplateSchema.parse(await request(`/api/templates/${encodeURIComponent(slug)}`));
 }
 
 export async function getBook(id: string): Promise<Book> {

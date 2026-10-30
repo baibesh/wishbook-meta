@@ -47,6 +47,12 @@ export interface StoryBrief {
   pageCount: number;
   methodology: MethodologySlug;
   theme?: string;
+  /** Set for a catalog book: the author's plot and the parent's answers. */
+  template?: {
+    title: string;
+    plot: string[];
+    answers: { question: string; answer: string }[];
+  };
 }
 
 export function storyPrompt(brief: StoryBrief): string {
@@ -65,6 +71,7 @@ export function storyPrompt(brief: StoryBrief): string {
       ? `The book is about: ${brief.theme}.`
       : 'Choose what the book is about so it fits the method and the interests.',
     '',
+    ...templateLines(brief),
     `Story method: ${method.slug} (${method.source}). Beats, in order:`,
     list(method.structure),
     'Rules:',
@@ -77,23 +84,44 @@ export function storyPrompt(brief: StoryBrief): string {
   ].join('\n');
 }
 
-export function heroPrompt(heroDescription: string): string {
+function templateLines({ template }: StoryBrief): string[] {
+  if (!template) return [];
+  const answers = template.answers.length
+    ? [
+        "The parent's answers; weave each one into the story:",
+        ...template.answers.map((a) => `- ${a.question} ${a.answer}`),
+      ]
+    : [];
+  return [
+    `This is the catalog book "${template.title}". Base the title on it.`,
+    'Keep its plot, in this order, adapted to the hero:',
+    ...template.plot.map((point) => `- ${point}`),
+    ...answers,
+    '',
+  ];
+}
+
+export function heroPrompt(heroDescription: string, style = ART_STYLE): string {
   return (
     `an original children's book character sheet of the hero: ${heroDescription}, ` +
-    `full body, front view, friendly expression, plain white background, centered, ${ART_STYLE}`
+    `full body, front view, friendly expression, plain white background, centered, ${style}`
   );
 }
 
-export function petPrompt(petDescription: string): string {
+export function petPrompt(petDescription: string, style = ART_STYLE): string {
   return (
     `an original children's book character sheet of the pet: ${petDescription}, ` +
-    `full body, side view, plain white background, centered, ${ART_STYLE}`
+    `full body, side view, plain white background, centered, ${style}`
   );
 }
 
-export function pagePrompt(scenePrompt: string, withPet: boolean): string {
+export function pagePrompt(
+  scenePrompt: string,
+  withPet: boolean,
+  style = ART_STYLE,
+): string {
   const pet = withPet
     ? ' The pet is the same animal as in the pet character sheet shown earlier.'
     : '';
-  return `${scenePrompt}. The hero is the same child as in the hero character sheet shown earlier.${pet} ${ART_STYLE}`;
+  return `${scenePrompt}. The hero is the same child as in the hero character sheet shown earlier.${pet} ${style}`;
 }

@@ -19,12 +19,62 @@ export const ChildProfileSchema = z.object({
 });
 export type ChildProfile = z.infer<typeof ChildProfileSchema>;
 
+// ---- Catalog books -------------------------------------------------------------
+
+/** A question a catalog book asks the parent; the answer goes into the story. */
+export const TemplateQuestionSchema = z.object({
+  key: z.string().regex(/^[a-z][a-z0-9_]*$/),
+  label: z.string().min(1),
+  kind: z.enum(["text", "choice"]),
+  options: z.array(z.string().min(1)).optional(),
+  required: z.boolean().default(false),
+  placeholder: z.string().optional(),
+});
+export type TemplateQuestion = z.infer<typeof TemplateQuestionSchema>;
+
+/** A catalog card. */
+export const TemplateSummarySchema = z.object({
+  slug: z.string(),
+  title: z.string(),
+  summary: z.string(),
+  ageMin: z.number().int(),
+  ageMax: z.number().int(),
+  methodology: MethodologySlugSchema,
+  languages: z.array(LanguageSchema),
+  coverUrl: z.string().nullable(),
+});
+export type TemplateSummary = z.infer<typeof TemplateSummarySchema>;
+
+export const TemplateSchema = TemplateSummarySchema.extend({
+  questions: z.array(TemplateQuestionSchema),
+});
+export type Template = z.infer<typeof TemplateSchema>;
+
+/** Answers by question key. Kept short: they go into the prompt. */
+export const AnswersSchema = z.record(z.string(), z.string().trim().max(200));
+export type Answers = z.infer<typeof AnswersSchema>;
+
+/** Why `answers` do not satisfy `questions`, or null when they do. */
+export function answersProblem(questions: TemplateQuestion[], answers: Answers): string | null {
+  for (const q of questions) {
+    const answer = answers[q.key]?.trim() ?? "";
+    if (q.required && !answer) return `Ответьте на вопрос «${q.label}»`;
+    if (answer && q.kind === "choice" && q.options && !q.options.includes(answer)) {
+      return `«${answer}» — нет такого варианта в вопросе «${q.label}»`;
+    }
+  }
+  return null;
+}
+
 export const CreateBookSchema = z
   .object({
     child: ChildProfileSchema,
-    /** Story method; left out, one is picked by age. */
+    /** Catalog book slug; the book then follows its plot, method and questions. */
+    template: z.string().min(1).optional(),
+    answers: AnswersSchema.optional(),
+    /** Story method for a book of your own; left out, one is picked by age. */
     methodology: MethodologySlugSchema.optional(),
-    /** What the book is about, in the parent's words ("first day at kindergarten"). */
+    /** What a book of your own is about, in the parent's words ("first day at kindergarten"). */
     theme: z.string().trim().min(3).max(200).optional(),
   })
   .superRefine((b, ctx) => {
@@ -76,6 +126,8 @@ export const BookSchema = z.object({
   progress: z.number().min(0).max(100),
   title: z.string().nullable(),
   methodology: MethodologySlugSchema,
+  /** Catalog book slug, or null for a book of your own. */
+  template: z.string().nullable(),
   talkQuestions: z.array(z.string()),
   heroImageUrl: z.string().nullable(),
   pages: z.array(BookPageSchema),

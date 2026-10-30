@@ -70,20 +70,29 @@ export class MetaGateway implements ModelGateway {
     );
   }
 
-  drawHero(heroDescription: string): Promise<GeneratedImage> {
-    return this.draw(heroPrompt(heroDescription), '1024x1024');
+  drawHero(heroDescription: string, style?: string): Promise<GeneratedImage> {
+    return this.draw(heroPrompt(heroDescription, style), '1024x1024');
   }
 
-  drawPet(petDescription: string, heroRef: string): Promise<GeneratedImage> {
-    return this.draw(petPrompt(petDescription), '1024x1024', heroRef);
+  drawPet(
+    petDescription: string,
+    heroRef: string,
+    style?: string,
+  ): Promise<GeneratedImage> {
+    return this.draw(petPrompt(petDescription, style), '1024x1024', heroRef);
   }
 
   drawPage(
     scenePrompt: string,
     anchorRef: string,
     withPet: boolean,
+    style?: string,
   ): Promise<GeneratedImage> {
-    return this.draw(pagePrompt(scenePrompt, withPet), '1536x1024', anchorRef);
+    return this.draw(
+      pagePrompt(scenePrompt, withPet, style),
+      '1536x1024',
+      anchorRef,
+    );
   }
 
   private async draw(

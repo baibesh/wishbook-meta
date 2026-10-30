@@ -18,37 +18,41 @@ enum BookStatus {
 }
 
 model Book {
-  id             String     @id @default(cuid())
-  status         BookStatus @default(queued)
-  progress       Int        @default(0)
+  id              String        @id @default(cuid())
+  status          BookStatus    @default(queued)
+  progress        Int           @default(0)
   /// The child profile the parent submitted (ChildProfile in @wishbook/shared).
-  child          Json
-  language       String
+  child           Json
+  language        String
   /// Story method slug (METHODOLOGIES in @wishbook/shared).
-  methodology    String     @default("adventure-quest")
+  methodology     String        @default("adventure-quest")
   /// What the parent asked the book to be about, if anything.
-  theme          String?
-  title          String?
+  theme           String?
+  template        BookTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  templateId      String?
+  /// Answers to the catalog book's questions, by question key.
+  answers         Json?
+  title           String?
   heroDescription String?
   /// Muse Image response id of the hero character sheet; pages chain from it.
-  heroResponseId String?
-  heroImagePath  String?
-  petImagePath   String?
+  heroResponseId  String?
+  heroImagePath   String?
+  petImagePath    String?
   /// BookPage[]: { page, text, scenePrompt, imagePath }
-  pages          Json       @default("[]")
+  pages           Json          @default("[]")
   /// Questions for the parent to ask after reading (dialogic reading).
-  talkQuestions  Json       @default("[]")
-  pdfPath        String?
-  error          String?
+  talkQuestions   Json          @default("[]")
+  pdfPath         String?
+  error           String?
   /// Model spend for this book, in US dollars.
-  costUsd        Float      @default(0)
+  costUsd         Float         @default(0)
   /// Anonymous visitor key the free limit is counted against.
-  clientKey      String
+  clientKey       String
   /// Set when the book was made with a demo code: it does not count against the visitor.
-  demo           Boolean    @default(false)
-  orders         Order[]
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  demo            Boolean       @default(false)
+  orders          Order[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   @@index([clientKey])
 }
@@ -84,4 +88,31 @@ model Order {
   deliveryKzt   Int
   totalKzt      Int
   createdAt     DateTime @default(now())
+}
+
+/// A catalog book: a plot written by an author that each child's story is adapted from.
+model BookTemplate {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  summary     String
+  ageMin      Int
+  ageMax      Int
+  /// Story method slug (METHODOLOGIES in @wishbook/shared).
+  methodology String
+  languages   String[]
+  /// What the book is about, in English, for Muse Spark.
+  theme       String
+  /// Plot points in order, in English; Muse Spark spreads them across the pages.
+  plot        Json
+  /// TemplateQuestion[] (@wishbook/shared).
+  questions   Json     @default("[]")
+  /// Replaces the default art style in image prompts.
+  stylePrompt String?
+  coverUrl    String?
+  published   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  books       Book[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

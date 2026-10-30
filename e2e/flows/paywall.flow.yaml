@@ -10,19 +10,20 @@ env:
   childName: "Пейвол ${Date.now()}"
 before:
   - launchApp: { appId: "${WEB}", clearState: true }
+  - openLink: "${WEB}/create"
 commands:
   - waitForVisible: { text: "Бесплатных книг осталось: 3 из 3" }
   - repeat:
       times: 3
       commands:
-        - openLink: "${WEB}/"
+        - openLink: "${WEB}/create"
         - tapOn: { testId: child-name }
         - inputText: "${childName}"
         - tapOn: { testId: child-interests }
         - inputText: "мячи"
         - tapOn: { testId: create-book }
         - waitForVisible: { testId: book-status }
-  - openLink: "${WEB}/"
+  - openLink: "${WEB}/create"
   - waitForVisible: { text: "Бесплатных книг осталось: 0 из 3" }
   - tapOn: { testId: child-name }
   - inputText: "${childName}"

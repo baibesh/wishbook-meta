@@ -19,6 +19,7 @@
     "dev": "nest start --watch",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "db:push": "prisma db push",
+    "covers": "ts-node scripts/catalog-covers.ts",
     "db:generate": "prisma generate",
     "postinstall": "prisma generate"
   },

@@ -1,0 +1,48 @@
+# API contract for the catalog: list, details, and books that do not fit a template or a method.
+device: none
+env:
+  childName: "ApiCatalog ${Date.now()}"
+http:
+  baseUrl: ${API}
+  headers:
+    X-Client-Key: "e2e-${childName}"
+commands:
+  - request:
+      url: /templates
+      assert:
+        status: 200
+        json: { "$[5].slug": bath-time, "$[0].slug": first-day-kindergarten, "$[0].coverUrl": /catalog/first-day-kindergarten.jpg }
+  - request:
+      url: /templates/not-yet
+      assert:
+        status: 200
+        json: { "$.methodology": growth-mindset, "$.questions[0].key": skill }
+  - request:
+      url: /templates/no-such-book
+      assert: { status: 404 }
+  # A 3-year-old is too young for "Я научусь!" (5–10).
+  - request:
+      method: POST
+      url: /books
+      json:
+        child: { name: "${childName}", age: 3, gender: girl, interests: [мячи], city: Алматы }
+        template: not-yet
+        answers: { skill: плавать, helper: мама }
+      assert: { status: 400, json: { "$.message": { contains: "5–10" } } }
+  # A required answer is missing.
+  - request:
+      method: POST
+      url: /books
+      json:
+        child: { name: "${childName}", age: 6, gender: girl, interests: [мячи], city: Алматы }
+        template: not-yet
+        answers: { skill: плавать }
+      assert: { status: 400, json: { "$.message": { contains: "Кто помогает учиться?" } } }
+  # A method of your own that does not fit the age.
+  - request:
+      method: POST
+      url: /books
+      json:
+        child: { name: "${childName}", age: 3, gender: girl, interests: [мячи], city: Алматы }
+        methodology: growth-mindset
+      assert: { status: 400 }
