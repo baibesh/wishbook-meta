@@ -3,12 +3,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ORDER_STATUSES, type OrderStatus } from "@fabulka/shared";
 import Link from "next/link";
+import { useState } from "react";
 import { adminOrders, setOrderStatus } from "@/lib/admin-api";
 import { formatKzt } from "@/lib/format";
 import { formatDate, input, ORDER_STATUS, PageTitle, table } from "./ui";
 
 export function OrdersTable() {
   const queryClient = useQueryClient();
+  const [filter, setFilter] = useState<OrderStatus | "">("");
   const orders = useQuery({ queryKey: ["admin", "orders"], queryFn: adminOrders, refetchInterval: 10_000 });
   const update = useMutation({
     mutationFn: ({ id, status }: { id: string; status: OrderStatus }) => setOrderStatus(id, status),
@@ -17,7 +19,20 @@ export function OrdersTable() {
 
   return (
     <>
-      <PageTitle>Заказы печати</PageTitle>
+      <PageTitle
+        aside={
+          <select data-testid="orders-filter" className={`${input} w-48`} value={filter} onChange={(e) => setFilter(e.target.value as OrderStatus | "")}>
+            <option value="">Все статусы</option>
+            {ORDER_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {ORDER_STATUS[s]}
+              </option>
+            ))}
+          </select>
+        }
+      >
+        Заказы печати
+      </PageTitle>
       {orders.isError && <p role="alert" className="text-red-600">{orders.error.message}</p>}
       <div className="overflow-x-auto rounded-2xl border border-border bg-card">
         <table data-testid="orders-table" className={table}>
@@ -33,7 +48,7 @@ export function OrdersTable() {
             </tr>
           </thead>
           <tbody>
-            {orders.data?.map((order) => (
+            {orders.data?.filter((o) => !filter || o.status === filter).map((order) => (
               <tr key={order.id} data-testid="order-row">
                 <td>
                   <Link href={`/admin/books/${order.bookId}`} className="font-semibold hover:text-accent">

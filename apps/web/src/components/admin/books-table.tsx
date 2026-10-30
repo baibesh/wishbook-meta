@@ -9,12 +9,27 @@ import { Badge, BOOK_STATUS, formatDate, formatUsd, input, PageTitle, table } fr
 
 export function BooksTable() {
   const [status, setStatus] = useState<BookStatus | "">("");
+  const [query, setQuery] = useState("");
   const books = useQuery({ queryKey: ["admin", "books", status], queryFn: () => adminBooks(status || undefined), refetchInterval: 5000 });
+
+  const needle = query.trim().toLowerCase();
+  const visible = needle
+    ? books.data?.filter((b) => [b.title ?? "", b.childName, b.id].some((v) => v.toLowerCase().includes(needle)))
+    : books.data;
 
   return (
     <>
       <PageTitle
         aside={
+          <div className="flex flex-wrap gap-2">
+          <input
+            data-testid="books-search"
+            type="search"
+            className={`${input} w-56`}
+            placeholder="Название, имя или id"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
           <select data-testid="books-filter" className={`${input} w-48`} value={status} onChange={(e) => setStatus(e.target.value as BookStatus | "")}>
             <option value="">Все статусы</option>
             {BOOK_STATUSES.map((s) => (
@@ -23,6 +38,7 @@ export function BooksTable() {
               </option>
             ))}
           </select>
+          </div>
         }
       >
         Книги
@@ -42,7 +58,7 @@ export function BooksTable() {
             </tr>
           </thead>
           <tbody>
-            {books.data?.map((book) => (
+            {visible?.map((book) => (
               <tr key={book.id} className="hover:bg-background/60">
                 <td>
                   <Link href={`/admin/books/${book.id}`} className="font-semibold hover:text-accent">
@@ -65,7 +81,7 @@ export function BooksTable() {
                 <td className="whitespace-nowrap text-muted">{formatDate(book.createdAt)}</td>
               </tr>
             ))}
-            {books.data?.length === 0 && (
+            {visible?.length === 0 && (
               <tr>
                 <td colSpan={7} className="py-8 text-center text-muted">
                   Книг нет
