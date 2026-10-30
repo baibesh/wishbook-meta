@@ -1,5 +1,6 @@
 import {
   BookSchema,
+  MyBookSchema,
   OrderSchema,
   QuotaSchema,
   TemplateSchema,
@@ -98,6 +99,10 @@ export async function listTemplates(): Promise<TemplateSummary[]> {
 
 export async function getTemplate(slug: string): Promise<Template> {
   return TemplateSchema.parse(await request(`/api/templates/${encodeURIComponent(slug)}`));
+}
+
+export async function listMyBooks() {
+  return MyBookSchema.array().parse(await request("/api/books"));
 }
 
 export async function getBook(id: string): Promise<Book> {

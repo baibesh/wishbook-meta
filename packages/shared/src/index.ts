@@ -163,6 +163,18 @@ export const BookSchema = z.object({
 });
 export type Book = z.infer<typeof BookSchema>;
 
+/** A row of "My books": what this browser has made. */
+export const MyBookSchema = z.object({
+  id: z.string(),
+  title: z.string().nullable(),
+  status: BookStatusSchema,
+  childName: z.string(),
+  language: LanguageSchema,
+  heroImageUrl: z.string().nullable(),
+  createdAt: z.string(),
+});
+export type MyBook = z.infer<typeof MyBookSchema>;
+
 /** Progress shown for each stage while the book is generating. */
 export function progressFor(status: BookStatus, pagesDone = 0, pagesTotal = 0): number {
   switch (status) {

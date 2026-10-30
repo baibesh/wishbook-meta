@@ -12,6 +12,7 @@ import {
   GENERATION_PAUSED,
   type Book,
   type CreateBookInput,
+  type MyBook,
 } from '@fabulka/shared';
 import { CurrentClient, type Client } from '../common/client';
 import { ZodPipe } from '../common/zod.pipe';
@@ -51,6 +52,12 @@ export class BooksController {
       this.quota.isDemo(client.demoCode),
       this.geo.country(client.ip),
     );
+  }
+
+  /** "My books": everything made from this browser (its anonymous key). */
+  @Get()
+  mine(@CurrentClient() client: Client): Promise<MyBook[]> {
+    return this.books.listMine(client.key);
   }
 
   @Get(':id')

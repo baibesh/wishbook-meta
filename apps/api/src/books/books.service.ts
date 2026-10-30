@@ -16,6 +16,7 @@ import {
   type CreateBookInput,
   type Language,
   type MethodologySlug,
+  type MyBook,
 } from '@fabulka/shared';
 import { basename } from 'node:path';
 import { MODEL_GATEWAY, type ModelGateway } from '../meta/model-gateway';
@@ -113,6 +114,24 @@ export class BooksService {
       this.fail(row.id, error),
     );
     return this.toDto(row);
+  }
+
+  /** Books made with this visitor key, newest first. */
+  async listMine(clientKey: string): Promise<MyBook[]> {
+    const rows = await this.prisma.book.findMany({
+      where: { clientKey },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+    return rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      status: row.status,
+      childName: (row.child as unknown as ChildProfile).name,
+      language: row.language as Language,
+      heroImageUrl: this.storage.url(row.heroImagePath),
+      createdAt: row.createdAt.toISOString(),
+    }));
   }
 
   async get(id: string): Promise<Book> {
