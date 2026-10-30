@@ -23,6 +23,15 @@ export interface ModelGateway {
   writeStory(child: ChildProfile, pageCount: number): Promise<GeneratedStory>;
   /** The hero character sheet every page is anchored on. */
   drawHero(heroDescription: string): Promise<GeneratedImage>;
-  /** One page illustration, chained from the hero sheet so the child stays on-model. */
-  drawPage(scenePrompt: string, heroRef: string): Promise<GeneratedImage>;
+  /** The pet character sheet, chained from the hero sheet so both stay in the conversation. */
+  drawPet(petDescription: string, heroRef: string): Promise<GeneratedImage>;
+  /**
+   * One page illustration, chained from the last character sheet (`anchorRef`) so the
+   * child and the pet stay on-model.
+   */
+  drawPage(
+    scenePrompt: string,
+    anchorRef: string,
+    withPet: boolean,
+  ): Promise<GeneratedImage>;
 }

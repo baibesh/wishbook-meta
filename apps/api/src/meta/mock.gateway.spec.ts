@@ -51,6 +51,10 @@ describe('prompts', () => {
 
   it('repeats the art style in hero and page prompts', () => {
     expect(heroPrompt('a girl')).toContain('watercolor');
-    expect(pagePrompt('the hero in a park')).toContain('watercolor');
+    expect(pagePrompt('the hero in a park', false)).toContain('watercolor');
+    expect(pagePrompt('the hero in a park', true)).toContain(
+      'pet character sheet',
+    );
+    expect(pagePrompt('the hero in a park', false)).not.toContain('pet');
   });
 });

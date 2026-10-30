@@ -30,6 +30,8 @@ export type StoryPage = z.infer<typeof StoryPageSchema>;
 export const StorySchema = z.object({
   title: z.string().min(1),
   hero_description: z.string().min(1),
+  /** The pet's look, or null when the child has no pet. */
+  pet_description: z.string().min(1).nullable().default(null),
   pages: z.array(StoryPageSchema).min(1),
 });
 export type Story = z.infer<typeof StorySchema>;

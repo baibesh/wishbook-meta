@@ -45,6 +45,7 @@ export class MockGateway implements ModelGateway {
         ? `${child.name} және жұлдызды сапар`
         : `${child.name} и звёздное путешествие`,
       hero_description: `a ${child.age}-year-old ${child.gender} with dark hair, yellow raincoat, red boots`,
+      pet_description: child.pet ? 'a small ginger cat with white paws' : null,
       pages: Array.from({ length: pageCount }, (_, i) => ({
         page: i + 1,
         text: kk
@@ -62,6 +63,16 @@ export class MockGateway implements ModelGateway {
       data: placeholder('hero', '#FFFFFF'),
       ext: 'svg',
       ref: 'mock-hero',
+      costUsd: 0,
+    };
+  }
+
+  async drawPet(): Promise<GeneratedImage> {
+    await sleep(this.delayMs);
+    return {
+      data: placeholder('pet', '#FFFFFF'),
+      ext: 'svg',
+      ref: 'mock-pet',
       costUsd: 0,
     };
   }

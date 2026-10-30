@@ -83,12 +83,30 @@ export class BooksService {
       costUsd,
     });
 
+    // The pet gets its own sheet too, or it changes breed and color between pages.
+    let anchorRef = hero.ref;
+    const withPet = story.pet_description !== null;
+    if (story.pet_description) {
+      const pet = await this.models.drawPet(story.pet_description, hero.ref);
+      costUsd += pet.costUsd;
+      const petImagePath = await this.storage.save(
+        `books/${id}/pet.${pet.ext}`,
+        pet.data,
+      );
+      anchorRef = pet.ref;
+      await this.update(id, 'hero', { petImagePath, costUsd });
+    }
+
     await this.update(id, 'pages', {
       progress: progressFor('pages', 0, pages.length),
     });
     let done = 0;
     await eachLimit(pages, PAGE_CONCURRENCY, async (page) => {
-      const image = await this.models.drawPage(page.scenePrompt, hero.ref);
+      const image = await this.models.drawPage(
+        page.scenePrompt,
+        anchorRef,
+        withPet,
+      );
       costUsd += image.costUsd;
       page.imagePath = await this.storage.save(
         `books/${id}/page-${page.page}.${image.ext}`,

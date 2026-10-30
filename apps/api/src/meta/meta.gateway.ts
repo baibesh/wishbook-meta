@@ -10,6 +10,7 @@ import {
   STORY_INSTRUCTIONS,
   heroPrompt,
   pagePrompt,
+  petPrompt,
   storyPrompt,
 } from './prompts';
 
@@ -75,8 +76,16 @@ export class MetaGateway implements ModelGateway {
     return this.draw(heroPrompt(heroDescription), '1024x1024');
   }
 
-  drawPage(scenePrompt: string, heroRef: string): Promise<GeneratedImage> {
-    return this.draw(pagePrompt(scenePrompt), '1536x1024', heroRef);
+  drawPet(petDescription: string, heroRef: string): Promise<GeneratedImage> {
+    return this.draw(petPrompt(petDescription), '1024x1024', heroRef);
+  }
+
+  drawPage(
+    scenePrompt: string,
+    anchorRef: string,
+    withPet: boolean,
+  ): Promise<GeneratedImage> {
+    return this.draw(pagePrompt(scenePrompt, withPet), '1536x1024', anchorRef);
   }
 
   private async draw(

@@ -29,6 +29,7 @@ model Book {
   /// Muse Image response id of the hero character sheet; pages chain from it.
   heroResponseId String?
   heroImagePath  String?
+  petImagePath   String?
   /// BookPage[]: { page, text, scenePrompt, imagePath }
   pages          Json       @default("[]")
   pdfPath        String?
