@@ -28,6 +28,9 @@ function stored(key: string): string | null {
 }
 
 /** Anonymous visitor id the free generation limit is counted against. */
+/** When storage is blocked: a key for this page only, never one shared between visitors. */
+let pageKey: string | null = null;
+
 function clientKey(): string {
   let key = stored(CLIENT_KEY);
   if (!key) {
@@ -35,7 +38,8 @@ function clientKey(): string {
     try {
       localStorage.setItem(CLIENT_KEY, key);
     } catch {
-      return "anonymous";
+      pageKey ??= key;
+      return pageKey;
     }
   }
   return key;

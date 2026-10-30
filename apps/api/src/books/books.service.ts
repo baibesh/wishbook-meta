@@ -4,6 +4,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  type OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Book as BookRow, BookStatus, Prisma } from '@prisma/client';
@@ -56,9 +57,11 @@ interface Job {
 const PAGE_CONCURRENCY = 4;
 
 @Injectable()
-export class BooksService {
+export class BooksService implements OnModuleInit {
   private readonly logger = new Logger(BooksService.name);
   private readonly pageCount: number;
+  /** Books generated at once; more wait their turn as "queued". */
+  private readonly slots: Slots;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -69,6 +72,26 @@ export class BooksService {
     config: ConfigService,
   ) {
     this.pageCount = Number(config.get('PAGE_COUNT', 10));
+    this.slots = new Slots(Number(config.get('BOOK_CONCURRENCY', 3)));
+  }
+
+  /**
+   * Generation lives in this process, so books caught mid-way by a restart or deploy would wait
+   * forever. Fail them on start: the parent sees an error and the free book is not used up.
+   */
+  async onModuleInit() {
+    const { count } = await this.prisma.book.updateMany({
+      where: { status: { notIn: ['done', 'failed'] } },
+      data: {
+        status: 'failed',
+        error:
+          'Генерация прервалась: сервис перезапустился. Создайте книгу ещё раз.',
+      },
+    });
+    if (count)
+      this.logger.warn(
+        `${count} unfinished books marked failed after a restart`,
+      );
   }
 
   async create(
@@ -113,10 +136,11 @@ export class BooksService {
       },
       include: withTemplate,
     });
-    // Generation runs in the background; the client polls GET /books/:id.
-    void this.generate(row.id, job).catch((error: unknown) =>
-      this.fail(row.id, error),
-    );
+    // Generation runs in the background, a few books at a time; the client polls GET /books/:id.
+    const spent: Spend = { usd: 0 };
+    void this.slots
+      .run(() => this.generate(row.id, job, spent))
+      .catch((error: unknown) => this.fail(row.id, error, spent.usd));
     return this.toDto(row);
   }
 
@@ -170,7 +194,14 @@ export class BooksService {
     const asked = questions(template);
     const answers = input.answers ?? {};
     const problem = answersProblem(questionsInAnyLanguage(template), answers);
-    if (problem) throw new BadRequestException(problem);
+    if (problem) {
+      const { question, answer } = problem;
+      throw new BadRequestException(
+        problem.reason === 'required'
+          ? `Ответьте на вопрос «${question.label}»`
+          : `«${answer}» — нет такого варианта в вопросе «${question.label}»`,
+      );
+    }
     return {
       brief: {
         child,
@@ -192,9 +223,9 @@ export class BooksService {
   private async generate(
     id: string,
     { brief, style, toyUpload }: Job,
+    spent: Spend,
   ): Promise<void> {
     const { child } = brief;
-    let costUsd = 0;
 
     // The toy first: SAM cuts it out of the photo, Muse Spark puts it into words for the story.
     let toyReference: Buffer | null = null;
@@ -212,12 +243,12 @@ export class BooksService {
         ? await this.storage.save(`books/${id}/toy-cutout.jpg`, found.cutout)
         : null;
       const described = await this.models.describeToy(toyReference);
-      costUsd += found.costUsd + described.costUsd;
+      spent.usd += found.costUsd + described.costUsd;
       const row = await this.update(id, 'toy', {
         toyPhotoPath,
         toyCutoutPath,
         toyDescription: described.description,
-        costUsd,
+        costUsd: spent.usd,
       });
       brief = {
         ...brief,
@@ -230,7 +261,7 @@ export class BooksService {
 
     await this.stage(id, 'story');
     const { story, costUsd: storyCost } = await this.models.writeStory(brief);
-    costUsd += storyCost;
+    spent.usd += storyCost;
     const pages: StoredPage[] = story.pages.map((p) => ({
       page: p.page,
       text: p.text,
@@ -242,12 +273,21 @@ export class BooksService {
       heroDescription: story.hero_description,
       pages: json(pages),
       talkQuestions: story.talk_questions,
-      costUsd,
+      costUsd: spent.usd,
     });
+
+    // A second pass before any picture is drawn: the parent's text went into the prompt.
+    const review = await this.models.reviewStory(story, child.age);
+    spent.usd += review.costUsd;
+    if (!review.safe) {
+      throw new Error(
+        `Сказка не прошла проверку безопасности: ${review.reason}`,
+      );
+    }
 
     await this.stage(id, 'hero');
     const hero = await this.models.drawHero(story.hero_description, style);
-    costUsd += hero.costUsd;
+    spent.usd += hero.costUsd;
     const heroImagePath = await this.storage.save(
       `books/${id}/hero.${hero.ext}`,
       hero.data,
@@ -255,7 +295,7 @@ export class BooksService {
     await this.update(id, 'hero', {
       heroResponseId: hero.ref,
       heroImagePath,
-      costUsd,
+      costUsd: spent.usd,
     });
 
     // The pet gets its own sheet too, or it changes breed and color between pages.
@@ -267,13 +307,13 @@ export class BooksService {
         hero.ref,
         style,
       );
-      costUsd += pet.costUsd;
+      spent.usd += pet.costUsd;
       const petImagePath = await this.storage.save(
         `books/${id}/pet.${pet.ext}`,
         pet.data,
       );
       anchorRef = pet.ref;
-      await this.update(id, 'hero', { petImagePath, costUsd });
+      await this.update(id, 'hero', { petImagePath, costUsd: spent.usd });
     }
 
     // The toy's sheet is drawn from the cut-out photo, chained after the hero (and pet).
@@ -284,13 +324,13 @@ export class BooksService {
         anchorRef,
         style,
       );
-      costUsd += toy.costUsd;
+      spent.usd += toy.costUsd;
       const toyImagePath = await this.storage.save(
         `books/${id}/toy.${toy.ext}`,
         toy.data,
       );
       anchorRef = toy.ref;
-      await this.update(id, 'hero', { toyImagePath, costUsd });
+      await this.update(id, 'hero', { toyImagePath, costUsd: spent.usd });
     }
 
     await this.update(id, 'pages', {
@@ -307,7 +347,7 @@ export class BooksService {
         },
         style,
       );
-      costUsd += image.costUsd;
+      spent.usd += image.costUsd;
       page.imagePath = await this.storage.save(
         `books/${id}/page-${page.page}.${image.ext}`,
         image.data,
@@ -315,14 +355,14 @@ export class BooksService {
       done++;
       await this.update(id, 'pages', {
         pages: json(pages),
-        costUsd,
+        costUsd: spent.usd,
         progress: progressFor('pages', done, pages.length),
       });
     });
 
     await this.update(id, 'pdf', {
       pages: json(pages),
-      costUsd,
+      costUsd: spent.usd,
       progress: progressFor('pdf'),
     });
     // Images sit next to book.html, so the template takes bare file names.
@@ -341,7 +381,7 @@ export class BooksService {
     });
     await this.update(id, 'done', { pdfPath, progress: 100 });
     this.logger.log(
-      `book ${id} done: ${pages.length} pages, $${costUsd.toFixed(3)}`,
+      `book ${id} done: ${pages.length} pages, $${spent.usd.toFixed(3)}`,
     );
   }
 
@@ -349,22 +389,31 @@ export class BooksService {
     return this.update(id, status, { progress: progressFor(status) });
   }
 
+  /**
+   * Moves a book on. A failed book stays failed: the update then throws, which stops the rest
+   * of its generation (other pages still in flight, or a book deleted meanwhile).
+   */
   private update(id: string, status: BookStatus, data: Prisma.BookUpdateInput) {
     return this.prisma.book.update({
-      where: { id },
+      where: { id, status: { not: 'failed' } },
       data: { ...data, status },
     });
   }
 
   /** Never throws: a background generation must not take the process down with it. */
-  private async fail(id: string, error: unknown) {
+  private async fail(id: string, error: unknown, spentUsd?: number) {
     const message = error instanceof Error ? error.message : String(error);
     this.logger.error(`book ${id} failed: ${message}`);
     try {
       // updateMany: the book may have been deleted while it was generating.
       await this.prisma.book.updateMany({
         where: { id },
-        data: { status: 'failed', error: message.slice(0, 1000) },
+        data: {
+          status: 'failed',
+          error: message.slice(0, 1000),
+          // What was spent before it failed still counts against the budget.
+          ...(spentUsd !== undefined && { costUsd: spentUsd }),
+        },
       });
     } catch (problem) {
       this.logger.error(`book ${id}: could not record the failure`, problem);
@@ -417,15 +466,49 @@ function json(value: unknown): Prisma.InputJsonValue {
   return value as Prisma.InputJsonValue;
 }
 
-/** Runs fn over items with at most `limit` in flight. */
+/** Spend so far, shared with the failure handler so a failed book still records it. */
+interface Spend {
+  usd: number;
+}
+
+/** Runs at most `limit` tasks at once; the rest wait in order. */
+class Slots {
+  private active = 0;
+  private readonly waiting: (() => void)[] = [];
+
+  constructor(private readonly limit: number) {}
+
+  async run<T>(task: () => Promise<T>): Promise<T> {
+    if (this.active >= this.limit) {
+      await new Promise<void>((resolve) => this.waiting.push(resolve));
+    }
+    this.active++;
+    try {
+      return await task();
+    } finally {
+      this.active--;
+      this.waiting.shift()?.();
+    }
+  }
+}
+
+/** Runs fn over items with at most `limit` in flight; after the first failure no new item starts. */
 async function eachLimit<T>(
   items: T[],
   limit: number,
   fn: (item: T) => Promise<void>,
 ): Promise<void> {
   let next = 0;
+  let failed = false;
   const worker = async () => {
-    while (next < items.length) await fn(items[next++]);
+    while (!failed && next < items.length) {
+      try {
+        await fn(items[next++]);
+      } catch (error) {
+        failed = true;
+        throw error;
+      }
+    }
   };
   await Promise.all(
     Array.from({ length: Math.min(limit, items.length) }, worker),

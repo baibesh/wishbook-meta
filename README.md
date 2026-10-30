@@ -12,7 +12,8 @@ Built for the Meta Global AI Developer Hackathon (Indie track, "Build for Your W
 | --- | --- | --- |
 | Toy | SAM 3.1 (`sam-3.1`) | Finds the child's favourite toy in the parent's photo; `@meta-sam/parser` decodes the mask and the API cuts the toy out on white (`apps/api/src/toy`). |
 | Toy | Muse Spark (vision) | Looks at the cut-out and describes the toy in one sentence for the story and the illustrator. |
-| Story | Muse Spark (`muse-spark-1.3`) | Writes the book in Russian or Kazakh as strict JSON: title, a hero description, and per page the text and a scene prompt. Invalid JSON is retried with the validation error. |
+| Story | Muse Spark (`muse-spark-1.3`) | Writes the book in Kazakh, Russian or English as strict JSON, following a child-development method and age norms: title, a hero description, per page the text and a scene prompt, and questions to talk about after reading. Invalid JSON is retried with the validation error. Everything the parent typed is passed as quoted data, never as instructions. |
+| Review | Muse Spark | Reads the finished story as a children's content reviewer before anything is drawn; a story that fails stops the book. |
 | Hero | Muse Image (`muse-image-1.0`) | Draws a character sheet of the child on a white background. |
 | Pet | Muse Image | The pet gets its own sheet, chained from the hero's, or it changes breed and color between pages. |
 | Toy sheet | Muse Image | Draws the toy as a storybook character with the cut-out as a reference image, chained after the hero, so it stays the same toy on every page. |
@@ -59,6 +60,22 @@ where Muse Image is not available, get HTTP 451 before any model is called
 `pnpm --filter @fabulka/api geoip`. A country database cannot single out the Crimea, Donetsk
 and Luhansk regions, so those are not blocked by IP.
 
+## Built to run
+
+- Generation runs in the API, a few books at a time (`BOOK_CONCURRENCY`). A page that fails stops
+  the rest of the book, the spend so far is still recorded, and books caught by a restart are
+  marked failed on start instead of hanging.
+- New books stop when model spend reaches `MODEL_BUDGET_USD`, on top of per-visitor and daily caps;
+  nginx limits how often one address can start a book.
+- Book and order ids are random (cuid2); an order, which holds an address, is visible only to the
+  browser that placed it. Unused toy photos are deleted after an hour.
+- The schema ships as Prisma migrations; CI applies them to a fresh database, runs the E2E flows and
+  only then builds the images, so a red commit never reaches `:latest`.
+
+Known limitations: generation is an in-process queue, not a durable job table; the interface
+language is chosen in the browser, so a Kazakh or English page first renders in Russian; Kazakh
+and English catalog text is not yet editable in the admin.
+
 ## Stack
 
 - `apps/web`: Next.js 16, Tailwind 4, TanStack Query, react-hook-form + zod, lucide-react
@@ -72,9 +89,9 @@ Needs Node 22+, pnpm and Postgres.
 
 ```bash
 pnpm install
-createdb wishbook_meta
+createdb fabulka
 cp apps/api/.env.example apps/api/.env   # set DATABASE_URL; MODELS=meta + MODEL_API_KEY for real models
-pnpm --filter @fabulka/api exec prisma db push
+pnpm --filter @fabulka/api exec prisma migrate deploy
 pnpm dev                                  # web :3000, api :4000
 ```
 
@@ -82,7 +99,7 @@ pnpm dev                                  # web :3000, api :4000
 
 ```bash
 pnpm typecheck && pnpm lint && pnpm test   # unit tests
-createdb wishbook_meta_e2e && cp e2e/.env.example e2e/.env
+createdb fabulka_e2e && cp e2e/.env.example e2e/.env
 pnpm build && DATABASE_URL=… ./e2e/start-stack.sh
 tapstep test e2e/flows --config e2e/config.yaml
 ```

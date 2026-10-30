@@ -1,6 +1,13 @@
 import { Global, Injectable, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import {
+  mkdir,
+  readdir,
+  readFile,
+  rm,
+  stat,
+  writeFile,
+} from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 
 /** Generated files on local disk, served at /files. Swap for R2 when deploying. */
@@ -26,6 +33,22 @@ export class StorageService {
 
   remove(relativePath: string): Promise<void> {
     return rm(join(this.root, relativePath), { force: true });
+  }
+
+  /** Deletes files in a folder that were last written more than `ageMs` ago; returns how many. */
+  async removeOlderThan(relativeDir: string, ageMs: number): Promise<number> {
+    const dir = join(this.root, relativeDir);
+    const names = await readdir(dir).catch(() => [] as string[]);
+    let removed = 0;
+    for (const name of names) {
+      const file = join(dir, name);
+      const { mtimeMs } = await stat(file);
+      if (Date.now() - mtimeMs > ageMs) {
+        await rm(file, { force: true });
+        removed++;
+      }
+    }
+    return removed;
   }
 
   url(relativePath: string | null): string | null {

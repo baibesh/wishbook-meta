@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   BOOK_PRICE_KZT,
+  BUDGET_REACHED,
   DAILY_CAP_REACHED,
   LIMIT_REACHED,
   type Quota,
@@ -19,6 +20,7 @@ export class QuotaService {
   private readonly dailyCap: number;
   private readonly demoDailyCap: number;
   private readonly demoCodes: Set<string>;
+  private readonly budgetUsd: number;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -27,6 +29,7 @@ export class QuotaService {
     this.freeBooks = Number(config.get('FREE_BOOKS', 3));
     this.dailyCap = Number(config.get('DAILY_BOOK_CAP', 100));
     this.demoDailyCap = Number(config.get('DEMO_DAILY_CAP', 50));
+    this.budgetUsd = Number(config.get('MODEL_BUDGET_USD', 150));
     this.demoCodes = new Set(
       config
         .get<string>('DEMO_CODES', '')
@@ -59,8 +62,22 @@ export class QuotaService {
     };
   }
 
-  /** Throws 402 when the visitor is out of books, 503 when today's cap is spent. */
+  /**
+   * Throws 402 when the visitor is out of books, 503 when today's cap or the whole model budget
+   * is spent.
+   */
   async assertCanCreate(clientKey: string, demoCode?: string): Promise<void> {
+    const spent = await this.prisma.book.aggregate({ _sum: { costUsd: true } });
+    if ((spent._sum.costUsd ?? 0) >= this.budgetUsd) {
+      throw new HttpException(
+        {
+          code: BUDGET_REACHED,
+          message:
+            'Создание книг временно приостановлено, загляните чуть позже',
+        },
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
+    }
     const demo = this.isDemo(demoCode);
     const today = await this.prisma.book.count({
       where: { demo, createdAt: { gte: startOfDay() } },

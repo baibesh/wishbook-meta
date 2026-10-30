@@ -14,7 +14,7 @@ import {
 } from "@fabulka/shared";
 import { BookOpen, Loader2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { ApiError, createBook, getQuota, uploadToy } from "@/lib/api";
@@ -79,6 +79,15 @@ export function BookForm({ template }: { template?: Template }) {
   const toyPreview = useMemo(() => (toyPhoto ? URL.createObjectURL(toyPhoto) : null), [toyPhoto]);
   useEffect(() => () => void (toyPreview && URL.revokeObjectURL(toyPreview)), [toyPreview]);
 
+  // A retry after the paywall or a validation error reuses the photo already uploaded.
+  const lastUpload = useRef<{ file: File; upload: string } | null>(null);
+  const uploadedToy = async (file: File) => {
+    if (lastUpload.current?.file !== file) {
+      lastUpload.current = { file, upload: await uploadToy(await toJpegDataUrl(file)) };
+    }
+    return lastUpload.current.upload;
+  };
+
   const create = useMutation({
     mutationFn: async (values: FormValues) =>
       createBook({
@@ -92,7 +101,7 @@ export function BookForm({ template }: { template?: Template }) {
           language: values.language,
         },
         ...(toyPhoto && {
-          toy: { upload: await uploadToy(await toJpegDataUrl(toyPhoto)), name: values.toyName || undefined },
+          toy: { upload: await uploadedToy(toyPhoto), name: values.toyName || undefined },
         }),
         ...(template
           ? { template: template.slug, answers: values.answers }
@@ -104,13 +113,18 @@ export function BookForm({ template }: { template?: Template }) {
             }),
       }),
     onSuccess: (book) => {
+      // The book has taken the photo; a next book uploads it again.
+      lastUpload.current = null;
       void queryClient.invalidateQueries({ queryKey: ["quota"] });
       router.push(`/books/${book.id}`);
     },
   });
   const submit = form.handleSubmit((values) => {
     const problem = template && answersProblem(template.questions, values.answers);
-    if (problem) return form.setError("root.answers", { message: problem });
+    if (problem) {
+      // The form offers only valid options, so the one problem a parent can hit is a missing answer.
+      return form.setError("root.answers", { message: t("form.answers.required", { label: problem.question.label }) });
+    }
     create.mutate(values);
   });
   const limitReached = create.error instanceof ApiError && create.error.code === LIMIT_REACHED;

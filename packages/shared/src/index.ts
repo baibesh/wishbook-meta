@@ -72,13 +72,16 @@ export type Template = z.infer<typeof TemplateSchema>;
 export const AnswersSchema = z.record(z.string(), z.string().trim().max(200));
 export type Answers = z.infer<typeof AnswersSchema>;
 
-/** Why `answers` do not satisfy `questions`, or null when they do. */
-export function answersProblem(questions: TemplateQuestion[], answers: Answers): string | null {
+/** The first question `answers` fail and why, or null when they satisfy `questions`. */
+export function answersProblem(
+  questions: TemplateQuestion[],
+  answers: Answers,
+): { question: TemplateQuestion; answer: string; reason: "required" | "unknown_option" } | null {
   for (const q of questions) {
     const answer = answers[q.key]?.trim() ?? "";
-    if (q.required && !answer) return `Ответьте на вопрос «${q.label}»`;
+    if (q.required && !answer) return { question: q, answer, reason: "required" };
     if (answer && q.kind === "choice" && q.options && !q.options.includes(answer)) {
-      return `«${answer}» — нет такого варианта в вопросе «${q.label}»`;
+      return { question: q, answer, reason: "unknown_option" };
     }
   }
   return null;
@@ -239,6 +242,8 @@ export type Quota = z.infer<typeof QuotaSchema>;
 export const LIMIT_REACHED = "limit_reached";
 /** Body of a 503 from POST /books when the service-wide daily cap is hit. */
 export const DAILY_CAP_REACHED = "daily_cap_reached";
+/** Body of a 503 from POST /books once model spend reaches MODEL_BUDGET_USD. */
+export const BUDGET_REACHED = "budget_reached";
 /** Body of a 451 from any route: the visitor is in a country where Meta's models may not be offered. */
 export const REGION_UNAVAILABLE = "region_unavailable";
 

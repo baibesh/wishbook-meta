@@ -99,6 +99,11 @@ export class MockGateway implements ModelGateway {
     return { story, costUsd: 0 };
   }
 
+  async reviewStory() {
+    await sleep(this.delayMs);
+    return { safe: true, reason: 'mock review', costUsd: 0 };
+  }
+
   async findToy(photo: Buffer) {
     await sleep(this.delayMs);
     return { cutout: photo, costUsd: 0 };

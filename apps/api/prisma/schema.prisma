@@ -19,7 +19,7 @@ enum BookStatus {
 }
 
 model Book {
-  id              String          @id @default(cuid())
+  id              String          @id @default(cuid(2))
   status          BookStatus      @default(queued)
   progress        Int             @default(0)
   /// The child profile the parent submitted (ChildProfile in @fabulka/shared).
@@ -65,6 +65,7 @@ model Book {
   updatedAt       DateTime        @updatedAt
 
   @@index([clientKey])
+  @@index([createdAt, demo])
 }
 
 /// Books a visitor bought on top of the free ones (demo payment: nothing is charged).
@@ -85,7 +86,7 @@ enum Cover {
 
 /// A printed copy of a book (demo payment; the delivery timeline is simulated).
 model Order {
-  id            String   @id @default(cuid())
+  id            String   @id @default(cuid(2))
   book          Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
   bookId        String
   recipientName String
@@ -100,6 +101,8 @@ model Order {
   /// Set by hand in the admin (ORDER_STATUSES); until then the stage follows the demo timer.
   status        String?
   createdAt     DateTime @default(now())
+
+  @@index([bookId])
 }
 
 /// Service-wide switches changed in the admin, such as pausing generation.

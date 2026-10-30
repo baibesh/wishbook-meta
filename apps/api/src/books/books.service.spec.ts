@@ -77,6 +77,65 @@ describe('BooksService', () => {
     expect(unhandled).not.toHaveBeenCalled();
   });
 
+  it('fails books left unfinished by a restart', async () => {
+    const updateMany = jest.fn().mockResolvedValue({ count: 2 });
+    await makeService({ book: { updateMany } }).onModuleInit();
+    expect(updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { status: { notIn: ['done', 'failed'] } },
+        data: expect.objectContaining({ status: 'failed' }) as unknown,
+      }),
+    );
+  });
+
+  it('stops before drawing when the story fails the safety review, keeping what it cost', async () => {
+    const models = new MockGateway(0);
+    const { story } = await models.writeStory({
+      child,
+      pageCount: 2,
+      methodology: 'adventure-quest',
+    });
+    jest
+      .spyOn(models, 'writeStory')
+      .mockResolvedValue({ story, costUsd: 0.02 });
+    jest
+      .spyOn(models, 'reviewStory')
+      .mockResolvedValue({ safe: false, reason: 'too scary', costUsd: 0.001 });
+    const drawHero = jest.spyOn(models, 'drawHero');
+    const row = {
+      id: 'b3',
+      status: 'queued',
+      child,
+      language: 'ru',
+      pages: [],
+      createdAt: new Date(),
+    };
+    const updateMany = jest.fn().mockResolvedValue({ count: 1 });
+    const service = makeService(
+      {
+        book: {
+          create: jest.fn().mockResolvedValue(row),
+          update: jest.fn().mockResolvedValue(row),
+          updateMany,
+        },
+      },
+      models,
+    );
+
+    await service.create({ child }, 'k', false);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    expect(drawHero).not.toHaveBeenCalled();
+    expect(updateMany).toHaveBeenCalledWith({
+      where: { id: 'b3' },
+      data: {
+        status: 'failed',
+        error: 'Сказка не прошла проверку безопасности: too scary',
+        costUsd: 0.021,
+      },
+    });
+  });
+
   describe('a catalog book', () => {
     const row = {
       id: 'b2',

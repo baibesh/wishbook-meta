@@ -22,6 +22,11 @@ export interface GeneratedStory {
  */
 export interface ModelGateway {
   writeStory(brief: StoryBrief): Promise<GeneratedStory>;
+  /** Muse Spark reads the finished story as a children's content reviewer before anything is drawn. */
+  reviewStory(
+    story: Story,
+    age: number,
+  ): Promise<{ safe: boolean; reason: string; costUsd: number }>;
   /**
    * Finds the toy in the parent's photo with SAM and cuts it out on white. `cutout` is null when
    * nothing was found; the caller then works from the whole photo.

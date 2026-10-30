@@ -19,6 +19,7 @@
     "dev": "nest start --watch",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
     "covers": "ts-node scripts/catalog-covers.ts",
     "geoip": "node scripts/geoip.mjs",
     "db:generate": "prisma generate",

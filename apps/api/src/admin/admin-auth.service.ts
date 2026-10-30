@@ -14,6 +14,7 @@ const SESSION_MS = 12 * 60 * 60 * 1000;
 /** Failed logins allowed per address in a window before it has to wait. */
 const MAX_FAILURES = 10;
 const FAILURE_WINDOW_MS = 15 * 60 * 1000;
+const MAX_TRACKED = 10_000;
 
 /**
  * One admin, configured by ADMIN_EMAIL and ADMIN_PASSWORD. A session is a signed, expiring token
@@ -22,7 +23,7 @@ const FAILURE_WINDOW_MS = 15 * 60 * 1000;
 @Injectable()
 export class AdminAuthService {
   private readonly logger = new Logger(AdminAuthService.name);
-  private readonly email: string;
+  private email: string;
   private readonly password: string;
   private readonly secret: string;
   readonly secureCookie: boolean;
@@ -34,13 +35,23 @@ export class AdminAuthService {
   constructor(config: ConfigService) {
     this.email = config.get<string>('ADMIN_EMAIL', '').trim().toLowerCase();
     this.password = config.get('ADMIN_PASSWORD', '');
-    this.secret =
-      config.get('ADMIN_SECRET', '') || randomBytes(32).toString('hex');
-    this.secureCookie = config.get('ADMIN_COOKIE_SECURE', 'false') === 'true';
+    const production = config.get('NODE_ENV') === 'production';
+    const secret = config.get<string>('ADMIN_SECRET', '');
+    this.secret = secret || randomBytes(32).toString('hex');
+    // Production runs behind HTTPS; ADMIN_COOKIE_SECURE=false is for a plain-HTTP local run.
+    this.secureCookie =
+      config.get('ADMIN_COOKIE_SECURE', production ? 'true' : 'false') ===
+      'true';
     if (!this.email || !this.password) {
       this.logger.warn(
         'ADMIN_EMAIL or ADMIN_PASSWORD is not set: the admin is off',
       );
+    } else if (production && !secret) {
+      // Without a fixed secret every restart signs the admin out, and a guessable default is worse.
+      this.logger.error(
+        'ADMIN_SECRET is not set in production: the admin is off',
+      );
+      this.email = '';
     }
   }
 
@@ -66,6 +77,13 @@ export class AdminAuthService {
       same(password, this.password);
     if (!ok) {
       const fresh = !failed || now - failed.since >= FAILURE_WINDOW_MS;
+      // Old entries go first, so a flood of addresses cannot grow the map without bound.
+      if (this.failures.size >= MAX_TRACKED) {
+        for (const [key, entry] of this.failures) {
+          if (now - entry.since >= FAILURE_WINDOW_MS) this.failures.delete(key);
+        }
+        if (this.failures.size >= MAX_TRACKED) this.failures.clear();
+      }
       this.failures.set(ip, {
         count: fresh ? 1 : failed.count + 1,
         since: fresh ? now : failed.since,

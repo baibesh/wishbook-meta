@@ -1,18 +1,10 @@
 name: Images
 
 # Builds the production images on GitHub's runners and publishes them to GHCR, so the
-# server only pulls them: building on the production host is too heavy for it.
+# server only pulls them: building on the production host is too heavy for it. CI calls this
+# after its checks pass on main, so a red commit never becomes :latest.
 on:
-  push:
-    branches: [main]
-    # Only when the shipped code changes: docs and test edits do not need new images.
-    paths:
-      - "apps/**"
-      - "packages/**"
-      - "pnpm-lock.yaml"
-      - "pnpm-workspace.yaml"
-      - ".dockerignore"
-      - ".github/workflows/images.yml"
+  workflow_call:
   workflow_dispatch:
 
 permissions:

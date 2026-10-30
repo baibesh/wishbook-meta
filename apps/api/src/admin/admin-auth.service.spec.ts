@@ -69,6 +69,18 @@ describe('AdminAuthService', () => {
     ).toThrow('not configured');
   });
 
+  it('is Secure by default in production and off there without a secret', () => {
+    const prod = auth({ NODE_ENV: 'production' });
+    expect(prod.cookie('t')).toContain('Secure');
+    expect(() =>
+      auth({ NODE_ENV: 'production', ADMIN_SECRET: '' }).login(
+        'admin@fabulka.com',
+        'correct horse',
+        '1.1.1.1',
+      ),
+    ).toThrow('not configured');
+  });
+
   it('sets an httpOnly cookie, Secure only when asked', () => {
     expect(auth().cookie('t')).toContain('HttpOnly');
     expect(auth().cookie('t')).not.toContain('Secure');

@@ -30,11 +30,14 @@ export class OrdersService {
     this.stageMs = Number(config.get('ORDER_STAGE_MS', 20_000));
   }
 
-  async create(input: CreateOrderInput): Promise<Order> {
+  /** Only the browser that made the book can order it. */
+  async create(input: CreateOrderInput, clientKey: string): Promise<Order> {
     const book = await this.prisma.book.findUnique({
       where: { id: input.bookId },
     });
-    if (!book) throw new NotFoundException(`book ${input.bookId} not found`);
+    if (book?.clientKey !== clientKey) {
+      throw new NotFoundException(`book ${input.bookId} not found`);
+    }
     if (book.status !== 'done') {
       throw new ConflictException('The book is still being made');
     }
@@ -50,12 +53,15 @@ export class OrdersService {
     return this.toDto(row, book);
   }
 
-  async get(id: string): Promise<Order> {
+  /** An order carries a name and address: only the browser that placed it can see it. */
+  async get(id: string, clientKey: string): Promise<Order> {
     const row = await this.prisma.order.findUnique({
       where: { id },
       include: { book: true },
     });
-    if (!row) throw new NotFoundException(`order ${id} not found`);
+    if (row?.book.clientKey !== clientKey) {
+      throw new NotFoundException(`order ${id} not found`);
+    }
     return this.toDto(row, row.book);
   }
 

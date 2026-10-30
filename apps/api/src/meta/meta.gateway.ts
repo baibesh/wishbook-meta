@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import type { Response, Tool } from 'openai/resources/responses/responses';
-import { StorySchema } from '@fabulka/shared';
+import { StorySchema, type Story } from '@fabulka/shared';
+import { z } from 'zod';
 import type {
   GeneratedImage,
   GeneratedStory,
@@ -8,6 +9,8 @@ import type {
 } from './model-gateway';
 import { cutout } from '../toy/cutout';
 import {
+  REVIEW_INSTRUCTIONS,
+  reviewPrompt,
   STORY_INSTRUCTIONS,
   TOY_DESCRIPTION_PROMPT,
   type Companions,
@@ -77,6 +80,26 @@ export class MetaGateway implements ModelGateway {
     throw new Error(
       `Muse Spark returned an invalid story ${STORY_ATTEMPTS} times: ${error}`,
     );
+  }
+
+  async reviewStory(
+    story: Story,
+    age: number,
+  ): Promise<{ safe: boolean; reason: string; costUsd: number }> {
+    const response = await this.client.responses.create({
+      model: this.options.storyModel,
+      instructions: REVIEW_INSTRUCTIONS,
+      input: reviewPrompt(JSON.stringify(story), age),
+      text: { format: { type: 'json_object' } },
+    });
+    const parsed = ReviewSchema.safeParse(
+      JSON.parse(response.output_text || '{}'),
+    );
+    // An unreadable verdict is not a pass.
+    const verdict = parsed.success
+      ? parsed.data
+      : { safe: false, reason: 'the safety review returned no verdict' };
+    return { ...verdict, costUsd: tokenCost(response) };
   }
 
   async findToy(
@@ -242,6 +265,8 @@ function tokenCost(response: Response): number {
     1_000_000
   );
 }
+
+const ReviewSchema = z.object({ safe: z.boolean(), reason: z.string() });
 
 function dataUrl(jpeg: Buffer): string {
   return `data:image/jpeg;base64,${jpeg.toString('base64')}`;

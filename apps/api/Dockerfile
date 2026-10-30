@@ -9,5 +9,5 @@ RUN pnpm install --frozen-lockfile --filter @fabulka/api... \
 WORKDIR /app/apps/api
 ENV NODE_ENV=production PORT=4000 STORAGE_DIR=/data/storage
 EXPOSE 4000
-# Apply the Prisma schema, then serve.
-CMD ["sh", "-c", "pnpm exec prisma db push --skip-generate && node dist/main.js"]
+# Apply pending migrations, then serve.
+CMD ["sh", "-c", "pnpm exec prisma migrate deploy && node dist/main.js"]

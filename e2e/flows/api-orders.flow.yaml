@@ -1,0 +1,41 @@
+# An order holds a name and an address: only the browser that made the book can order it or see it.
+device: none
+env:
+  childName: "Owner ${Date.now()}"
+  owner: "e2e-owner-${Date.now()}"
+  stranger: "e2e-stranger-${Date.now()}"
+http:
+  baseUrl: ${API}
+commands:
+  - request:
+      method: POST
+      url: /books
+      headers: { X-Client-Key: "${owner}" }
+      json: { child: { name: "${childName}", age: 6, gender: girl, interests: [мячи], city: Алматы } }
+      extract: { bookId: "$.id" }
+      assert: { status: 201 }
+  - request:
+      url: /books/${bookId}
+      retryUntil: { status: 200, json: { "$.status": done } }
+      timeout: 30000
+  - request:
+      method: POST
+      url: /orders
+      headers: { X-Client-Key: "${stranger}" }
+      json: { bookId: "${bookId}", recipientName: Чужой, phone: "+77011234567", city: Алматы, address: "ул. Абая, 1", cover: soft, quantity: 1 }
+      assert: { status: 404 }
+  - request:
+      method: POST
+      url: /orders
+      headers: { X-Client-Key: "${owner}" }
+      json: { bookId: "${bookId}", recipientName: Айгерим, phone: "+77011234567", city: Алматы, address: "ул. Абая, 1", cover: soft, quantity: 1 }
+      extract: { orderId: "$.id" }
+      assert: { status: 201 }
+  - request:
+      url: /orders/${orderId}
+      headers: { X-Client-Key: "${stranger}" }
+      assert: { status: 404 }
+  - request:
+      url: /orders/${orderId}
+      headers: { X-Client-Key: "${owner}" }
+      assert: { status: 200, json: { "$.recipientName": Айгерим } }
