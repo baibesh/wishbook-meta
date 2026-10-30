@@ -1,0 +1,14 @@
+**/node_modules
+**/dist
+**/.next
+**/*.tsbuildinfo
+.git
+.ref
+reports
+allure-results
+**/storage
+**/storage-e2e
+**/.env
+**/.env.*
+!**/.env.example
+e2e/*.log

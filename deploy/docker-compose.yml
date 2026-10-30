@@ -1,0 +1,51 @@
+# Production stack. On the server: docker compose -f deploy/docker-compose.yml up -d --build
+# Only the web app is published, on 127.0.0.1; the host's nginx terminates TLS in front of it.
+name: fabulka
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: fabulka
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/.env}
+      POSTGRES_DB: fabulka
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fabulka"]
+      interval: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://fabulka:${POSTGRES_PASSWORD}@db:5432/fabulka
+      STORAGE_DIR: /data/storage
+    volumes:
+      - storage:/data/storage
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+      args:
+        API_URL: http://api:4000
+    restart: unless-stopped
+    environment:
+      API_URL: http://api:4000
+    ports:
+      - "127.0.0.1:${WEB_PORT:-13110}:3000"
+    depends_on:
+      - api
+
+volumes:
+  db:
+  storage:
