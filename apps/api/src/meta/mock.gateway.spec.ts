@@ -32,6 +32,12 @@ describe('MockGateway', () => {
     expect(story.title).toContain('сапар');
   });
 
+  it('writes in English when asked', async () => {
+    const { story } = await gateway.writeStory(brief({ language: 'en' }, 1));
+    expect(story.title).toBe('Айгерим and the Starry Journey');
+    expect(story.talk_questions[0]).toBe('What happened in the book?');
+  });
+
   it('draws a distinct placeholder per page', async () => {
     const one = await gateway.drawPage('the hero, scene 1');
     const two = await gateway.drawPage('the hero, scene 2');
@@ -43,6 +49,7 @@ describe('MockGateway', () => {
 describe('prompts', () => {
   it('puts every profile detail into the story prompt', () => {
     const prompt = storyPrompt(brief({}, 10));
+    expect(storyPrompt(brief({ language: 'en' }))).toContain('in English');
     for (const part of [
       '10-page',
       'Russian',

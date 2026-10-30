@@ -24,7 +24,7 @@ const FormSchema = z.object({
   interests: z.string().trim().min(1, "Назовите хотя бы одно увлечение"),
   pet: z.string().trim().max(60),
   city: z.string().trim().min(1, "Введите город").max(60),
-  language: z.enum(["ru", "kk"]),
+  language: z.enum(["ru", "kk", "en"]),
   /** "" lets the API pick a method by age. */
   methodology: z.string(),
   theme: z.string().trim().max(200),
@@ -136,6 +136,7 @@ export function BookForm({ template }: { template?: Template }) {
         <select data-testid="book-language" className={field} {...form.register("language")}>
           <option value="ru">Русский</option>
           <option value="kk">Қазақша</option>
+          <option value="en">English</option>
         </select>
       </label>
 

@@ -11,7 +11,11 @@ export const ART_STYLE =
   'warm children picture-book illustration, soft watercolor and gouache textures, ' +
   'gentle rounded shapes, cozy pastel palette, no text, no letters';
 
-const LANGUAGE_NAMES = { ru: 'Russian', kk: 'Kazakh' } as const;
+const LANGUAGE_NAMES = {
+  ru: 'Russian',
+  kk: 'Kazakh',
+  en: 'English',
+} as const;
 
 export const STORY_INSTRUCTIONS = `You write personalized picture books for children.
 The child is the hero of the story. The story is kind, safe and written for a parent to read

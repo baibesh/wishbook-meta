@@ -31,6 +31,11 @@ const LABELS: Record<
     end: 'Соңы',
     talk: 'Әңгімелесейік',
   },
+  en: {
+    madeFor: (name) => `Made just for you, ${name}!`,
+    end: 'The End',
+    talk: "Let's talk",
+  },
 };
 
 export function escapeHtml(text: string): string {

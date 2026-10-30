@@ -1,4 +1,4 @@
-import type { Story } from '@wishbook/shared';
+import type { Language, Story } from '@wishbook/shared';
 import type {
   GeneratedImage,
   GeneratedStory,
@@ -31,6 +31,46 @@ function placeholder(label: string, color: string): Buffer {
   );
 }
 
+const MOCK_TEXT: Record<
+  Language,
+  {
+    title: (name: string) => string;
+    page: (n: number, name: string, city: string) => string;
+    questions: string[];
+  }
+> = {
+  ru: {
+    title: (name) => `${name} и звёздное путешествие`,
+    page: (n, name, city) =>
+      `Страница ${n}. ${name} отправляется в новое приключение в городе ${city}.`,
+    questions: [
+      'Что случилось в книге?',
+      'Кого ты видишь на картинке?',
+      'А что бы сделал ты?',
+    ],
+  },
+  kk: {
+    title: (name) => `${name} және жұлдызды сапар`,
+    page: (n, name, city) =>
+      `${n}-бет. ${name} ${city} қаласында жаңа шытырман оқиғаны бастайды.`,
+    questions: [
+      'Кітапта не болды?',
+      'Суретте кімді көріп тұрсың?',
+      'Сен не істер едің?',
+    ],
+  },
+  en: {
+    title: (name) => `${name} and the Starry Journey`,
+    page: (n, name, city) =>
+      `Page ${n}. ${name} sets off on a new adventure in ${city}.`,
+    questions: [
+      'What happened in the book?',
+      'Who do you see in the picture?',
+      'What would you do?',
+    ],
+  },
+};
+
 /** Canned model output: no network, no cost, same result every run. */
 export class MockGateway implements ModelGateway {
   constructor(private readonly delayMs: number) {}
@@ -41,33 +81,19 @@ export class MockGateway implements ModelGateway {
     template,
   }: StoryBrief): Promise<GeneratedStory> {
     await sleep(this.delayMs);
-    const kk = child.language === 'kk';
+    const text = MOCK_TEXT[child.language];
     const story: Story = {
       title: template
         ? `${child.name}: ${template.title}`
-        : kk
-          ? `${child.name} және жұлдызды сапар`
-          : `${child.name} и звёздное путешествие`,
+        : text.title(child.name),
       hero_description: `a ${child.age}-year-old ${child.gender} with dark hair, yellow raincoat, red boots`,
       pet_description: child.pet ? 'a small ginger cat with white paws' : null,
       pages: Array.from({ length: pageCount }, (_, i) => ({
         page: i + 1,
-        text: kk
-          ? `${i + 1}-бет. ${child.name} ${child.city} қаласында жаңа шытырман оқиғаны бастайды.`
-          : `Страница ${i + 1}. ${child.name} отправляется в новое приключение в городе ${child.city}.`,
+        text: text.page(i + 1, child.name, child.city),
         scene_prompt: `the hero exploring ${child.city}, scene ${i + 1}`,
       })),
-      talk_questions: kk
-        ? [
-            'Кітапта не болды?',
-            'Суретте кімді көріп тұрсың?',
-            'Сен не істер едің?',
-          ]
-        : [
-            'Что случилось в книге?',
-            'Кого ты видишь на картинке?',
-            'А что бы сделал ты?',
-          ],
+      talk_questions: text.questions,
     };
     return { story, costUsd: 0 };
   }

@@ -5,8 +5,9 @@ import {
   type OnModuleInit,
 } from '@nestjs/common';
 import type { BookTemplate, Prisma } from '@prisma/client';
-import type {
-  MethodologySlug,
+import {
+  LANGUAGES,
+  type MethodologySlug,
   Template,
   TemplateQuestion,
   TemplateSummary,
@@ -30,7 +31,7 @@ export class TemplatesService implements OnModuleInit {
         ageMin: t.ageMin,
         ageMax: t.ageMax,
         methodology: t.methodology,
-        languages: ['ru', 'kk'],
+        languages: [...LANGUAGES],
         theme: t.theme,
         plot: t.plot,
         questions: t.questions,

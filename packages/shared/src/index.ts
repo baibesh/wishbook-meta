@@ -3,7 +3,7 @@ import { MethodologySlugSchema, fitsAge, methodology } from "./methodologies";
 
 export * from "./methodologies";
 
-export const LANGUAGES = ["ru", "kk"] as const;
+export const LANGUAGES = ["ru", "kk", "en"] as const;
 export const LanguageSchema = z.enum(LANGUAGES);
 export type Language = z.infer<typeof LanguageSchema>;
 
