@@ -1,7 +1,7 @@
 import { BadRequestException, PipeTransform } from '@nestjs/common';
 import type { ZodType } from 'zod';
 
-/** Validates a request body against a @wishbook/shared schema. */
+/** Validates a request body against a @fabulka/shared schema. */
 export class ZodPipe<T> implements PipeTransform<unknown, T> {
   constructor(private readonly schema: ZodType<T>) {}
 

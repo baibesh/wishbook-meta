@@ -1,4 +1,4 @@
-# tapstep workspace for WishBook. Run: tapstep test --config e2e/config.yaml [--env-set ci]
+# tapstep workspace for Fabulka. Run: tapstep test --config e2e/config.yaml [--env-set ci]
 flows: ["flows/**"]
 defaultEnvironment: local
 env:

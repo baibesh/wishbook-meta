@@ -1,4 +1,4 @@
-import type { BookStatus, OrderStatus } from "@wishbook/shared";
+import type { BookStatus, OrderStatus } from "@fabulka/shared";
 import type { ReactNode } from "react";
 
 export const BOOK_STATUS: Record<BookStatus, { label: string; tone: string }> = {

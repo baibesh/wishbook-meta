@@ -12,7 +12,7 @@ import {
   type AdminTemplate,
   type OrderStatus,
   type UpdateTemplate,
-} from "@wishbook/shared";
+} from "@fabulka/shared";
 import { request } from "./api";
 
 const json = (method: string, body: unknown): RequestInit => ({ method, body: JSON.stringify(body) });

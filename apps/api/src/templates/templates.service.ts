@@ -11,7 +11,7 @@ import {
   Template,
   TemplateQuestion,
   TemplateSummary,
-} from '@wishbook/shared';
+} from '@fabulka/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { SEED_TEMPLATES } from './catalog';
 

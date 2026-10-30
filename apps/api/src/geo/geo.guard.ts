@@ -4,7 +4,7 @@ import {
   HttpException,
   Injectable,
 } from '@nestjs/common';
-import { REGION_UNAVAILABLE } from '@wishbook/shared';
+import { REGION_UNAVAILABLE } from '@fabulka/shared';
 import type { Request } from 'express';
 import { GeoService } from './geo.service';
 

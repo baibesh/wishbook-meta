@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { BOOK_STATUSES, methodology, type BookStatus } from "@wishbook/shared";
+import { BOOK_STATUSES, methodology, type BookStatus } from "@fabulka/shared";
 import Link from "next/link";
 import { useState } from "react";
 import { adminBooks } from "@/lib/admin-api";

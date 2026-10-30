@@ -5,7 +5,7 @@ import {
   DAILY_CAP_REACHED,
   LIMIT_REACHED,
   type Quota,
-} from '@wishbook/shared';
+} from '@fabulka/shared';
 import { PrismaService } from '../prisma/prisma.service';
 
 /**

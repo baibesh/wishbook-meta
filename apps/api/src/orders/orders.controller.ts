@@ -3,7 +3,7 @@ import {
   CreateOrderSchema,
   type CreateOrderInput,
   type Order,
-} from '@wishbook/shared';
+} from '@fabulka/shared';
 import { ZodPipe } from '../common/zod.pipe';
 import { OrdersService } from './orders.service';
 

@@ -15,7 +15,7 @@ import {
   type Language,
   type MethodologySlug,
   type UpdateTemplate,
-} from '@wishbook/shared';
+} from '@fabulka/shared';
 import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { BooksService, withTemplate } from '../books/books.service';

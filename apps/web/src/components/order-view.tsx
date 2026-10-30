@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ORDER_STATUSES, type OrderStatus } from "@wishbook/shared";
+import { ORDER_STATUSES, type OrderStatus } from "@fabulka/shared";
 import { CheckCircle2, Circle, CreditCard, Home, Printer, Truck } from "lucide-react";
 import { use } from "react";
 import { getOrder } from "@/lib/api";

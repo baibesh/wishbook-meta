@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { BOOK_PRICE_KZT } from "@wishbook/shared";
+import { BOOK_PRICE_KZT } from "@fabulka/shared";
 import { KeyRound, Loader2, ShoppingBag } from "lucide-react";
 import { useState } from "react";
 import { buyBook, setDemoCode } from "@/lib/api";

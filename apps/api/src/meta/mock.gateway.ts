@@ -1,4 +1,4 @@
-import type { Language, Story } from '@wishbook/shared';
+import type { Language, Story } from '@fabulka/shared';
 import type {
   GeneratedImage,
   GeneratedStory,

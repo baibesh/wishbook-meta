@@ -10,7 +10,7 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "WishBook — книга, где ваш ребёнок главный герой",
+  title: "Fabulka — книга, где ваш ребёнок главный герой",
   description: "Персонализированные детские книги: сказка и иллюстрации с вашим ребёнком. Powered by Meta Muse models.",
 };
 

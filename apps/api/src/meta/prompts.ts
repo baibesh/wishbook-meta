@@ -4,7 +4,7 @@ import {
   talkQuestionKinds,
   type ChildProfile,
   type MethodologySlug,
-} from '@wishbook/shared';
+} from '@fabulka/shared';
 
 /** Art style repeated in every image prompt: Muse Image has no seed, so the words keep pages consistent. */
 export const ART_STYLE =

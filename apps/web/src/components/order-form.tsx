@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { COVER_PRICE_KZT, CreateOrderSchema, orderPrice, type CreateOrderInput } from "@wishbook/shared";
+import { COVER_PRICE_KZT, CreateOrderSchema, orderPrice, type CreateOrderInput } from "@fabulka/shared";
 import { Loader2, Printer } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { use } from "react";

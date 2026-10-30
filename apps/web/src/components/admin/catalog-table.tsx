@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { methodology } from "@wishbook/shared";
+import { methodology } from "@fabulka/shared";
 import Link from "next/link";
 import { adminTemplates, updateTemplate } from "@/lib/admin-api";
 import { Badge, PageTitle, table } from "./ui";

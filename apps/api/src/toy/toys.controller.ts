@@ -1,5 +1,5 @@
 import { Body, Controller, Post } from '@nestjs/common';
-import { ToyUploadSchema } from '@wishbook/shared';
+import { ToyUploadSchema } from '@fabulka/shared';
 import { randomBytes } from 'node:crypto';
 import type { z } from 'zod';
 import { ZodPipe } from '../common/zod.pipe';

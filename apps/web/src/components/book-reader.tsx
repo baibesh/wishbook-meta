@@ -1,6 +1,6 @@
 "use client";
 
-import { BOOK_LABELS, type Book } from "@wishbook/shared";
+import { BOOK_LABELS, type Book } from "@fabulka/shared";
 import { ChevronLeft, ChevronRight, Maximize2, Minimize2 } from "lucide-react";
 import { motion } from "motion/react";
 import { type ReactNode, useEffect, useEffectEvent, useRef, useState, useSyncExternalStore } from "react";

@@ -1,6 +1,6 @@
 /**
  * Draws a cover for every catalog book that has none yet, with Muse Image, into
- * apps/web/public/catalog/<slug>.jpg. Run: pnpm --filter @wishbook/api covers
+ * apps/web/public/catalog/<slug>.jpg. Run: pnpm --filter @fabulka/api covers
  */
 import OpenAI from 'openai';
 import type { Tool } from 'openai/resources/responses/responses';

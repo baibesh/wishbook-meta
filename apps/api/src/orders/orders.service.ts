@@ -12,7 +12,7 @@ import {
   type CreateOrderInput,
   type Order,
   type OrderStatus,
-} from '@wishbook/shared';
+} from '@fabulka/shared';
 import { PrismaService } from '../prisma/prisma.service';
 
 /**

@@ -1,5 +1,5 @@
 import { Controller, Get, Post } from '@nestjs/common';
-import type { Quota } from '@wishbook/shared';
+import type { Quota } from '@fabulka/shared';
 import { CurrentClient, type Client } from '../common/client';
 import { QuotaService } from './quota.service';
 

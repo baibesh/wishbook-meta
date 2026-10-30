@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { methodology } from "@wishbook/shared";
+import { methodology } from "@fabulka/shared";
 import { Wand2 } from "lucide-react";
 import Link from "next/link";
 import { listTemplates } from "@/lib/api";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ORDER_STATUSES, type OrderStatus } from "@wishbook/shared";
+import { ORDER_STATUSES, type OrderStatus } from "@fabulka/shared";
 import Link from "next/link";
 import { adminOrders, setOrderStatus } from "@/lib/admin-api";
 import { formatKzt } from "@/lib/format";

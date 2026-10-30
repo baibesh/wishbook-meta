@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { METHODOLOGIES, type AdminTemplate, type MethodologySlug, type TemplateQuestion } from "@wishbook/shared";
+import { METHODOLOGIES, type AdminTemplate, type MethodologySlug, type TemplateQuestion } from "@fabulka/shared";
 import { Plus, Save, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { use, useState } from "react";

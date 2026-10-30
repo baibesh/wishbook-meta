@@ -1,6 +1,6 @@
 # tapstep notes (dogfooding)
 
-Things noticed while using tapstep on WishBook. Version: 0.13.11.
+Things noticed while using tapstep on Fabulka. Version: 0.13.11.
 
 1. **`--config` with `flows:` still requires a `<FLOW>` argument.** The docs say the `flows:`
    globs replace the directory argument, but `tapstep test --config e2e/config.yaml` fails with

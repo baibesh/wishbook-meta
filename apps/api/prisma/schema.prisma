@@ -22,10 +22,10 @@ model Book {
   id              String        @id @default(cuid())
   status          BookStatus    @default(queued)
   progress        Int           @default(0)
-  /// The child profile the parent submitted (ChildProfile in @wishbook/shared).
+  /// The child profile the parent submitted (ChildProfile in @fabulka/shared).
   child           Json
   language        String
-  /// Story method slug (METHODOLOGIES in @wishbook/shared).
+  /// Story method slug (METHODOLOGIES in @fabulka/shared).
   methodology     String        @default("adventure-quest")
   /// What the parent asked the book to be about, if anything.
   theme           String?
@@ -116,14 +116,14 @@ model BookTemplate {
   summary     String
   ageMin      Int
   ageMax      Int
-  /// Story method slug (METHODOLOGIES in @wishbook/shared).
+  /// Story method slug (METHODOLOGIES in @fabulka/shared).
   methodology String
   languages   String[]
   /// What the book is about, in English, for Muse Spark.
   theme       String
   /// Plot points in order, in English; Muse Spark spreads them across the pages.
   plot        Json
-  /// TemplateQuestion[] (@wishbook/shared).
+  /// TemplateQuestion[] (@fabulka/shared).
   questions   Json     @default("[]")
   /// Replaces the default art style in image prompts.
   stylePrompt String?

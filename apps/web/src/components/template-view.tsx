@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { methodology } from "@wishbook/shared";
+import { methodology } from "@fabulka/shared";
 import { use } from "react";
 import { getTemplate } from "@/lib/api";
 import { BookForm } from "./book-form";

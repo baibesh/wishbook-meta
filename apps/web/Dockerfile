@@ -5,8 +5,8 @@ COPY . .
 # Next bakes rewrites at build time, so the API address is a build argument.
 ARG API_URL=http://api:4000
 ENV API_URL=$API_URL NEXT_TELEMETRY_DISABLED=1
-RUN pnpm install --frozen-lockfile --filter @wishbook/web... \
- && pnpm --filter @wishbook/web build
+RUN pnpm install --frozen-lockfile --filter @fabulka/web... \
+ && pnpm --filter @fabulka/web build
 WORKDIR /app/apps/web
 ENV NODE_ENV=production
 EXPOSE 3000

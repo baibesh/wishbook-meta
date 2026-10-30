@@ -1,4 +1,4 @@
-import type { MethodologySlug, TemplateQuestion } from '@wishbook/shared';
+import type { MethodologySlug, TemplateQuestion } from '@fabulka/shared';
 
 export interface SeedTemplate {
   slug: string;

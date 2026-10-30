@@ -16,7 +16,7 @@ import {
   type CreateBookInput,
   type Language,
   type MethodologySlug,
-} from '@wishbook/shared';
+} from '@fabulka/shared';
 import { basename } from 'node:path';
 import { MODEL_GATEWAY, type ModelGateway } from '../meta/model-gateway';
 import type { StoryBrief } from '../meta/prompts';

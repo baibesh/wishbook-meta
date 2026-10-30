@@ -1,4 +1,4 @@
-import { BOOK_LABELS, type Language } from '@wishbook/shared';
+import { BOOK_LABELS, type Language } from '@fabulka/shared';
 
 /** Square picture-book page; 3:2 illustrations fill the top two thirds edge to edge. */
 export const PAGE_SIZE_MM = 210;
@@ -101,7 +101,7 @@ html, body { font-family: 'Nunito', sans-serif; color: #2b2118; background: #fff
   ${pages}${talk}
   <section class="page end">
     <h2>${labels.end}</h2>
-    <p class="made">WishBook · Powered by Meta Muse models</p>
+    <p class="made">Fabulka · Powered by Meta Muse models</p>
   </section>
 </body>
 </html>`;

@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import type { Response, Tool } from 'openai/resources/responses/responses';
-import { StorySchema } from '@wishbook/shared';
+import { StorySchema } from '@fabulka/shared';
 import type {
   GeneratedImage,
   GeneratedStory,

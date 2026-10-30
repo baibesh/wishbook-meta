@@ -4,7 +4,7 @@ import { MetaGateway } from './meta.gateway';
 import { MockGateway } from './mock.gateway';
 import { MODEL_GATEWAY, type ModelGateway } from './model-gateway';
 
-/** The only place that knows which models WishBook talks to. MODELS=mock|meta. */
+/** The only place that knows which models Fabulka talks to. MODELS=mock|meta. */
 @Global()
 @Module({
   providers: [

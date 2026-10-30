@@ -1,6 +1,6 @@
 import type { ExecutionContext } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
-import { REGION_UNAVAILABLE } from '@wishbook/shared';
+import { REGION_UNAVAILABLE } from '@fabulka/shared';
 import type { Request } from 'express';
 import { clientIp, GeoGuard } from './geo.guard';
 import { GeoService } from './geo.service';

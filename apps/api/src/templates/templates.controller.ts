@@ -1,5 +1,5 @@
 import { Controller, Get, Param } from '@nestjs/common';
-import type { Template, TemplateSummary } from '@wishbook/shared';
+import type { Template, TemplateSummary } from '@fabulka/shared';
 import { TemplatesService } from './templates.service';
 
 @Controller('templates')

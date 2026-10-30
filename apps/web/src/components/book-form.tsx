@@ -9,7 +9,7 @@ import {
   fitsAge,
   type MethodologySlug,
   type Template,
-} from "@wishbook/shared";
+} from "@fabulka/shared";
 import { BookOpen, Loader2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";

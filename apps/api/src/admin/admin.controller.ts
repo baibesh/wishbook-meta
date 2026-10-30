@@ -18,7 +18,7 @@ import {
   UpdateTemplateSchema,
   type AdminLogin,
   type UpdateTemplate,
-} from '@wishbook/shared';
+} from '@fabulka/shared';
 import type { Response } from 'express';
 import type { z } from 'zod';
 import { CurrentClient, type Client } from '../common/client';

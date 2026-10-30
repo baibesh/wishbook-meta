@@ -1,12 +1,12 @@
-# WishBook
+# Fabulka
 
 A personalized picture book where your child is the hero. A parent tells us the child's name, age,
-interests, pet and city; WishBook writes the story and illustrates every page with the same child,
+interests, pet and city; Fabulka writes the story and illustrates every page with the same child,
 then the book is printed and delivered in Kazakhstan.
 
 Built for the Meta Global AI Developer Hackathon (Indie track, "Build for Your World").
 
-## How WishBook uses Meta models
+## How Fabulka uses Meta models
 
 | Step | Model | What it does |
 | --- | --- | --- |
@@ -56,7 +56,7 @@ policy's Restricted Territories (Russia, Belarus, China, Iran and the others) an
 where Muse Image is not available, get HTTP 451 before any model is called
 (`apps/api/src/geo`, `GEO_BLOCK=true`). The visitor's country comes from the
 [DB-IP](https://db-ip.com) country database (CC BY 4.0), downloaded with
-`pnpm --filter @wishbook/api geoip`. A country database cannot single out the Crimea, Donetsk
+`pnpm --filter @fabulka/api geoip`. A country database cannot single out the Crimea, Donetsk
 and Luhansk regions, so those are not blocked by IP.
 
 ## Stack
@@ -74,7 +74,7 @@ Needs Node 22+, pnpm and Postgres.
 pnpm install
 createdb wishbook_meta
 cp apps/api/.env.example apps/api/.env   # set DATABASE_URL; MODELS=meta + MODEL_API_KEY for real models
-pnpm --filter @wishbook/api exec prisma db push
+pnpm --filter @fabulka/api exec prisma db push
 pnpm dev                                  # web :3000, api :4000
 ```
 

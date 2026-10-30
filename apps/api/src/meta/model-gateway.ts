@@ -1,4 +1,4 @@
-import type { Story } from '@wishbook/shared';
+import type { Story } from '@fabulka/shared';
 import type { Companions, StoryBrief } from './prompts';
 
 export const MODEL_GATEWAY = Symbol('MODEL_GATEWAY');
@@ -17,7 +17,7 @@ export interface GeneratedStory {
 }
 
 /**
- * Everything WishBook asks of Meta's models. The real implementation calls the
+ * Everything Fabulka asks of Meta's models. The real implementation calls the
  * Meta Model API; the mock one returns canned output so tests and CI cost nothing.
  */
 export interface ModelGateway {

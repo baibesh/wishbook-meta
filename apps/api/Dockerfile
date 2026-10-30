@@ -3,9 +3,9 @@ FROM mcr.microsoft.com/playwright:v1.64.1-noble
 RUN npm install -g pnpm@12.4.1
 WORKDIR /app
 COPY . .
-RUN pnpm install --frozen-lockfile --filter @wishbook/api... \
- && pnpm --filter @wishbook/api build \
- && pnpm --filter @wishbook/api geoip
+RUN pnpm install --frozen-lockfile --filter @fabulka/api... \
+ && pnpm --filter @fabulka/api build \
+ && pnpm --filter @fabulka/api geoip
 WORKDIR /app/apps/api
 ENV NODE_ENV=production PORT=4000 STORAGE_DIR=/data/storage
 EXPOSE 4000

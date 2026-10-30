@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { methodology } from "@wishbook/shared";
+import { methodology } from "@fabulka/shared";
 import { Download, ExternalLink, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

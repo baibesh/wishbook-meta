@@ -1,5 +1,5 @@
 {
-  "name": "@wishbook/api",
+  "name": "@fabulka/api",
   "version": "0.0.1",
   "private": true,
   "license": "UNLICENSED",
@@ -33,7 +33,7 @@
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/serve-static": "^5.0.5",
     "@prisma/client": "^6.19.3",
-    "@wishbook/shared": "workspace:*",
+    "@fabulka/shared": "workspace:*",
     "jpeg-js": "0.4.4",
     "maxmind": "5.0.7",
     "openai": "^6.49.0",

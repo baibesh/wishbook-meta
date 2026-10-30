@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { COVER_PRICE_KZT, methodology, type Book, type BookStatus } from "@wishbook/shared";
+import { COVER_PRICE_KZT, methodology, type Book, type BookStatus } from "@fabulka/shared";
 import { AlertTriangle, Download, MessageCircleQuestion, Printer, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";

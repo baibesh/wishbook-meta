@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { AdminStats } from "@wishbook/shared";
+import type { AdminStats } from "@fabulka/shared";
 import { Pause, Play } from "lucide-react";
 import { adminStats, setPaused } from "@/lib/admin-api";
 import { formatKzt } from "@/lib/format";

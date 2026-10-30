@@ -1,4 +1,4 @@
-import { REGION_UNAVAILABLE } from "@wishbook/shared";
+import { REGION_UNAVAILABLE } from "@fabulka/shared";
 import { Globe } from "lucide-react";
 import { ApiError } from "@/lib/api";
 

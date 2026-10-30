@@ -12,7 +12,7 @@ import {
   GENERATION_PAUSED,
   type Book,
   type CreateBookInput,
-} from '@wishbook/shared';
+} from '@fabulka/shared';
 import { CurrentClient, type Client } from '../common/client';
 import { ZodPipe } from '../common/zod.pipe';
 import { GeoService } from '../geo/geo.service';

@@ -12,7 +12,7 @@ import {
   type Quota,
   type Template,
   type TemplateSummary,
-} from "@wishbook/shared";
+} from "@fabulka/shared";
 
 const CLIENT_KEY = "wishbook.clientKey";
 const DEMO_CODE = "wishbook.demoCode";

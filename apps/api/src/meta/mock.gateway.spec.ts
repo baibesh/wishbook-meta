@@ -1,4 +1,4 @@
-import { StorySchema, type ChildProfile } from '@wishbook/shared';
+import { StorySchema, type ChildProfile } from '@fabulka/shared';
 import { MockGateway } from './mock.gateway';
 import { heroPrompt, pagePrompt, storyPrompt, toyPrompt } from './prompts';
 
