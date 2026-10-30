@@ -7,6 +7,13 @@ export const LANGUAGES = ["ru", "kk", "en"] as const;
 export const LanguageSchema = z.enum(LANGUAGES);
 export type Language = z.infer<typeof LanguageSchema>;
 
+/** Fixed words of a book, by its language. Phrased so the name never has to be declined. */
+export const BOOK_LABELS: Record<Language, { madeFor: (name: string) => string; end: string; talk: string }> = {
+  ru: { madeFor: (name) => `Специально для тебя, ${name}!`, end: "Конец", talk: "Поговорим?" },
+  kk: { madeFor: (name) => `Арнайы саған, ${name}!`, end: "Соңы", talk: "Әңгімелесейік" },
+  en: { madeFor: (name) => `Made just for you, ${name}!`, end: "The End", talk: "Let's talk" },
+};
+
 /** What the parent tells us about the child. */
 export const ChildProfileSchema = z.object({
   name: z.string().trim().min(1).max(40),
@@ -125,6 +132,9 @@ export const BookSchema = z.object({
   status: BookStatusSchema,
   progress: z.number().min(0).max(100),
   title: z.string().nullable(),
+  language: LanguageSchema,
+  /** The child's name, for the cover. */
+  childName: z.string(),
   methodology: MethodologySlugSchema,
   /** Catalog book slug, or null for a book of your own. */
   template: z.string().nullable(),

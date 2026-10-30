@@ -12,7 +12,9 @@ import {
   defaultMethodology,
   progressFor,
   type Book,
+  type ChildProfile,
   type CreateBookInput,
+  type Language,
   type MethodologySlug,
 } from '@wishbook/shared';
 import { basename } from 'node:path';
@@ -273,6 +275,8 @@ export class BooksService {
       status: row.status,
       progress: row.progress,
       title: row.title,
+      language: row.language as Language,
+      childName: (row.child as unknown as ChildProfile).name,
       methodology: row.methodology as MethodologySlug,
       template: row.template?.slug ?? null,
       talkQuestions: row.talkQuestions as string[],

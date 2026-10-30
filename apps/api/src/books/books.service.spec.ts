@@ -43,6 +43,8 @@ describe('BooksService', () => {
     const row = {
       id: 'b1',
       status: 'queued',
+      child,
+      language: 'ru',
       progress: 0,
       title: null,
       heroImagePath: null,
@@ -77,6 +79,8 @@ describe('BooksService', () => {
     const row = {
       id: 'b2',
       status: 'queued',
+      child,
+      language: 'ru',
       progress: 0,
       methodology: 'social-story',
       talkQuestions: [],

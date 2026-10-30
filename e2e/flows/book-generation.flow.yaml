@@ -22,7 +22,8 @@ commands:
   - tapOn: { testId: create-book }
   - waitForVisible: { text: "Книга готова", timeout: 30000 }
   - assertVisible: { contains: "${childName} и звёздное путешествие" }
-  - assertVisible: { testId: hero-image }
+  - waitForVisible: { testId: book-reader }
+  - waitForVisible: { testId: reader-position, contains: "1 / " }
   - assertVisible: { testId: download-pdf }
   - assertVisible: { testId: talk-questions }
   - sql:

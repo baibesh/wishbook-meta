@@ -16,3 +16,7 @@ Things noticed while using tapstep on WishBook. Version: 0.13.11.
 5. **The JSON report changes shape between a single flow and a directory.** A directory run gives
    `{ passed, flows: [{ name, passed, steps }] }`, a single flow `{ passed, steps, platform }`, so
    a script reading reports needs two code paths. One shape (a one-element `flows`) would be easier.
+6. **"The page was still changing" caught a real bug, but did not say where.** A page-turn library
+   ran an endless `requestAnimationFrame` loop that rewrote page styles every frame; tapstep rightly
+   never saw the page settle. Finding the cause took a while; naming the element (or selector)
+   whose attributes kept changing would have pointed straight at it.

@@ -1,4 +1,4 @@
-import type { Language } from '@wishbook/shared';
+import { BOOK_LABELS, type Language } from '@wishbook/shared';
 
 /** Square picture-book page; 3:2 illustrations fill the top two thirds edge to edge. */
 export const PAGE_SIZE_MM = 210;
@@ -16,28 +16,6 @@ export interface BookPdfInput {
   fontCss: string;
 }
 
-// Phrased so the name never has to be declined ("для Армана" would need a case ending).
-const LABELS: Record<
-  Language,
-  { madeFor: (name: string) => string; end: string; talk: string }
-> = {
-  ru: {
-    madeFor: (name) => `Специально для тебя, ${name}!`,
-    end: 'Конец',
-    talk: 'Поговорим?',
-  },
-  kk: {
-    madeFor: (name) => `Арнайы саған, ${name}!`,
-    end: 'Соңы',
-    talk: 'Әңгімелесейік',
-  },
-  en: {
-    madeFor: (name) => `Made just for you, ${name}!`,
-    end: 'The End',
-    talk: "Let's talk",
-  },
-};
-
 export function escapeHtml(text: string): string {
   return text.replace(
     /[&<>"']/g,
@@ -50,7 +28,7 @@ export function escapeHtml(text: string): string {
 
 /** The whole book as one HTML document that Chromium prints to PDF. */
 export function renderBookHtml(book: BookPdfInput): string {
-  const labels = LABELS[book.language];
+  const labels = BOOK_LABELS[book.language];
   const image = (src: string | null, cls: string) =>
     src
       ? `<img class="${cls}" src="${escapeHtml(src)}" alt="">`
