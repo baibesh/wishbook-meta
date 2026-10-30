@@ -36,8 +36,13 @@ function subscribe(onChange: () => void) {
   };
 }
 
-/** The saved choice, else the browser's language, else Russian. */
+const isLocale = (value: string | null): value is UiLocale =>
+  value !== null && (UI_LOCALES as readonly string[]).includes(value);
+
+/** ?lang= on this page, else the saved choice, else the browser's language, else Russian. */
 function currentLocale(): UiLocale {
+  const asked = new URLSearchParams(window.location.search).get("lang");
+  if (isLocale(asked)) return asked;
   const saved = read(LOCALE_KEY);
   if (saved && (UI_LOCALES as readonly string[]).includes(saved)) return saved as UiLocale;
   const browser = navigator.language.slice(0, 2);
@@ -45,6 +50,12 @@ function currentLocale(): UiLocale {
 }
 
 export function setLocale(locale: UiLocale) {
+  // A ?lang= in the address outranks the saved choice, so a choice made here drops it.
+  const url = new URL(window.location.href);
+  if (url.searchParams.has("lang")) {
+    url.searchParams.delete("lang");
+    window.history.replaceState(window.history.state, "", url);
+  }
   write(LOCALE_KEY, locale);
   document.documentElement.lang = locale;
 }
