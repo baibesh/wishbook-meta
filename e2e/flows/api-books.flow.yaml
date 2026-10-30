@@ -34,12 +34,17 @@ commands:
       timeout: 30000
   - request:
       url: /books/${bookId}
-      extract: { imageUrl: "$.pages[0].imageUrl" }
+      extract: { imageUrl: "$.pages[0].imageUrl", pdfUrl: "$.pdfUrl" }
       assert:
         json: { "$.title": { contains: "сапар" }, "$.pages[3].page": 4 }
   - request:
       url: ${WEB}${imageUrl}
       assert: { status: 200 }
+  - request:
+      url: ${WEB}${pdfUrl}
+      assert:
+        status: 200
+        headers: { content-type: application/pdf }
   - sql:
       query: "select \"clientKey\", language from \"Book\" where id = $1"
       params: ["${bookId}"]

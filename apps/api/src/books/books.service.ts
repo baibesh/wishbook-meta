@@ -2,7 +2,9 @@ import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Book as BookRow, BookStatus, Prisma } from '@prisma/client';
 import { progressFor, type Book, type ChildProfile } from '@wishbook/shared';
+import { basename } from 'node:path';
 import { MODEL_GATEWAY, type ModelGateway } from '../meta/model-gateway';
+import { PdfService } from '../pdf/pdf.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 
@@ -25,6 +27,7 @@ export class BooksService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
+    private readonly pdf: PdfService,
     @Inject(MODEL_GATEWAY) private readonly models: ModelGateway,
     config: ConfigService,
   ) {
@@ -120,12 +123,25 @@ export class BooksService {
       });
     });
 
-    // TODO(pdf): render the book to PDF with Playwright before marking it done.
-    await this.update(id, 'done', {
+    await this.update(id, 'pdf', {
       pages: json(pages),
       costUsd,
-      progress: 100,
+      progress: progressFor('pdf'),
     });
+    // Images sit next to book.html, so the template takes bare file names.
+    const local = (path: string | null) => (path ? basename(path) : null);
+    const pdfPath = await this.pdf.render(id, {
+      title: story.title,
+      childName: child.name,
+      language: child.language,
+      coverImage: local(heroImagePath),
+      pages: pages.map((p) => ({
+        page: p.page,
+        text: p.text,
+        image: local(p.imagePath),
+      })),
+    });
+    await this.update(id, 'done', { pdfPath, progress: 100 });
     this.logger.log(
       `book ${id} done: ${pages.length} pages, $${costUsd.toFixed(3)}`,
     );

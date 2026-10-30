@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 import { BooksController } from './books/books.controller';
 import { BooksService } from './books/books.service';
 import { MetaModule } from './meta/meta.module';
+import { PdfModule } from './pdf/pdf.service';
 import { PrismaModule } from './prisma/prisma.service';
 import { StorageModule } from './storage/storage.service';
 
@@ -26,6 +27,7 @@ class HealthController {
     }),
     PrismaModule,
     StorageModule,
+    PdfModule,
     MetaModule,
   ],
   controllers: [HealthController, BooksController],

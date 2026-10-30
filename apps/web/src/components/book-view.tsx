@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import type { BookStatus } from "@wishbook/shared";
-import { AlertTriangle, Sparkles } from "lucide-react";
+import { AlertTriangle, Download, Sparkles } from "lucide-react";
 import { use } from "react";
 import { getBook } from "@/lib/api";
 
@@ -47,6 +47,18 @@ export function BookView({ params }: { params: Promise<{ id: string }> }) {
         <h1 data-testid="book-title" className="text-3xl font-extrabold">
           {book.title}
         </h1>
+      )}
+
+      {book.pdfUrl && (
+        <a
+          data-testid="download-pdf"
+          href={book.pdfUrl}
+          download={`${book.title ?? "wishbook"}.pdf`}
+          className="flex w-fit items-center gap-2 rounded-xl bg-accent px-6 py-3 font-bold text-accent-foreground"
+        >
+          <Download className="size-5" />
+          Скачать PDF
+        </a>
       )}
 
       {book.heroImageUrl && (

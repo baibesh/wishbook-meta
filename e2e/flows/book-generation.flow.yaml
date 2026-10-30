@@ -20,14 +20,15 @@ commands:
   - waitForVisible: { text: "Книга готова", timeout: 30000 }
   - assertVisible: { contains: "${childName} и звёздное путешествие" }
   - assertVisible: { testId: hero-image }
+  - assertVisible: { testId: download-pdf }
   - sql:
       query: >-
-        select status::text as status, jsonb_array_length(pages) as pages, "costUsd" as cost
+        select status::text as status, jsonb_array_length(pages) as pages, "costUsd" as cost, "pdfPath" is not null as pdf
         from "Book" where child->>'name' = $1
       params: ["${childName}"]
       readOnly: true
       assert:
         rows: 1
-        first: { status: done, pages: 4, cost: 0 }
+        first: { status: done, pages: 4, cost: 0, pdf: true }
 after:
   - sql: { exec: "delete from \"Book\" where child->>'name' = $1", params: ["${childName}"] }

@@ -12,7 +12,12 @@ Built for the Meta Global AI Developer Hackathon (Indie track, "Build for Your W
 | --- | --- | --- |
 | Story | Muse Spark (`muse-spark-1.3`) | Writes the book in Russian or Kazakh as strict JSON: title, a hero description, and per page the text and a scene prompt. Invalid JSON is retried with the validation error. |
 | Hero | Muse Image (`muse-image-1.0`) | Draws a character sheet of the child on a white background. |
-| Pages | Muse Image | Every page chains from the hero sheet with `previous_response_id`, so the child stays the same on every page. Pages render in parallel. |
+| Pet | Muse Image | The pet gets its own sheet, chained from the hero's, or it changes breed and color between pages. |
+| Pages | Muse Image | Every page chains from the character sheets with `previous_response_id`, so the child and the pet stay the same on every page. Pages render in parallel. |
+
+The finished book is laid out as a square 210 × 210 mm picture book (cover, one illustrated page per
+story page, an end page) and printed to PDF by headless Chromium. A 4-page book takes about 90 s and
+$0.07 of model spend.
 
 All model calls live in `apps/api/src/meta/`. `MODELS=mock` swaps them for canned output, so tests and
 CI never call the API.

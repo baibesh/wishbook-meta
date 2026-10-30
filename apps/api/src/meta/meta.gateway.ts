@@ -97,7 +97,8 @@ export class MetaGateway implements ModelGateway {
     const tool = {
       type: 'image_generation',
       size,
-      output_format: 'png',
+      // JPEG keeps a 10-page PDF small enough to download; PNG made it ~5 MB a page.
+      output_format: 'jpeg',
       enable_web_search: false,
       enable_image_search: false,
     } as unknown as Tool;
@@ -119,7 +120,7 @@ export class MetaGateway implements ModelGateway {
     }
     return {
       data: Buffer.from(call.result, 'base64'),
-      ext: 'png',
+      ext: 'jpeg',
       ref: response.id,
       costUsd: IMAGE_PRICE,
     };

@@ -64,6 +64,12 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - name: Install Chromium for PDF rendering
+        run: pnpm --filter @wishbook/api exec playwright install --with-deps chromium
       - name: Create schema
         run: pnpm --filter @wishbook/api exec prisma db push --skip-generate
       - name: Start web + API (MODELS=mock)
