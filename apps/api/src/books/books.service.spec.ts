@@ -5,7 +5,7 @@ import type { PrismaService } from '../prisma/prisma.service';
 import type { StorageService } from '../storage/storage.service';
 import { SEED_TEMPLATES } from '../templates/catalog';
 import type { TemplatesService } from '../templates/templates.service';
-import { BooksService, petInScene } from './books.service';
+import { BooksService, petInScene, toyInScene } from './books.service';
 
 const child = {
   name: 'Арман',
@@ -172,5 +172,12 @@ describe('petInScene', () => {
     expect(petInScene('The pet sleeps at home')).toBe(true);
     expect(petInScene('the hero paints at a kindergarten table')).toBe(false);
     expect(petInScene('the hero sees a carpet')).toBe(false);
+  });
+});
+
+describe('toyInScene', () => {
+  it('draws the toy only where the scene names it', () => {
+    expect(toyInScene('the hero hugs the toy')).toBe(true);
+    expect(toyInScene('the hero sees a toyshop')).toBe(false);
   });
 });

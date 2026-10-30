@@ -79,6 +79,7 @@ export class MockGateway implements ModelGateway {
     child,
     pageCount,
     template,
+    toy,
   }: StoryBrief): Promise<GeneratedStory> {
     await sleep(this.delayMs);
     const text = MOCK_TEXT[child.language];
@@ -91,11 +92,34 @@ export class MockGateway implements ModelGateway {
       pages: Array.from({ length: pageCount }, (_, i) => ({
         page: i + 1,
         text: text.page(i + 1, child.name, child.city),
-        scene_prompt: `the hero exploring ${child.city}, scene ${i + 1}`,
+        scene_prompt: `the hero${toy ? ' and the toy' : ''} exploring ${child.city}, scene ${i + 1}`,
       })),
       talk_questions: text.questions,
     };
     return { story, costUsd: 0 };
+  }
+
+  async findToy(photo: Buffer) {
+    await sleep(this.delayMs);
+    return { cutout: photo, costUsd: 0 };
+  }
+
+  async describeToy() {
+    await sleep(this.delayMs);
+    return {
+      description: 'a small plush bunny with a red knitted scarf',
+      costUsd: 0,
+    };
+  }
+
+  async drawToy(): Promise<GeneratedImage> {
+    await sleep(this.delayMs);
+    return {
+      data: placeholder('toy', '#FFFFFF'),
+      ext: 'svg',
+      ref: 'mock-toy',
+      costUsd: 0,
+    };
   }
 
   async drawHero(): Promise<GeneratedImage> {

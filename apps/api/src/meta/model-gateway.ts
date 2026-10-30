@@ -1,5 +1,5 @@
 import type { Story } from '@wishbook/shared';
-import type { StoryBrief } from './prompts';
+import type { Companions, StoryBrief } from './prompts';
 
 export const MODEL_GATEWAY = Symbol('MODEL_GATEWAY');
 
@@ -22,6 +22,20 @@ export interface GeneratedStory {
  */
 export interface ModelGateway {
   writeStory(brief: StoryBrief): Promise<GeneratedStory>;
+  /**
+   * Finds the toy in the parent's photo with SAM and cuts it out on white. `cutout` is null when
+   * nothing was found; the caller then works from the whole photo.
+   */
+  findToy(photo: Buffer): Promise<{ cutout: Buffer | null; costUsd: number }>;
+  /** Muse Spark looks at the toy and describes it in one sentence for the illustrator. */
+  describeToy(image: Buffer): Promise<{ description: string; costUsd: number }>;
+  /** The toy's character sheet, drawn from the photo as a reference and chained to the others. */
+  drawToy(
+    toyDescription: string,
+    reference: Buffer,
+    anchorRef: string,
+    style?: string,
+  ): Promise<GeneratedImage>;
   /** The hero character sheet every page is anchored on. */
   drawHero(heroDescription: string, style?: string): Promise<GeneratedImage>;
   /** The pet character sheet, chained from the hero sheet so both stay in the conversation. */
@@ -32,12 +46,12 @@ export interface ModelGateway {
   ): Promise<GeneratedImage>;
   /**
    * One page illustration, chained from the last character sheet (`anchorRef`) so the
-   * child and the pet stay on-model. `style` replaces the default art style (catalog books).
+   * child, the pet and the toy stay on-model. `style` replaces the default art style (catalog books).
    */
   drawPage(
     scenePrompt: string,
     anchorRef: string,
-    withPet: boolean,
+    companions: Companions,
     style?: string,
   ): Promise<GeneratedImage>;
 }

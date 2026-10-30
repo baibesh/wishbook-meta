@@ -1,6 +1,6 @@
 import { StorySchema, type ChildProfile } from '@wishbook/shared';
 import { MockGateway } from './mock.gateway';
-import { heroPrompt, pagePrompt, storyPrompt } from './prompts';
+import { heroPrompt, pagePrompt, storyPrompt, toyPrompt } from './prompts';
 
 const brief = (overrides: Partial<ChildProfile> = {}, pageCount = 4) => ({
   child: { ...child, ...overrides },
@@ -76,11 +76,33 @@ describe('prompts', () => {
   });
 
   it('repeats the art style in hero and page prompts', () => {
+    const none = { pet: false, toy: false };
     expect(heroPrompt('a girl')).toContain('watercolor');
-    expect(pagePrompt('the hero in a park', false)).toContain('watercolor');
-    expect(pagePrompt('the hero in a park', true)).toContain(
+    expect(pagePrompt('the hero in a park', none)).toContain('watercolor');
+    expect(pagePrompt('the hero in a park', none)).not.toContain('pet');
+    expect(pagePrompt('the hero in a park', none)).not.toContain('toy');
+  });
+
+  it('points a page only at the sheets of the companions in it', () => {
+    const page = pagePrompt('the hero and the toy in a park', {
+      pet: false,
+      toy: true,
+    });
+    expect(page).toContain('toy character sheet');
+    expect(page).not.toContain('pet character sheet');
+    expect(pagePrompt('x', { pet: true, toy: false })).toContain(
       'pet character sheet',
     );
-    expect(pagePrompt('the hero in a park', false)).not.toContain('pet');
+  });
+
+  it('brings the toy into the story and draws it from the reference', () => {
+    const prompt = storyPrompt({
+      ...brief(),
+      toy: { name: 'Бусинка', description: 'a plush bunny with a red scarf' },
+    });
+    expect(prompt).toContain(
+      'Favourite toy, called "Бусинка": a plush bunny with a red scarf',
+    );
+    expect(toyPrompt('a plush bunny')).toContain('reference photo');
   });
 });

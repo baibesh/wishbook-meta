@@ -23,6 +23,7 @@ import { MODEL_GATEWAY, type ModelGateway } from './model-gateway';
           baseURL: config.get('MODEL_API_BASE_URL', 'https://api.meta.ai/v1'),
           storyModel: config.get('STORY_MODEL', 'muse-spark-1.3'),
           imageModel: config.get('IMAGE_MODEL', 'muse-image-1.0'),
+          samModel: config.get('SAM_MODEL', 'sam-3.1'),
         });
       },
     },

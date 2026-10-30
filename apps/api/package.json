@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@fontsource/nunito": "^5.3.0",
+    "@meta-sam/parser": "0.1.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",
@@ -33,6 +34,7 @@
     "@nestjs/serve-static": "^5.0.5",
     "@prisma/client": "^6.19.3",
     "@wishbook/shared": "workspace:*",
+    "jpeg-js": "0.4.4",
     "maxmind": "5.0.7",
     "openai": "^6.49.0",
     "playwright": "^1.64.1",

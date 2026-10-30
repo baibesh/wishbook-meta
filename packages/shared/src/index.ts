@@ -83,6 +83,13 @@ export const CreateBookSchema = z
     methodology: MethodologySlugSchema.optional(),
     /** What a book of your own is about, in the parent's words ("first day at kindergarten"). */
     theme: z.string().trim().min(3).max(200).optional(),
+    /** The child's favourite toy, from a photo uploaded to POST /toys; it joins the story. */
+    toy: z
+      .object({
+        upload: z.string().regex(/^[a-z0-9]{10,40}$/),
+        name: z.string().trim().max(40).optional(),
+      })
+      .optional(),
   })
   .superRefine((b, ctx) => {
     if (!b.methodology || fitsAge(b.methodology, b.child.age)) return;
@@ -114,8 +121,8 @@ export const StorySchema = z.object({
 });
 export type Story = z.infer<typeof StorySchema>;
 
-/** Generation stages, in order. */
-export const BOOK_STATUSES = ["queued", "story", "hero", "pages", "pdf", "done", "failed"] as const;
+/** Generation stages, in order. "toy" runs only when the parent sent a photo of a toy. */
+export const BOOK_STATUSES = ["queued", "toy", "story", "hero", "pages", "pdf", "done", "failed"] as const;
 export const BookStatusSchema = z.enum(BOOK_STATUSES);
 export type BookStatus = z.infer<typeof BookStatusSchema>;
 
@@ -140,6 +147,15 @@ export const BookSchema = z.object({
   template: z.string().nullable(),
   talkQuestions: z.array(z.string()),
   heroImageUrl: z.string().nullable(),
+  /** The toy photo the parent sent, the toy SAM cut out of it, and its character sheet. */
+  toy: z
+    .object({
+      name: z.string().nullable(),
+      photoUrl: z.string(),
+      cutoutUrl: z.string().nullable(),
+      sheetUrl: z.string().nullable(),
+    })
+    .nullable(),
   pages: z.array(BookPageSchema),
   pdfUrl: z.string().nullable(),
   error: z.string().nullable(),
@@ -152,6 +168,8 @@ export function progressFor(status: BookStatus, pagesDone = 0, pagesTotal = 0): 
   switch (status) {
     case "queued":
       return 0;
+    case "toy":
+      return 5;
     case "story":
       return 10;
     case "hero":
@@ -166,6 +184,15 @@ export function progressFor(status: BookStatus, pagesDone = 0, pagesTotal = 0): 
       return 0;
   }
 }
+
+/** Body of POST /toys: a JPEG photo as a data URL, already scaled down in the browser. */
+export const ToyUploadSchema = z.object({
+  image: z
+    .string()
+    .regex(/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/, "Нужна фотография в формате JPEG")
+    .max(8_000_000, "Фотография слишком большая"),
+});
+export const ToyUploadResultSchema = z.object({ upload: z.string() });
 
 // ---- Free limit and purchased books ------------------------------------------
 

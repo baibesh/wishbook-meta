@@ -20,6 +20,7 @@ import { QuotaService } from './quota/quota.service';
 import { SettingsService } from './settings/settings.service';
 import { StorageModule } from './storage/storage.service';
 import { TemplatesController } from './templates/templates.controller';
+import { ToysController } from './toy/toys.controller';
 import { TemplatesService } from './templates/templates.service';
 
 @Controller('health')
@@ -49,6 +50,7 @@ class HealthController {
     QuotaController,
     OrdersController,
     TemplatesController,
+    ToysController,
     AdminAuthController,
     AdminController,
   ],

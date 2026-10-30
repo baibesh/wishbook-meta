@@ -13,6 +13,7 @@ import { ErrorNotice } from "./error-notice";
 
 const STAGE_LABELS: Record<BookStatus, string> = {
   queued: "В очереди",
+  toy: "Находим игрушку на фото",
   story: "Пишем сказку",
   hero: "Рисуем героя",
   pages: "Рисуем страницы",
@@ -62,6 +63,8 @@ export function BookView({ params }: { params: Promise<{ id: string }> }) {
         </motion.div>
       )}
 
+      {book.toy && !done && <ToyPipeline toy={book.toy} />}
+
       {done ? <BookReader book={book} /> : <Progress book={book} />}
 
       {book.pdfUrl && (
@@ -85,6 +88,8 @@ export function BookView({ params }: { params: Promise<{ id: string }> }) {
           </Link>
         </div>
       )}
+
+      {book.toy && done && <ToyPipeline toy={book.toy} />}
 
       {done && book.talkQuestions.length > 0 && (
         <section data-testid="talk-questions" className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-6">
@@ -146,5 +151,39 @@ function Progress({ book }: { book: Book }) {
         ))}
       </ol>
     </div>
+  );
+}
+
+/** The toy's way into the book: the parent's photo, SAM 3.1's cut-out, Muse Image's character. */
+function ToyPipeline({ toy }: { toy: NonNullable<Book["toy"]> }) {
+  const steps = [
+    { label: "Ваше фото", url: toy.photoUrl, cover: true },
+    { label: "SAM 3.1 нашёл игрушку", url: toy.cutoutUrl, cover: false },
+    { label: "Muse Image нарисовал героя", url: toy.sheetUrl, cover: false },
+  ];
+  return (
+    <section data-testid="toy-pipeline" className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5">
+      <h2 className="font-bold">{toy.name ? `${toy.name} в книге` : "Любимая игрушка в книге"}</h2>
+      <ol className="grid grid-cols-3 gap-3">
+        {steps.map((step, i) => (
+          <li key={step.label} className="flex flex-col items-center gap-2 text-center">
+            {step.url ? (
+              <motion.img
+                key={step.url}
+                src={step.url}
+                alt={step.label}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.15 }}
+                className={`aspect-square w-full rounded-xl border border-border bg-white ${step.cover ? "object-cover" : "object-contain"}`}
+              />
+            ) : (
+              <div className="aspect-square w-full animate-pulse rounded-xl bg-border" />
+            )}
+            <span className="text-xs text-muted">{step.label}</span>
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }

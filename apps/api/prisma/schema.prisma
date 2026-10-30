@@ -9,6 +9,7 @@ datasource db {
 
 enum BookStatus {
   queued
+  toy
   story
   hero
   pages
@@ -37,6 +38,12 @@ model Book {
   /// Muse Image response id of the hero character sheet; pages chain from it.
   heroResponseId  String?
   heroImagePath   String?
+  /// The favourite toy: the parent's photo, SAM's cut-out, Spark's description, its character sheet.
+  toyName         String?
+  toyPhotoPath    String?
+  toyCutoutPath   String?
+  toyDescription  String?
+  toyImagePath    String?
   petImagePath    String?
   /// BookPage[]: { page, text, scenePrompt, imagePath }
   pages           Json          @default("[]")

@@ -4,6 +4,7 @@ import {
   QuotaSchema,
   TemplateSchema,
   TemplateSummarySchema,
+  ToyUploadResultSchema,
   type Book,
   type CreateBookInput,
   type CreateOrderInput,
@@ -83,6 +84,12 @@ export async function request(path: string, init?: RequestInit): Promise<unknown
 
 export async function createBook(input: CreateBookInput): Promise<Book> {
   return BookSchema.parse(await request("/api/books", { method: "POST", body: JSON.stringify(input) }));
+}
+
+/** Sends the toy photo (a JPEG data URL); the book then refers to it by the returned id. */
+export async function uploadToy(image: string): Promise<string> {
+  const result = ToyUploadResultSchema.parse(await request("/api/toys", { method: "POST", body: JSON.stringify({ image }) }));
+  return result.upload;
 }
 
 export async function listTemplates(): Promise<TemplateSummary[]> {

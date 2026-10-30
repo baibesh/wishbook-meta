@@ -10,11 +10,13 @@ import {
   type MethodologySlug,
   type Template,
 } from "@wishbook/shared";
-import { BookOpen, Loader2 } from "lucide-react";
+import { BookOpen, Loader2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
-import { ApiError, createBook, getQuota } from "@/lib/api";
+import { ApiError, createBook, getQuota, uploadToy } from "@/lib/api";
+import { toJpegDataUrl } from "@/lib/toy-photo";
 import { Paywall } from "./paywall";
 
 const FormSchema = z.object({
@@ -28,6 +30,7 @@ const FormSchema = z.object({
   /** "" lets the API pick a method by age. */
   methodology: z.string(),
   theme: z.string().trim().max(200),
+  toyName: z.string().trim().max(40),
   answers: z.record(z.string(), z.string()),
 });
 type FormValues = z.infer<typeof FormSchema>;
@@ -53,6 +56,7 @@ export function BookForm({ template }: { template?: Template }) {
       language: "ru",
       methodology: "",
       theme: "",
+      toyName: "",
       answers: {},
     },
   });
@@ -62,8 +66,12 @@ export function BookForm({ template }: { template?: Template }) {
   const queryClient = useQueryClient();
   const quota = useQuery({ queryKey: ["quota"], queryFn: getQuota });
 
+  const [toyPhoto, setToyPhoto] = useState<File | null>(null);
+  const toyPreview = useMemo(() => (toyPhoto ? URL.createObjectURL(toyPhoto) : null), [toyPhoto]);
+  useEffect(() => () => void (toyPreview && URL.revokeObjectURL(toyPreview)), [toyPreview]);
+
   const create = useMutation({
-    mutationFn: (values: FormValues) =>
+    mutationFn: async (values: FormValues) =>
       createBook({
         child: {
           name: values.name,
@@ -74,6 +82,9 @@ export function BookForm({ template }: { template?: Template }) {
           city: values.city,
           language: values.language,
         },
+        ...(toyPhoto && {
+          toy: { upload: await uploadToy(await toJpegDataUrl(toyPhoto)), name: values.toyName || undefined },
+        }),
         ...(template
           ? { template: template.slug, answers: values.answers }
           : {
@@ -156,6 +167,38 @@ export function BookForm({ template }: { template?: Template }) {
         <input data-testid="child-city" className={field} {...form.register("city")} />
         {errors.city && <span className="text-red-600">{errors.city.message}</span>}
       </label>
+
+      <fieldset className="grid gap-4 rounded-2xl border border-dashed border-border p-4 sm:col-span-2 sm:grid-cols-[8rem_1fr]">
+        <legend className="px-1 text-sm font-semibold">Любимая игрушка (необязательно)</legend>
+        <label className="relative flex aspect-square cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-border bg-background text-center text-xs text-muted hover:border-accent">
+          {toyPreview ? (
+            // eslint-disable-next-line @next/next/no-img-element -- a local preview of the chosen file
+            <img src={toyPreview} alt="Фото игрушки" className="h-full w-full object-cover" />
+          ) : (
+            <span className="p-2">Выбрать фото</span>
+          )}
+          <input
+            data-testid="toy-photo"
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            onChange={(e) => setToyPhoto(e.target.files?.[0] ?? null)}
+          />
+        </label>
+        <div className="flex flex-col gap-3">
+          <p className="text-sm text-muted">
+            Сфотографируйте игрушку, с которой ребёнок не расстаётся: она станет его другом в сказке и будет нарисована
+            такой же на каждой странице.
+          </p>
+          <input data-testid="toy-name" className={field} placeholder="Как её зовут? Например, Бусинка" {...form.register("toyName")} />
+          {toyPhoto && (
+            <button type="button" onClick={() => setToyPhoto(null)} className="flex items-center gap-1 self-start text-sm text-muted hover:text-foreground">
+              <X className="size-4" />
+              Убрать фото
+            </button>
+          )}
+        </div>
+      </fieldset>
 
       {template ? (
         <fieldset data-testid="template-questions" className="grid gap-5 sm:col-span-2 sm:grid-cols-2">

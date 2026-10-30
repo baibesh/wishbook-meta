@@ -37,8 +37,9 @@ Return only JSON of this exact shape:
 - "pet_description" is in English: the pet's species, size, fur colors and markings in one
   sentence, or null when there is no pet.
 - "scene_prompt" is in English: what the illustration shows on that page. Name the hero
-  as "the hero" and the pet as "the pet"; describe the place and action, not the style.
-  Mention the pet only in scenes the pet is actually in.
+  as "the hero", the pet as "the pet" and the favourite toy, when there is one, as "the toy";
+  describe the place and action, not the style.
+  Mention the pet and the toy only in scenes they are actually in.
   Any other character that appears on more than one page is described with the exact same
   words (species, colors, distinctive details) in every scene_prompt it appears in.
 - "talk_questions" are 3 to 5 short questions, in the book's language, that the parent asks
@@ -51,6 +52,8 @@ export interface StoryBrief {
   pageCount: number;
   methodology: MethodologySlug;
   theme?: string;
+  /** The child's favourite toy from the parent's photo, described by Muse Spark. */
+  toy?: { name?: string; description: string };
   /** Set for a catalog book: the author's plot and the parent's answers. */
   template?: {
     title: string;
@@ -70,6 +73,7 @@ export function storyPrompt(brief: StoryBrief): string {
     `Hero: ${child.name}, a ${child.age}-year-old ${child.gender}.`,
     `Interests: ${child.interests.join(', ')}.`,
     child.pet ? `Pet: ${child.pet}.` : 'No pet.',
+    ...toyLines(brief),
     `Home city: ${child.city}, Kazakhstan. Let the city appear in the story.`,
     brief.theme
       ? `The book is about: ${brief.theme}.`
@@ -86,6 +90,15 @@ export function storyPrompt(brief: StoryBrief): string {
     list(band.guidance),
     `Talk questions, one of each kind: ${talkQuestionKinds(child.age).join('; ')}.`,
   ].join('\n');
+}
+
+function toyLines({ toy }: StoryBrief): string[] {
+  if (!toy) return [];
+  const name = toy.name ? `, called "${toy.name}"` : '';
+  return [
+    `Favourite toy${name}: ${toy.description}.`,
+    "The toy is the hero's companion through the story; it may come to life and help.",
+  ];
 }
 
 function templateLines({ template }: StoryBrief): string[] {
@@ -119,13 +132,36 @@ export function petPrompt(petDescription: string, style = ART_STYLE): string {
   );
 }
 
+/** Which companions a page shows, so only their sheets are pointed at. */
+export interface Companions {
+  pet: boolean;
+  toy: boolean;
+}
+
+/** Asks Muse Spark (vision) to put the toy in the photo into words an illustrator can follow. */
+export const TOY_DESCRIPTION_PROMPT =
+  "This is a photo of a child's favourite toy. Describe the toy in one English sentence for an " +
+  'illustrator: what kind of toy it is, its material, colors, and distinctive details such as ' +
+  'clothes, patches or markings. Describe only the toy, not the background. Reply with the sentence only.';
+
+export function toyPrompt(toyDescription: string, style = ART_STYLE): string {
+  return (
+    `an original children's book character sheet of the toy: ${toyDescription}. ` +
+    'Draw the same toy as in the reference photo, as a friendly storybook character, ' +
+    `full body, front view, plain white background, centered, ${style}`
+  );
+}
+
 export function pagePrompt(
   scenePrompt: string,
-  withPet: boolean,
+  companions: Companions,
   style = ART_STYLE,
 ): string {
-  const pet = withPet
+  const pet = companions.pet
     ? ' The pet is the same animal as in the pet character sheet shown earlier.'
     : '';
-  return `${scenePrompt}. The hero is the same child as in the hero character sheet shown earlier.${pet} ${style}`;
+  const toy = companions.toy
+    ? ' The toy is the same toy as in the toy character sheet shown earlier.'
+    : '';
+  return `${scenePrompt}. The hero is the same child as in the hero character sheet shown earlier.${pet}${toy} ${style}`;
 }

@@ -10,9 +10,12 @@ Built for the Meta Global AI Developer Hackathon (Indie track, "Build for Your W
 
 | Step | Model | What it does |
 | --- | --- | --- |
+| Toy | SAM 3.1 (`sam-3.1`) | Finds the child's favourite toy in the parent's photo; `@meta-sam/parser` decodes the mask and the API cuts the toy out on white (`apps/api/src/toy`). |
+| Toy | Muse Spark (vision) | Looks at the cut-out and describes the toy in one sentence for the story and the illustrator. |
 | Story | Muse Spark (`muse-spark-1.3`) | Writes the book in Russian or Kazakh as strict JSON: title, a hero description, and per page the text and a scene prompt. Invalid JSON is retried with the validation error. |
 | Hero | Muse Image (`muse-image-1.0`) | Draws a character sheet of the child on a white background. |
 | Pet | Muse Image | The pet gets its own sheet, chained from the hero's, or it changes breed and color between pages. |
+| Toy sheet | Muse Image | Draws the toy as a storybook character with the cut-out as a reference image, chained after the hero, so it stays the same toy on every page. |
 | Pages | Muse Image | Every page chains from the character sheets with `previous_response_id`, so the child and the pet stay the same on every page. Pages render in parallel. |
 
 The finished book is laid out as a square 210 × 210 mm picture book (cover, one illustrated page per

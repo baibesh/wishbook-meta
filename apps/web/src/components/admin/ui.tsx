@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 export const BOOK_STATUS: Record<BookStatus, { label: string; tone: string }> = {
   queued: { label: "В очереди", tone: "bg-border text-muted" },
+  toy: { label: "Игрушка", tone: "bg-amber-500/15 text-amber-600" },
   story: { label: "Сказка", tone: "bg-amber-500/15 text-amber-600" },
   hero: { label: "Герой", tone: "bg-amber-500/15 text-amber-600" },
   pages: { label: "Страницы", tone: "bg-amber-500/15 text-amber-600" },

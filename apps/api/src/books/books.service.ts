@@ -21,6 +21,7 @@ import { basename } from 'node:path';
 import { MODEL_GATEWAY, type ModelGateway } from '../meta/model-gateway';
 import type { StoryBrief } from '../meta/prompts';
 import { questions, TemplatesService } from '../templates/templates.service';
+import { toyUploadPath } from '../toy/toys.controller';
 import { PdfService } from '../pdf/pdf.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
@@ -42,6 +43,8 @@ interface Job {
   brief: StoryBrief;
   /** Art style of a catalog book; the default one otherwise. */
   style?: string;
+  /** The uploaded toy photo, when the parent sent one. */
+  toyUpload?: string;
 }
 
 /** Page illustrations generated at once; each chains from the hero sheet, not from each other. */
@@ -70,7 +73,7 @@ export class BooksService {
     country: string | null = null,
   ): Promise<Book> {
     const { child } = input;
-    const job = input.template
+    const job: Job = input.template
       ? await this.catalogJob(input.template, input)
       : {
           brief: {
@@ -80,6 +83,14 @@ export class BooksService {
             theme: input.theme,
           },
         };
+    if (input.toy) {
+      await this.storage.read(toyUploadPath(input.toy.upload)).catch(() => {
+        throw new BadRequestException(
+          'Фото игрушки не найдено, загрузите его ещё раз',
+        );
+      });
+      job.toyUpload = input.toy.upload;
+    }
     const row = await this.prisma.book.create({
       data: {
         child,
@@ -93,6 +104,7 @@ export class BooksService {
         clientKey,
         demo,
         country,
+        toyName: input.toy?.name || null,
       },
       include: withTemplate,
     });
@@ -143,9 +155,44 @@ export class BooksService {
     };
   }
 
-  private async generate(id: string, { brief, style }: Job): Promise<void> {
+  private async generate(
+    id: string,
+    { brief, style, toyUpload }: Job,
+  ): Promise<void> {
     const { child } = brief;
     let costUsd = 0;
+
+    // The toy first: SAM cuts it out of the photo, Muse Spark puts it into words for the story.
+    let toyReference: Buffer | null = null;
+    if (toyUpload) {
+      await this.stage(id, 'toy');
+      const photo = await this.storage.read(toyUploadPath(toyUpload));
+      const toyPhotoPath = await this.storage.save(
+        `books/${id}/toy-photo.jpg`,
+        photo,
+      );
+      await this.storage.remove(toyUploadPath(toyUpload));
+      const found = await this.models.findToy(photo);
+      toyReference = found.cutout ?? photo;
+      const toyCutoutPath = found.cutout
+        ? await this.storage.save(`books/${id}/toy-cutout.jpg`, found.cutout)
+        : null;
+      const described = await this.models.describeToy(toyReference);
+      costUsd += found.costUsd + described.costUsd;
+      const row = await this.update(id, 'toy', {
+        toyPhotoPath,
+        toyCutoutPath,
+        toyDescription: described.description,
+        costUsd,
+      });
+      brief = {
+        ...brief,
+        toy: {
+          name: row.toyName ?? undefined,
+          description: described.description,
+        },
+      };
+    }
 
     await this.stage(id, 'story');
     const { story, costUsd: storyCost } = await this.models.writeStory(brief);
@@ -195,6 +242,23 @@ export class BooksService {
       await this.update(id, 'hero', { petImagePath, costUsd });
     }
 
+    // The toy's sheet is drawn from the cut-out photo, chained after the hero (and pet).
+    if (toyReference && brief.toy) {
+      const toy = await this.models.drawToy(
+        brief.toy.description,
+        toyReference,
+        anchorRef,
+        style,
+      );
+      costUsd += toy.costUsd;
+      const toyImagePath = await this.storage.save(
+        `books/${id}/toy.${toy.ext}`,
+        toy.data,
+      );
+      anchorRef = toy.ref;
+      await this.update(id, 'hero', { toyImagePath, costUsd });
+    }
+
     await this.update(id, 'pages', {
       progress: progressFor('pages', 0, pages.length),
     });
@@ -203,7 +267,10 @@ export class BooksService {
       const image = await this.models.drawPage(
         page.scenePrompt,
         anchorRef,
-        withPet && petInScene(page.scenePrompt),
+        {
+          pet: withPet && petInScene(page.scenePrompt),
+          toy: toyReference !== null && toyInScene(page.scenePrompt),
+        },
         style,
       );
       costUsd += image.costUsd;
@@ -283,6 +350,14 @@ export class BooksService {
       template: row.template?.slug ?? null,
       talkQuestions: row.talkQuestions as string[],
       heroImageUrl: this.storage.url(row.heroImagePath),
+      toy: row.toyPhotoPath
+        ? {
+            name: row.toyName,
+            photoUrl: this.storage.url(row.toyPhotoPath)!,
+            cutoutUrl: this.storage.url(row.toyCutoutPath),
+            sheetUrl: this.storage.url(row.toyImagePath),
+          }
+        : null,
       pages: pages.map((p) => ({
         page: p.page,
         text: p.text,
@@ -298,6 +373,10 @@ export class BooksService {
 /** Pointing Muse Image at the pet sheet on every page draws the pet into scenes it is not in. */
 export function petInScene(scenePrompt: string): boolean {
   return /\bthe pet\b/i.test(scenePrompt);
+}
+
+export function toyInScene(scenePrompt: string): boolean {
+  return /\bthe toy\b/i.test(scenePrompt);
 }
 
 function json(value: unknown): Prisma.InputJsonValue {

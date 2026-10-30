@@ -1,6 +1,6 @@
 import { Global, Injectable, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 
 /** Generated files on local disk, served at /files. Swap for R2 when deploying. */
@@ -18,6 +18,14 @@ export class StorageService {
     await mkdir(dirname(full), { recursive: true });
     await writeFile(full, data);
     return relativePath;
+  }
+
+  read(relativePath: string): Promise<Buffer> {
+    return readFile(join(this.root, relativePath));
+  }
+
+  remove(relativePath: string): Promise<void> {
+    return rm(join(this.root, relativePath), { force: true });
   }
 
   url(relativePath: string | null): string | null {

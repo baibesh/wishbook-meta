@@ -6,10 +6,14 @@ import type {
   GeneratedStory,
   ModelGateway,
 } from './model-gateway';
+import { cutout } from '../toy/cutout';
 import {
   STORY_INSTRUCTIONS,
+  TOY_DESCRIPTION_PROMPT,
+  type Companions,
   type StoryBrief,
   heroPrompt,
+  toyPrompt,
   pagePrompt,
   petPrompt,
   storyPrompt,
@@ -20,6 +24,10 @@ const SPARK_INPUT_PER_M = 1.25;
 const SPARK_OUTPUT_PER_M = 4.25;
 /** Muse Image is a flat price per generated image. */
 const IMAGE_PRICE = 0.01;
+/** SAM 3.1: $2.50 per 1,000 images. */
+const SAM_PRICE = 0.0025;
+/** What SAM is asked to find in the parent's photo. */
+const TOY_CONCEPT = 'toy';
 const STORY_ATTEMPTS = 3;
 
 export interface MetaGatewayOptions {
@@ -27,6 +35,7 @@ export interface MetaGatewayOptions {
   baseURL: string;
   storyModel: string;
   imageModel: string;
+  samModel: string;
 }
 
 /** The Meta Model API, through the OpenAI SDK's Responses API. */
@@ -70,6 +79,80 @@ export class MetaGateway implements ModelGateway {
     );
   }
 
+  async findToy(
+    photo: Buffer,
+  ): Promise<{ cutout: Buffer | null; costUsd: number }> {
+    // ESM-only package; loaded on first use.
+    const { parseImageStream, recordsOfKind, decodeMaskToRaster } =
+      await import('@meta-sam/parser');
+    const events = await this.client.responses.create({
+      model: this.options.samModel,
+      input: [
+        {
+          type: 'message',
+          role: 'user',
+          content: [
+            { type: 'input_text', text: TOY_CONCEPT },
+            { type: 'input_image', image_url: dataUrl(photo), detail: 'auto' },
+          ],
+        },
+      ],
+      stream: true,
+      metadata: { mask_encoding: 'one_bit' },
+    });
+    const parsed = parseImageStream(events as never);
+    for await (const snapshot of parsed) void snapshot;
+    const { records } = await parsed.finalResult;
+    // Several matches: the biggest one is the toy the photo is of.
+    const largest = [...recordsOfKind(records, 'mask')].sort(
+      (a, b) => area(b.bounds) - area(a.bounds),
+    )[0];
+    if (!largest) return { cutout: null, costUsd: SAM_PRICE };
+    return {
+      cutout: cutout(photo, {
+        box: largest.bounds,
+        mask: decodeMaskToRaster(largest.mask),
+        maskWidth: largest.mask.width,
+        maskHeight: largest.mask.height,
+      }),
+      costUsd: SAM_PRICE,
+    };
+  }
+
+  async describeToy(
+    image: Buffer,
+  ): Promise<{ description: string; costUsd: number }> {
+    const response = await this.client.responses.create({
+      model: this.options.storyModel,
+      input: [
+        {
+          role: 'user',
+          content: [
+            { type: 'input_text', text: TOY_DESCRIPTION_PROMPT },
+            { type: 'input_image', image_url: dataUrl(image), detail: 'auto' },
+          ],
+        },
+      ],
+    });
+    const description = response.output_text.trim().replace(/\.$/, '');
+    if (!description) throw new Error('Muse Spark returned no toy description');
+    return { description, costUsd: tokenCost(response) };
+  }
+
+  drawToy(
+    toyDescription: string,
+    reference: Buffer,
+    anchorRef: string,
+    style?: string,
+  ): Promise<GeneratedImage> {
+    return this.draw(
+      toyPrompt(toyDescription, style),
+      '1024x1024',
+      anchorRef,
+      reference,
+    );
+  }
+
   drawHero(heroDescription: string, style?: string): Promise<GeneratedImage> {
     return this.draw(heroPrompt(heroDescription, style), '1024x1024');
   }
@@ -85,11 +168,11 @@ export class MetaGateway implements ModelGateway {
   drawPage(
     scenePrompt: string,
     anchorRef: string,
-    withPet: boolean,
+    companions: Companions,
     style?: string,
   ): Promise<GeneratedImage> {
     return this.draw(
-      pagePrompt(scenePrompt, withPet, style),
+      pagePrompt(scenePrompt, companions, style),
       '1536x1024',
       anchorRef,
     );
@@ -99,6 +182,7 @@ export class MetaGateway implements ModelGateway {
     prompt: string,
     size: '1024x1024' | '1536x1024',
     previousResponseId?: string,
+    reference?: Buffer,
   ): Promise<GeneratedImage> {
     // Web and image search add latency and nothing for invented characters.
     const tool = {
@@ -111,7 +195,22 @@ export class MetaGateway implements ModelGateway {
     } as unknown as Tool;
     const response = await this.client.responses.create({
       model: this.options.imageModel,
-      input: prompt,
+      // A reference photo goes in as an image part next to the prompt.
+      input: reference
+        ? [
+            {
+              role: 'user',
+              content: [
+                { type: 'input_text', text: prompt },
+                {
+                  type: 'input_image',
+                  image_url: dataUrl(reference),
+                  detail: 'auto',
+                },
+              ],
+            },
+          ]
+        : prompt,
       tools: [tool],
       ...(previousResponseId
         ? { previous_response_id: previousResponseId }
@@ -142,4 +241,17 @@ function tokenCost(response: Response): number {
       usage.output_tokens * SPARK_OUTPUT_PER_M) /
     1_000_000
   );
+}
+
+function dataUrl(jpeg: Buffer): string {
+  return `data:image/jpeg;base64,${jpeg.toString('base64')}`;
+}
+
+function area(box: {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}) {
+  return (box.right - box.left) * (box.bottom - box.top);
 }
