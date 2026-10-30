@@ -6,8 +6,8 @@
 .ref
 reports
 allure-results
-**/storage
-**/storage-e2e
+apps/api/storage
+apps/api/storage-e2e
 **/.env
 **/.env.*
 !**/.env.example
