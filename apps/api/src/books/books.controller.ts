@@ -23,7 +23,7 @@ export class BooksController {
   ): Promise<Book> {
     await this.quota.assertCanCreate(client.key, client.demoCode);
     return this.books.create(
-      body.child,
+      body,
       client.key,
       this.quota.isDemo(client.demoCode),
     );

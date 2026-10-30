@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import type { Response, Tool } from 'openai/resources/responses/responses';
-import { StorySchema, type ChildProfile } from '@wishbook/shared';
+import { StorySchema } from '@wishbook/shared';
 import type {
   GeneratedImage,
   GeneratedStory,
@@ -8,6 +8,7 @@ import type {
 } from './model-gateway';
 import {
   STORY_INSTRUCTIONS,
+  type StoryBrief,
   heroPrompt,
   pagePrompt,
   petPrompt,
@@ -41,10 +42,7 @@ export class MetaGateway implements ModelGateway {
     });
   }
 
-  async writeStory(
-    child: ChildProfile,
-    pageCount: number,
-  ): Promise<GeneratedStory> {
+  async writeStory(brief: StoryBrief): Promise<GeneratedStory> {
     let costUsd = 0;
     let error = '';
     for (let attempt = 0; attempt < STORY_ATTEMPTS; attempt++) {
@@ -52,7 +50,7 @@ export class MetaGateway implements ModelGateway {
         model: this.options.storyModel,
         instructions: STORY_INSTRUCTIONS,
         input:
-          storyPrompt(child, pageCount) +
+          storyPrompt(brief) +
           (error ? `\nYour previous output was invalid: ${error}` : ''),
         text: { format: { type: 'json_object' } },
       });

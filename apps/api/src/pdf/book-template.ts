@@ -10,6 +10,8 @@ export interface BookPdfInput {
   /** Image paths relative to the HTML file. */
   coverImage: string | null;
   pages: { page: number; text: string; image: string | null }[];
+  /** Questions for the parent, printed after the story. */
+  talkQuestions: string[];
   /** @font-face rules for Nunito, with absolute file:// URLs. */
   fontCss: string;
 }
@@ -17,10 +19,18 @@ export interface BookPdfInput {
 // Phrased so the name never has to be declined ("для Армана" would need a case ending).
 const LABELS: Record<
   Language,
-  { madeFor: (name: string) => string; end: string }
+  { madeFor: (name: string) => string; end: string; talk: string }
 > = {
-  ru: { madeFor: (name) => `Специально для тебя, ${name}!`, end: 'Конец' },
-  kk: { madeFor: (name) => `Арнайы саған, ${name}!`, end: 'Соңы' },
+  ru: {
+    madeFor: (name) => `Специально для тебя, ${name}!`,
+    end: 'Конец',
+    talk: 'Поговорим?',
+  },
+  kk: {
+    madeFor: (name) => `Арнайы саған, ${name}!`,
+    end: 'Соңы',
+    talk: 'Әңгімелесейік',
+  },
 };
 
 export function escapeHtml(text: string): string {
@@ -52,6 +62,14 @@ export function renderBookHtml(book: BookPdfInput): string {
     )
     .join('');
 
+  const talk = book.talkQuestions.length
+    ? `
+  <section class="page talk">
+    <h2>${labels.talk}</h2>
+    <ol>${book.talkQuestions.map((q) => `<li>${escapeHtml(q)}</li>`).join('')}</ol>
+  </section>`
+    : '';
+
   return `<!doctype html>
 <html lang="${book.language}">
 <head>
@@ -80,6 +98,11 @@ html, body { font-family: 'Nunito', sans-serif; color: #2b2118; background: #fff
 .story .text p { font-size: 16pt; line-height: 1.45; }
 .story .folio { position: absolute; bottom: 6mm; right: 10mm; font-size: 9pt; color: #b3a493; }
 
+.talk { padding: 24mm 22mm; background: #fffaf3; }
+.talk h2 { font-size: 22pt; font-weight: 800; margin-bottom: 10mm; }
+.talk ol { padding-left: 8mm; }
+.talk li { font-size: 15pt; line-height: 1.4; margin-bottom: 6mm; }
+
 .end { display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 6mm; text-align: center; background: #fdf1e2; }
 .end h2 { font-size: 30pt; font-weight: 800; }
@@ -92,7 +115,7 @@ html, body { font-family: 'Nunito', sans-serif; color: #2b2118; background: #fff
     <h1>${escapeHtml(book.title)}</h1>
     <p class="for">${escapeHtml(labels.madeFor(book.childName))}</p>
   </section>
-  ${pages}
+  ${pages}${talk}
   <section class="page end">
     <h2>${labels.end}</h2>
     <p class="made">WishBook · Powered by Meta Muse models</p>

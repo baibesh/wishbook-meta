@@ -1,9 +1,16 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Book as BookRow, BookStatus, Prisma } from '@prisma/client';
-import { progressFor, type Book, type ChildProfile } from '@wishbook/shared';
+import {
+  defaultMethodology,
+  progressFor,
+  type Book,
+  type CreateBookInput,
+  type MethodologySlug,
+} from '@wishbook/shared';
 import { basename } from 'node:path';
 import { MODEL_GATEWAY, type ModelGateway } from '../meta/model-gateway';
+import type { StoryBrief } from '../meta/prompts';
 import { PdfService } from '../pdf/pdf.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
@@ -35,15 +42,25 @@ export class BooksService {
   }
 
   async create(
-    child: ChildProfile,
+    input: CreateBookInput,
     clientKey: string,
     demo: boolean,
   ): Promise<Book> {
+    const { child, theme } = input;
+    const methodology = input.methodology ?? defaultMethodology(child.age);
     const row = await this.prisma.book.create({
-      data: { child, language: child.language, clientKey, demo },
+      data: {
+        child,
+        language: child.language,
+        methodology,
+        theme,
+        clientKey,
+        demo,
+      },
     });
+    const brief = { child, pageCount: this.pageCount, methodology, theme };
     // Generation runs in the background; the client polls GET /books/:id.
-    void this.generate(row.id, child).catch((error: unknown) =>
+    void this.generate(row.id, brief).catch((error: unknown) =>
       this.fail(row.id, error),
     );
     return this.toDto(row);
@@ -55,14 +72,12 @@ export class BooksService {
     return this.toDto(row);
   }
 
-  private async generate(id: string, child: ChildProfile): Promise<void> {
+  private async generate(id: string, brief: StoryBrief): Promise<void> {
+    const { child } = brief;
     let costUsd = 0;
 
     await this.stage(id, 'story');
-    const { story, costUsd: storyCost } = await this.models.writeStory(
-      child,
-      this.pageCount,
-    );
+    const { story, costUsd: storyCost } = await this.models.writeStory(brief);
     costUsd += storyCost;
     const pages: StoredPage[] = story.pages.map((p) => ({
       page: p.page,
@@ -74,6 +89,7 @@ export class BooksService {
       title: story.title,
       heroDescription: story.hero_description,
       pages: json(pages),
+      talkQuestions: story.talk_questions,
       costUsd,
     });
 
@@ -144,6 +160,7 @@ export class BooksService {
         text: p.text,
         image: local(p.imagePath),
       })),
+      talkQuestions: story.talk_questions,
     });
     await this.update(id, 'done', { pdfPath, progress: 100 });
     this.logger.log(
@@ -184,6 +201,8 @@ export class BooksService {
       status: row.status,
       progress: row.progress,
       title: row.title,
+      methodology: row.methodology as MethodologySlug,
+      talkQuestions: row.talkQuestions as string[],
       heroImageUrl: this.storage.url(row.heroImagePath),
       pages: pages.map((p) => ({
         page: p.page,

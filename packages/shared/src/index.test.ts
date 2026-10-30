@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   ChildProfileSchema,
+  CreateBookSchema,
+  METHODOLOGIES,
+  ageBand,
+  defaultMethodology,
+  fitsAge,
   CreateOrderSchema,
   StorySchema,
   orderPrice,
@@ -66,5 +71,36 @@ describe("orders", () => {
     expect(orderStatusAt(0, 1000)).toBe("paid");
     expect(orderStatusAt(2500, 1000)).toBe("shipped");
     expect(orderStatusAt(99_000, 1000)).toBe("delivered");
+  });
+});
+
+describe("methodologies", () => {
+  const child = { name: "Арман", age: 3, gender: "boy", interests: ["машинки"], city: "Астана" };
+
+  it("covers every age from 2 to 10 with a default that fits", () => {
+    for (let age = 2; age <= 10; age++) {
+      expect(fitsAge(defaultMethodology(age), age)).toBe(true);
+      expect(ageBand(age).ageMin).toBeLessThanOrEqual(age);
+    }
+  });
+
+  it("has unique slugs and at least three beats each", () => {
+    expect(new Set(METHODOLOGIES.map((m) => m.slug)).size).toBe(METHODOLOGIES.length);
+    for (const m of METHODOLOGIES) expect(m.structure.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("rejects a method meant for older children", () => {
+    const result = CreateBookSchema.safeParse({ child, methodology: "growth-mindset" });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0].path).toEqual(["methodology"]);
+  });
+
+  it("accepts a fitting method with a theme", () => {
+    const result = CreateBookSchema.parse({
+      child,
+      methodology: "social-story",
+      theme: "первый день в детском саду",
+    });
+    expect(result.methodology).toBe("social-story");
   });
 });

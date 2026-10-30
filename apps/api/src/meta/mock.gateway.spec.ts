@@ -1,8 +1,14 @@
-import { StorySchema } from '@wishbook/shared';
+import { StorySchema, type ChildProfile } from '@wishbook/shared';
 import { MockGateway } from './mock.gateway';
 import { heroPrompt, pagePrompt, storyPrompt } from './prompts';
 
-const child = {
+const brief = (overrides: Partial<ChildProfile> = {}, pageCount = 4) => ({
+  child: { ...child, ...overrides },
+  pageCount,
+  methodology: 'growth-mindset' as const,
+});
+
+const child: ChildProfile = {
   name: 'Айгерим',
   age: 6,
   gender: 'girl' as const,
@@ -16,13 +22,13 @@ describe('MockGateway', () => {
   const gateway = new MockGateway(0);
 
   it('writes a valid story with the requested page count', async () => {
-    const { story } = await gateway.writeStory(child, 4);
+    const { story } = await gateway.writeStory(brief());
     expect(StorySchema.parse(story).pages).toHaveLength(4);
     expect(story.title).toContain('Айгерим');
   });
 
   it('writes in Kazakh when asked', async () => {
-    const { story } = await gateway.writeStory({ ...child, language: 'kk' }, 1);
+    const { story } = await gateway.writeStory(brief({ language: 'kk' }, 1));
     expect(story.title).toContain('сапар');
   });
 
@@ -36,7 +42,7 @@ describe('MockGateway', () => {
 
 describe('prompts', () => {
   it('puts every profile detail into the story prompt', () => {
-    const prompt = storyPrompt(child, 10);
+    const prompt = storyPrompt(brief({}, 10));
     for (const part of [
       '10-page',
       'Russian',
@@ -47,6 +53,19 @@ describe('prompts', () => {
     ]) {
       expect(prompt).toContain(part);
     }
+  });
+
+  it('puts the method beats, the age norms and the theme into the story prompt', () => {
+    const prompt = storyPrompt({
+      ...brief({ age: 3 }),
+      methodology: 'social-story',
+      theme: 'первый день в детском саду',
+    });
+    expect(prompt).toContain('Social Stories by Carol Gray');
+    expect(prompt).toContain('step by step');
+    expect(prompt).toContain('at most 25 words');
+    expect(prompt).toContain('первый день в детском саду');
+    expect(prompt).toContain('finish a sentence');
   });
 
   it('repeats the art style in hero and page prompts', () => {

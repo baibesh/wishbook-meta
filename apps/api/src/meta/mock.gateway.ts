@@ -1,9 +1,10 @@
-import type { ChildProfile, Story } from '@wishbook/shared';
+import type { Story } from '@wishbook/shared';
 import type {
   GeneratedImage,
   GeneratedStory,
   ModelGateway,
 } from './model-gateway';
+import type { StoryBrief } from './prompts';
 
 const COLORS = [
   '#F9D9A8',
@@ -34,10 +35,7 @@ function placeholder(label: string, color: string): Buffer {
 export class MockGateway implements ModelGateway {
   constructor(private readonly delayMs: number) {}
 
-  async writeStory(
-    child: ChildProfile,
-    pageCount: number,
-  ): Promise<GeneratedStory> {
+  async writeStory({ child, pageCount }: StoryBrief): Promise<GeneratedStory> {
     await sleep(this.delayMs);
     const kk = child.language === 'kk';
     const story: Story = {
@@ -53,6 +51,17 @@ export class MockGateway implements ModelGateway {
           : `Страница ${i + 1}. ${child.name} отправляется в новое приключение в городе ${child.city}.`,
         scene_prompt: `the hero exploring ${child.city}, scene ${i + 1}`,
       })),
+      talk_questions: kk
+        ? [
+            'Кітапта не болды?',
+            'Суретте кімді көріп тұрсың?',
+            'Сен не істер едің?',
+          ]
+        : [
+            'Что случилось в книге?',
+            'Кого ты видишь на картинке?',
+            'А что бы сделал ты?',
+          ],
     };
     return { story, costUsd: 0 };
   }

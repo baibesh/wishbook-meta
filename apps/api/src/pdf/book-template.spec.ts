@@ -9,14 +9,25 @@ const book = {
     { page: 1, text: 'Бірінші бет.', image: 'page-1.png' },
     { page: 2, text: 'Екінші бет.', image: null },
   ],
+  talkQuestions: ['Кітапта не болды?', 'Сен не істер едің?'],
   fontCss: '@font-face{}',
 };
 
 describe('renderBookHtml', () => {
   const html = renderBookHtml(book);
 
-  it('lays out a cover, one page per story page and an end page', () => {
-    expect(html.match(/class="page /g)).toHaveLength(4);
+  it('lays out a cover, the story pages, a talk page and an end page', () => {
+    expect(html.match(/class="page /g)).toHaveLength(5);
+  });
+
+  it('prints the talk questions in the book language', () => {
+    expect(html).toContain('Әңгімелесейік');
+    expect(html).toContain('<li>Сен не істер едің?</li>');
+  });
+
+  it('leaves the talk page out when there are no questions', () => {
+    const plain = renderBookHtml({ ...book, talkQuestions: [] });
+    expect(plain).not.toContain('class="page talk"');
   });
 
   it('escapes story text', () => {

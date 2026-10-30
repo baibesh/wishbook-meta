@@ -1,4 +1,5 @@
-import type { ChildProfile, Story } from '@wishbook/shared';
+import type { Story } from '@wishbook/shared';
+import type { StoryBrief } from './prompts';
 
 export const MODEL_GATEWAY = Symbol('MODEL_GATEWAY');
 
@@ -20,7 +21,7 @@ export interface GeneratedStory {
  * Meta Model API; the mock one returns canned output so tests and CI cost nothing.
  */
 export interface ModelGateway {
-  writeStory(child: ChildProfile, pageCount: number): Promise<GeneratedStory>;
+  writeStory(brief: StoryBrief): Promise<GeneratedStory>;
   /** The hero character sheet every page is anchored on. */
   drawHero(heroDescription: string): Promise<GeneratedImage>;
   /** The pet character sheet, chained from the hero sheet so both stay in the conversation. */

@@ -49,7 +49,7 @@ describe('BooksService', () => {
     const unhandled = jest.fn();
     process.on('unhandledRejection', unhandled);
 
-    await service.create(child, 'k', false);
+    await service.create({ child }, 'k', false);
     await new Promise((resolve) => setTimeout(resolve, 20));
 
     process.off('unhandledRejection', unhandled);

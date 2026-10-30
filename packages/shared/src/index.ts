@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { MethodologySlugSchema, fitsAge, methodology } from "./methodologies";
+
+export * from "./methodologies";
 
 export const LANGUAGES = ["ru", "kk"] as const;
 export const LanguageSchema = z.enum(LANGUAGES);
@@ -16,7 +19,23 @@ export const ChildProfileSchema = z.object({
 });
 export type ChildProfile = z.infer<typeof ChildProfileSchema>;
 
-export const CreateBookSchema = z.object({ child: ChildProfileSchema });
+export const CreateBookSchema = z
+  .object({
+    child: ChildProfileSchema,
+    /** Story method; left out, one is picked by age. */
+    methodology: MethodologySlugSchema.optional(),
+    /** What the book is about, in the parent's words ("first day at kindergarten"). */
+    theme: z.string().trim().min(3).max(200).optional(),
+  })
+  .superRefine((b, ctx) => {
+    if (!b.methodology || fitsAge(b.methodology, b.child.age)) return;
+    const m = methodology(b.methodology);
+    ctx.addIssue({
+      code: "custom",
+      path: ["methodology"],
+      message: `«${m.name}» подходит для возраста ${m.ageMin}–${m.ageMax} лет`,
+    });
+  });
 export type CreateBookInput = z.infer<typeof CreateBookSchema>;
 
 /** One page of the story as Muse Spark returns it. */
@@ -33,6 +52,8 @@ export const StorySchema = z.object({
   /** The pet's look, or null when the child has no pet. */
   pet_description: z.string().min(1).nullable().default(null),
   pages: z.array(StoryPageSchema).min(1),
+  /** Questions for the parent to ask while reading together, in the book's language. */
+  talk_questions: z.array(z.string().min(1)).min(3).max(5),
 });
 export type Story = z.infer<typeof StorySchema>;
 
@@ -54,6 +75,8 @@ export const BookSchema = z.object({
   status: BookStatusSchema,
   progress: z.number().min(0).max(100),
   title: z.string().nullable(),
+  methodology: MethodologySlugSchema,
+  talkQuestions: z.array(z.string()),
   heroImageUrl: z.string().nullable(),
   pages: z.array(BookPageSchema),
   pdfUrl: z.string().nullable(),

@@ -24,6 +24,10 @@ model Book {
   /// The child profile the parent submitted (ChildProfile in @wishbook/shared).
   child          Json
   language       String
+  /// Story method slug (METHODOLOGIES in @wishbook/shared).
+  methodology    String     @default("adventure-quest")
+  /// What the parent asked the book to be about, if anything.
+  theme          String?
   title          String?
   heroDescription String?
   /// Muse Image response id of the hero character sheet; pages chain from it.
@@ -32,6 +36,8 @@ model Book {
   petImagePath   String?
   /// BookPage[]: { page, text, scenePrompt, imagePath }
   pages          Json       @default("[]")
+  /// Questions for the parent to ask after reading (dialogic reading).
+  talkQuestions  Json       @default("[]")
   pdfPath        String?
   error          String?
   /// Model spend for this book, in US dollars.

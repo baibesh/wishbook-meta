@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { COVER_PRICE_KZT, type BookStatus } from "@wishbook/shared";
-import { AlertTriangle, Download, Printer, Sparkles } from "lucide-react";
+import { COVER_PRICE_KZT, methodology, type BookStatus } from "@wishbook/shared";
+import { AlertTriangle, Download, MessageCircleQuestion, Printer, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";
 import { getBook } from "@/lib/api";
@@ -46,9 +46,14 @@ export function BookView({ params }: { params: Promise<{ id: string }> }) {
       </section>
 
       {book.title && (
-        <h1 data-testid="book-title" className="text-3xl font-extrabold">
-          {book.title}
-        </h1>
+        <div className="flex flex-col gap-1">
+          <h1 data-testid="book-title" className="text-3xl font-extrabold">
+            {book.title}
+          </h1>
+          <p data-testid="book-methodology" className="text-muted">
+            Методика: {methodology(book.methodology).name}
+          </p>
+        </div>
       )}
 
       {book.pdfUrl && (
@@ -91,6 +96,20 @@ export function BookView({ params }: { params: Promise<{ id: string }> }) {
           </li>
         ))}
       </ol>
+
+      {book.talkQuestions.length > 0 && (
+        <section data-testid="talk-questions" className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-6">
+          <h2 className="flex items-center gap-2 text-xl font-bold">
+            <MessageCircleQuestion className="size-5 text-accent" />
+            Поговорите после чтения
+          </h2>
+          <ol className="list-decimal space-y-2 pl-6">
+            {book.talkQuestions.map((question) => (
+              <li key={question}>{question}</li>
+            ))}
+          </ol>
+        </section>
+      )}
     </div>
   );
 }
