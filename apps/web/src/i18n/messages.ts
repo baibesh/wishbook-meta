@@ -140,6 +140,9 @@ const ru = {
 
   "country.KZ": "Казахстан",
   "country.other": "Другая страна",
+
+  "notFound.text": "Такой страницы нет. Может, она ещё не написана?",
+  "notFound.cta": "В каталог",
 } as const;
 
 export type MessageKey = keyof typeof ru;
@@ -282,6 +285,9 @@ const kk: Messages = {
 
   "country.KZ": "Қазақстан",
   "country.other": "Басқа ел",
+
+  "notFound.text": "Мұндай бет жоқ. Мүмкін, ол әлі жазылмаған шығар?",
+  "notFound.cta": "Каталогқа",
 };
 
 const en: Messages = {
@@ -421,6 +427,9 @@ const en: Messages = {
 
   "country.KZ": "Kazakhstan",
   "country.other": "Another country",
+
+  "notFound.text": "This page doesn't exist. Maybe it hasn't been written yet?",
+  "notFound.cta": "Go to the catalog",
 };
 
 export const MESSAGES: Record<UiLocale, Messages> = { ru, kk, en };

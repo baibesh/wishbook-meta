@@ -1,0 +1,18 @@
+import Link from "next/link";
+import { Logo } from "@/components/logo";
+import { T } from "@/components/t";
+
+export default function NotFound() {
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-6 text-center">
+      <Logo />
+      <p className="text-6xl font-extrabold text-accent">404</p>
+      <p className="text-lg text-muted">
+        <T k="notFound.text" />
+      </p>
+      <Link href="/" className="rounded-xl bg-accent px-5 py-3 font-bold text-accent-foreground">
+        <T k="notFound.cta" />
+      </Link>
+    </main>
+  );
+}

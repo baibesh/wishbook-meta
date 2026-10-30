@@ -9,9 +9,21 @@ const nunito = Nunito({
   subsets: ["latin", "cyrillic", "cyrillic-ext"],
 });
 
+const description =
+  "Персональная детская книга, где ваш ребёнок — главный герой: сказка по детской методике и иллюстрации на казахском, русском или английском. Powered by Meta Muse models.";
+
 export const metadata: Metadata = {
-  title: "Fabulka — книга, где ваш ребёнок главный герой",
-  description: "Персонализированные детские книги: сказка и иллюстрации с вашим ребёнком. Powered by Meta Muse models.",
+  metadataBase: new URL(process.env.SITE_URL ?? "https://fabulka.com"),
+  title: { default: "Fabulka — книга, где ваш ребёнок главный герой", template: "%s · Fabulka" },
+  description,
+  openGraph: {
+    type: "website",
+    siteName: "Fabulka",
+    title: "Fabulka — книга, где ваш ребёнок главный герой",
+    description,
+    images: [{ url: "/og.jpg", width: 1200, height: 630 }],
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
