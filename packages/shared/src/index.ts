@@ -39,6 +39,17 @@ export const TemplateQuestionSchema = z.object({
 });
 export type TemplateQuestion = z.infer<typeof TemplateQuestionSchema>;
 
+/** A catalog book's text in another interface language; questions by key. */
+export const TemplateTranslationSchema = z.object({
+  title: z.string(),
+  summary: z.string(),
+  questions: z.record(
+    z.string(),
+    z.object({ label: z.string(), placeholder: z.string().optional(), options: z.array(z.string()).optional() }),
+  ),
+});
+export type TemplateTranslation = z.infer<typeof TemplateTranslationSchema>;
+
 /** A catalog card. */
 export const TemplateSummarySchema = z.object({
   slug: z.string(),
@@ -210,6 +221,8 @@ export const ToyUploadResultSchema = z.object({ upload: z.string() });
 
 /** Price of one more generated (digital) book once the free ones are used. */
 export const BOOK_PRICE_KZT = 2900;
+/** The same book outside Kazakhstan, where only the PDF is sold. */
+export const BOOK_PRICE_USD = 5.9;
 
 export const QuotaSchema = z.object({
   /** Books this visitor has generated (failed ones are not counted). */
@@ -325,6 +338,8 @@ export const AdminStatsSchema = z.object({
     purchasesKzt: z.number().int(),
   }),
   countries: z.array(z.object({ country: z.string(), books: z.number().int() })),
+  /** Requests for a printed book from countries without a print partner. */
+  printInterest: z.array(z.object({ country: z.string().nullable(), requests: z.number().int() })),
   templates: z.array(z.object({ slug: z.string().nullable(), title: z.string(), books: z.number().int() })),
 });
 export type AdminStats = z.infer<typeof AdminStatsSchema>;

@@ -3,6 +3,7 @@
 import { BOOK_LABELS, type Book } from "@fabulka/shared";
 import { ChevronLeft, ChevronRight, Maximize2, Minimize2 } from "lucide-react";
 import { motion } from "motion/react";
+import { useI18n } from "@/i18n/i18n";
 import { type ReactNode, useEffect, useEffectEvent, useRef, useState, useSyncExternalStore } from "react";
 
 /** One page. Pages keep paper colors in dark mode: it is a printed book, not app chrome. */
@@ -97,6 +98,7 @@ const FLIP_EASE = [0.45, 0, 0.25, 1] as const;
  * so the page is idle between turns. Arrow keys, clicks on either half and swipes turn pages.
  */
 export function BookReader({ book }: { book: Book }) {
+  const { t } = useI18n();
   const pages = bookPages(book);
   const wide = useSyncExternalStore(subscribeWide, () => window.matchMedia(wideQuery).matches, () => true);
   // Wide: view k shows pages 2k-1 (left) and 2k (right); view 0 is the cover alone.
@@ -247,7 +249,7 @@ export function BookReader({ book }: { book: Book }) {
       </div>
 
       <div className="flex items-center gap-3">
-        <button type="button" aria-label="Назад" className={control} onClick={() => go(-1)} disabled={view === 0}>
+        <button type="button" aria-label={t("reader.prev")} className={control} onClick={() => go(-1)} disabled={view === 0}>
           <ChevronLeft className="size-5" />
         </button>
         <span data-testid="reader-position" className="min-w-24 text-center text-sm text-muted">
@@ -255,7 +257,7 @@ export function BookReader({ book }: { book: Book }) {
         </span>
         <button
           type="button"
-          aria-label="Вперёд"
+          aria-label={t("reader.next")}
           data-testid="reader-next"
           className={control}
           onClick={() => go(1)}
@@ -263,7 +265,7 @@ export function BookReader({ book }: { book: Book }) {
         >
           <ChevronRight className="size-5" />
         </button>
-        <button type="button" aria-label="На весь экран" className={control} onClick={toggleFullscreen}>
+        <button type="button" aria-label={t("reader.fullscreen")} className={control} onClick={toggleFullscreen}>
           {fullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
         </button>
       </div>

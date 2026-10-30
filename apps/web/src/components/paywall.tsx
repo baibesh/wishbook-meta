@@ -1,15 +1,18 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { BOOK_PRICE_KZT } from "@fabulka/shared";
+import { BOOK_PRICE_KZT, BOOK_PRICE_USD } from "@fabulka/shared";
 import { KeyRound, Loader2, ShoppingBag } from "lucide-react";
 import { useState } from "react";
 import { buyBook, setDemoCode } from "@/lib/api";
-import { formatKzt } from "@/lib/format";
+import { useI18n } from "@/i18n/i18n";
+import { formatKzt, formatUsd } from "@/lib/format";
 
 /** Shown when the free books are used up: the demo checkout, or a demo code for judges. */
 export function Paywall({ onUnlocked }: { onUnlocked: () => void }) {
   const queryClient = useQueryClient();
+  const { t, country } = useI18n();
+  const price = country === "KZ" ? formatKzt(BOOK_PRICE_KZT) : formatUsd(BOOK_PRICE_USD);
   const [code, setCode] = useState("");
   const unlocked = () => {
     void queryClient.invalidateQueries({ queryKey: ["quota"] });
@@ -20,8 +23,8 @@ export function Paywall({ onUnlocked }: { onUnlocked: () => void }) {
   return (
     <section data-testid="paywall" className="flex flex-col gap-4 rounded-2xl border-2 border-accent bg-card p-5 sm:col-span-2">
       <div>
-        <h2 className="text-lg font-extrabold">Бесплатные книги закончились</h2>
-        <p className="text-muted">Каждая следующая книга — {formatKzt(BOOK_PRICE_KZT)}. PDF сразу, печать — по желанию.</p>
+        <h2 className="text-lg font-extrabold">{t("paywall.title")}</h2>
+        <p className="text-muted">{t("paywall.text", { price })}</p>
       </div>
       <button
         type="button"
@@ -31,9 +34,9 @@ export function Paywall({ onUnlocked }: { onUnlocked: () => void }) {
         className="flex items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 font-bold text-accent-foreground disabled:opacity-60"
       >
         {buy.isPending ? <Loader2 className="size-5 animate-spin" /> : <ShoppingBag className="size-5" />}
-        Купить книгу — {formatKzt(BOOK_PRICE_KZT)}
+        {t("paywall.buy", { price })}
       </button>
-      <p className="text-xs text-muted">Демо: оплата не списывается.</p>
+      <p className="text-xs text-muted">{t("paywall.demo")}</p>
       <form
         className="flex gap-2"
         onSubmit={(event) => {
@@ -47,11 +50,11 @@ export function Paywall({ onUnlocked }: { onUnlocked: () => void }) {
           data-testid="demo-code"
           value={code}
           onChange={(event) => setCode(event.target.value)}
-          placeholder="Демо-код"
+          placeholder={t("paywall.code")}
           className="w-full rounded-xl border border-border bg-background px-4 py-2"
         />
         <button type="submit" data-testid="apply-demo-code" className="flex items-center gap-1 rounded-xl border border-border px-4 font-semibold">
-          <KeyRound className="size-4" /> Применить
+          <KeyRound className="size-4" /> {t("paywall.apply")}
         </button>
       </form>
     </section>

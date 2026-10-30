@@ -10,6 +10,7 @@ env:
   childName: "Айгерим ${Date.now()}"
 commands:
   - launchApp: { appId: "${WEB}", clearState: true }
+  - openLink: "${WEB}/?lang=ru"
   - tapOn: { testId: create-own }
   - tapOn: { testId: child-name }
   - inputText: "${childName}"

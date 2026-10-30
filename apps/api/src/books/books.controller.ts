@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
   HttpException,
   HttpStatus,
   Param,
@@ -58,6 +59,15 @@ export class BooksController {
   @Get()
   mine(@CurrentClient() client: Client): Promise<MyBook[]> {
     return this.books.listMine(client.key);
+  }
+
+  @Post(':id/print-interest')
+  @HttpCode(204)
+  printInterest(
+    @Param('id') id: string,
+    @CurrentClient() client: Client,
+  ): Promise<void> {
+    return this.books.recordPrintInterest(id, this.geo.country(client.ip));
   }
 
   @Get(':id')

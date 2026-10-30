@@ -4,6 +4,7 @@ import type { PdfService } from '../pdf/pdf.service';
 import type { PrismaService } from '../prisma/prisma.service';
 import type { StorageService } from '../storage/storage.service';
 import { SEED_TEMPLATES } from '../templates/catalog';
+import { SEED_TRANSLATIONS } from '../templates/catalog-i18n';
 import type { TemplatesService } from '../templates/templates.service';
 import { BooksService, petInScene, toyInScene } from './books.service';
 
@@ -26,6 +27,7 @@ function makeService(prisma: unknown, models = new MockGateway(0)) {
       ...kindergarten,
       stylePrompt: null,
       published: true,
+      translations: SEED_TRANSLATIONS[kindergarten.slug],
     }),
   } as unknown as TemplatesService;
   return new BooksService(
@@ -129,6 +131,32 @@ describe('BooksService', () => {
         { question: 'Какую игрушку возьмёт с собой?', answer: 'зайка' },
         { question: 'Как вы прощаетесь утром?', answer: 'машем в окно' },
       ]);
+    });
+
+    it('accepts a choice made in the Kazakh interface', async () => {
+      const models = new MockGateway(0);
+      jest.spyOn(models, 'writeStory').mockRejectedValue(new Error('stop'));
+      const service = makeService(
+        {
+          book: {
+            create: jest.fn().mockResolvedValue(row),
+            update: jest.fn().mockResolvedValue(row),
+            updateMany: jest.fn(),
+          },
+        },
+        models,
+      );
+      await expect(
+        service.create(
+          {
+            child,
+            template: kindergarten.slug,
+            answers: { toy: 'қоян', goodbye: 'құшақтасамыз' },
+          },
+          'k',
+          false,
+        ),
+      ).resolves.toBeDefined();
     });
 
     it('refuses a child outside its age range', async () => {

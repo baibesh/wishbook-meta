@@ -1,9 +1,32 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { countryChosen, setCountry, setLocale, useI18n } from "@/i18n/i18n";
+import { UI_LOCALES, type UiLocale } from "@/i18n/messages";
+import { whereAmI } from "@/lib/api";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [client] = useState(() => new QueryClient());
+  const { locale } = useI18n();
+
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
+
+  // A link can choose the language: ?lang=kk, ?lang=en (and it sticks, like the header switch).
+  useEffect(() => {
+    const lang = new URLSearchParams(window.location.search).get("lang");
+    if (lang && (UI_LOCALES as readonly string[]).includes(lang)) setLocale(lang as UiLocale);
+  }, []);
+
+  // First visit: preselect the country from the visitor's address; the header switch overrides it.
+  useEffect(() => {
+    if (countryChosen()) return;
+    whereAmI()
+      .then((country) => setCountry(country && country !== "KZ" ? "other" : "KZ"))
+      .catch(() => undefined);
+  }, []);
+
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }

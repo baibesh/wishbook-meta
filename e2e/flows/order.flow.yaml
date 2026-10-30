@@ -22,7 +22,8 @@ before:
       retryUntil: { status: 200, json: { "$.status": done } }
       timeout: 30000
 commands:
-  - launchApp: { appId: "${WEB}/books/${bookId}", clearState: true }
+  - launchApp: { appId: "${WEB}", clearState: true }
+  - openLink: "${WEB}/books/${bookId}?lang=ru"
   - tapOn: { testId: order-print }
   - waitForVisible: { testId: order-form }
   - tapOn: { testId: cover-hard }

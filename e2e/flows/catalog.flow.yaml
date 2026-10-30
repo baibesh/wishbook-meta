@@ -10,6 +10,7 @@ env:
   childName: "Каталог ${Date.now()}"
 commands:
   - launchApp: { appId: "${WEB}", clearState: true }
+  - openLink: "${WEB}/?lang=ru"
   - waitForVisible: { testId: catalog }
   - assertVisible: "Тайна снежного барса"
   - tapOn: { testId: template-first-day-kindergarten }

@@ -3,24 +3,24 @@
 import { useQuery } from "@tanstack/react-query";
 import { BookOpen } from "lucide-react";
 import Link from "next/link";
+import { useI18n } from "@/i18n/i18n";
 import { listMyBooks } from "@/lib/api";
 import { ErrorNotice } from "./error-notice";
 
-const STATUS: Record<string, string> = { done: "Готова", failed: "Не получилась" };
-
 export function MyBooks() {
+  const { t, locale } = useI18n();
   const books = useQuery({ queryKey: ["my-books"], queryFn: listMyBooks, refetchInterval: 5000 });
 
   if (books.error) return <ErrorNotice error={books.error} />;
-  if (!books.data) return <p className="text-muted">Загружаем…</p>;
+  if (!books.data) return <p className="text-muted">{t("common.loading")}</p>;
   if (!books.data.length) {
     return (
       <div data-testid="my-books-empty" className="flex flex-col items-center gap-4 rounded-3xl border border-dashed border-border p-10 text-center">
         <BookOpen className="size-10 text-accent" />
-        <p className="text-lg font-bold">Здесь появятся ваши книги</p>
-        <p className="text-muted">Книги хранятся в этом браузере. Начните с каталога или придумайте свою историю.</p>
+        <p className="text-lg font-bold">{t("my.empty.title")}</p>
+        <p className="text-muted">{t("my.empty.text")}</p>
         <Link href="/" className="rounded-xl bg-accent px-5 py-3 font-bold text-accent-foreground">
-          Выбрать книгу
+          {t("my.empty.cta")}
         </Link>
       </div>
     );
@@ -38,8 +38,8 @@ export function MyBooks() {
             )}
             <div className="flex min-w-0 flex-col gap-1">
               <span className="truncate font-bold">{book.title ?? book.childName}</span>
-              <span className="text-sm text-muted">{STATUS[book.status] ?? "Создаётся…"}</span>
-              <span className="text-xs text-muted">{new Date(book.createdAt).toLocaleDateString("ru-RU")}</span>
+              <span className="text-sm text-muted">{book.status === "done" ? t("my.status.done") : book.status === "failed" ? t("my.status.failed") : t("my.status.working")}</span>
+              <span className="text-xs text-muted">{new Date(book.createdAt).toLocaleDateString(locale === "kk" ? "kk-KZ" : locale)}</span>
             </div>
           </Link>
         </li>

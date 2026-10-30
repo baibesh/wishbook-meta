@@ -1,0 +1,50 @@
+# Interface language and country: the switches in the header, the catalog in Kazakh and English,
+# and print offered only in Kazakhstan.
+appId: ${WEB}
+tags: [smoke, i18n]
+db: ${DATABASE_URL}
+params:
+  DATABASE_URL:
+    required: true
+    description: Postgres DSN of the e2e database (e2e/.env)
+env:
+  childName: "Lang ${Date.now()}"
+commands:
+  - launchApp: { appId: "${WEB}", clearState: true }
+  - openLink: "${WEB}/?lang=ru"
+  - waitForVisible: "Книга, где ваш ребёнок — главный герой"
+
+  - selectOption: { testId: ui-language, option: "ҚАЗ · Қазақша" }
+  - waitForVisible: "Балаңыз басты кейіпкер болатын кітап"
+  - assertVisible: "Ақ барыстың құпиясы"
+  - selectOption: { testId: ui-language, option: "EN · English" }
+  - waitForVisible: "A book where your child is the hero"
+  - assertVisible: "The Secret of the Snow Leopard"
+
+  # A book made while the interface is in English defaults to an English book.
+  - tapOn: { testId: nav-create }
+  - tapOn: { testId: child-name }
+  - inputText: "${childName}"
+  - tapOn: { testId: child-interests }
+  - inputText: "space"
+  - tapOn: { testId: create-book }
+  - waitForVisible: { text: "The book is ready", timeout: 30000 }
+  - assertVisible: { contains: "${childName} and the Starry Journey" }
+  - assertVisible: { testId: order-print }
+
+  # Outside Kazakhstan the PDF stays, print turns into a request.
+  - selectOption: { testId: ui-country, option: "Another country" }
+  - waitForVisible: { testId: want-print }
+  - assertNotVisible: { testId: order-print }
+  - tapOn: { testId: want-print }
+  - waitForVisible: { testId: want-print-thanks }
+  - sql:
+      query: >-
+        select count(*)::int as requests from "PrintInterest" p join "Book" b on b.id = p."bookId"
+        where b.child->>'name' = $1
+      params: ["${childName}"]
+      readOnly: true
+      assert:
+        first: { requests: 1 }
+after:
+  - sql: { exec: "delete from \"Book\" where child->>'name' = $1", params: ["${childName}"] }

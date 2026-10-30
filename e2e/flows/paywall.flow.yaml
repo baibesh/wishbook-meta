@@ -10,6 +10,7 @@ env:
   childName: "Пейвол ${Date.now()}"
 before:
   - launchApp: { appId: "${WEB}", clearState: true }
+  - openLink: "${WEB}/?lang=ru"
   - openLink: "${WEB}/create"
 commands:
   - waitForVisible: { text: "Бесплатных книг осталось: 3 из 3" }

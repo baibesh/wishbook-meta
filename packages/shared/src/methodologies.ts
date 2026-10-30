@@ -222,3 +222,68 @@ export function talkQuestionKinds(age: number): string[] {
         "connect the story to the child's own life",
       ];
 }
+
+/** Method names and summaries for the Kazakh and English interface; Russian lives on the method. */
+const METHOD_TEXT: Record<"kk" | "en", Record<MethodologySlug, { name: string; summary: string }>> = {
+  kk: {
+    "toddler-routine": {
+      name: "Кішкентайларға арналған қайталау мен ырғақ",
+      summary: "Қайталанатын сөз тіркесі, дыбыстар және кішкентай мейірімді тосынсыйы бар таныс күн.",
+    },
+    "social-story": {
+      name: "Әлеуметтік әңгіме",
+      summary: "Жаңа жағдайға сабырмен дайындайды: балабақша, дәрігер, ұшақ, көшу, інісі не сіңлісі.",
+    },
+    "sel-emotions": {
+      name: "Эмоциялық интеллект",
+      summary: "Кейіпкер сезімдерін байқап, атауды, сабырға келуді және басқаларды түсінуді үйренеді.",
+    },
+    "growth-mindset": {
+      name: "Даму ойлауы",
+      summary: "Шықпады — әзірге. Кейіпкер байқап, қателесіп, жол іздейді және еңбекпен мақсатына жетеді.",
+    },
+    "mirrors-windows": {
+      name: "Айналар мен терезелер",
+      summary: "Бала кітаптан өз қаласы мен мәдениетін таниды және басқа адамдардың әлемін ашады.",
+    },
+    "adventure-quest": {
+      name: "Шытырман оқиға",
+      summary: "Мейірімділік пен тапқырлық жеңетін, баланың қызығушылықтарына сай сиқырлы әлемге саяхат.",
+    },
+  },
+  en: {
+    "toddler-routine": {
+      name: "Rhythm and repetition for toddlers",
+      summary: "A familiar day with a repeating line, sounds to say along and a small, kind surprise.",
+    },
+    "social-story": {
+      name: "Social story",
+      summary: "Calmly prepares for something new: kindergarten, the doctor, a flight, a move, a new sibling.",
+    },
+    "sel-emotions": {
+      name: "Emotional intelligence",
+      summary: "The hero learns to notice and name feelings, calm down and understand others.",
+    },
+    "growth-mindset": {
+      name: "Growth mindset",
+      summary: "Can't do it — yet. The hero tries, makes mistakes, finds a way and gets there through effort.",
+    },
+    "mirrors-windows": {
+      name: "Mirrors and windows",
+      summary: "Children see their own city and culture in the book and discover the worlds of other people.",
+    },
+    "adventure-quest": {
+      name: "Adventure",
+      summary: "A journey to a magical place built on the child's interests, where kindness and wit win.",
+    },
+  },
+};
+
+/** A method's name and summary in the interface language. */
+export function methodologyText(slug: MethodologySlug, locale: "ru" | "kk" | "en"): { name: string; summary: string } {
+  if (locale === "ru") {
+    const m = methodology(slug);
+    return { name: m.name, summary: m.summary };
+  }
+  return METHOD_TEXT[locale][slug];
+}

@@ -9,6 +9,7 @@ import {
   type Book,
   type CreateBookInput,
   type CreateOrderInput,
+  type Language,
   type Order,
   type Quota,
   type Template,
@@ -93,12 +94,12 @@ export async function uploadToy(image: string): Promise<string> {
   return result.upload;
 }
 
-export async function listTemplates(): Promise<TemplateSummary[]> {
-  return TemplateSummarySchema.array().parse(await request("/api/templates"));
+export async function listTemplates(lang: Language): Promise<TemplateSummary[]> {
+  return TemplateSummarySchema.array().parse(await request(`/api/templates?lang=${lang}`));
 }
 
-export async function getTemplate(slug: string): Promise<Template> {
-  return TemplateSchema.parse(await request(`/api/templates/${encodeURIComponent(slug)}`));
+export async function getTemplate(slug: string, lang: Language): Promise<Template> {
+  return TemplateSchema.parse(await request(`/api/templates/${encodeURIComponent(slug)}?lang=${lang}`));
 }
 
 export async function listMyBooks() {
@@ -107,6 +108,17 @@ export async function listMyBooks() {
 
 export async function getBook(id: string): Promise<Book> {
   return BookSchema.parse(await request(`/api/books/${id}`));
+}
+
+/** The visitor's country by IP, or null when unknown (e.g. locally). */
+export async function whereAmI(): Promise<string | null> {
+  const body = (await request("/api/geo")) as { country: string | null };
+  return body.country;
+}
+
+/** Records that someone outside Kazakhstan wants this book printed. */
+export async function wantPrint(bookId: string) {
+  await request(`/api/books/${bookId}/print-interest`, { method: "POST" });
 }
 
 export async function getQuota(): Promise<Quota> {

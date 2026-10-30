@@ -1,31 +1,22 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { COVER_PRICE_KZT, methodology, type Book, type BookStatus } from "@fabulka/shared";
-import { AlertTriangle, Download, MessageCircleQuestion, Printer, Sparkles } from "lucide-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { COVER_PRICE_KZT, methodologyText, type Book, type BookStatus } from "@fabulka/shared";
+import { AlertTriangle, Check, Download, MessageCircleQuestion, Printer, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { use } from "react";
-import { getBook } from "@/lib/api";
+import { useI18n } from "@/i18n/i18n";
+import { getBook, wantPrint } from "@/lib/api";
 import { formatKzt } from "@/lib/format";
 import { BookReader } from "./book-reader";
 import { ErrorNotice } from "./error-notice";
-
-const STAGE_LABELS: Record<BookStatus, string> = {
-  queued: "В очереди",
-  toy: "Находим игрушку на фото",
-  story: "Пишем сказку",
-  hero: "Рисуем героя",
-  pages: "Рисуем страницы",
-  pdf: "Собираем книгу",
-  done: "Книга готова",
-  failed: "Ошибка",
-};
 
 const finished = (status: BookStatus | undefined) => status === "done" || status === "failed";
 
 export function BookView({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const { t, locale, country } = useI18n();
   const { data: book, error } = useQuery({
     queryKey: ["book", id],
     queryFn: () => getBook(id),
@@ -33,7 +24,7 @@ export function BookView({ params }: { params: Promise<{ id: string }> }) {
   });
 
   if (error) return <ErrorNotice error={error} />;
-  if (!book) return <p className="text-muted">Загружаем…</p>;
+  if (!book) return <p className="text-muted">{t("common.loading")}</p>;
   const done = book.status === "done";
 
   return (
@@ -41,7 +32,7 @@ export function BookView({ params }: { params: Promise<{ id: string }> }) {
       <section data-testid="book-status" data-status={book.status} className="flex flex-col gap-3">
         <div className="flex items-center gap-2 text-lg font-bold">
           {book.status === "failed" ? <AlertTriangle className="size-5 text-red-600" /> : <Sparkles className="size-5 text-accent" />}
-          <span data-testid="book-stage">{STAGE_LABELS[book.status]}</span>
+          <span data-testid="book-stage">{t(`book.stage.${book.status}`)}</span>
           {!done && <span className="text-muted">{book.progress}%</span>}
         </div>
         {!done && (
@@ -58,7 +49,7 @@ export function BookView({ params }: { params: Promise<{ id: string }> }) {
             {book.title}
           </h1>
           <p data-testid="book-methodology" className="text-muted">
-            Методика: {methodology(book.methodology).name}
+            {t("book.method", { name: methodologyText(book.methodology, locale).name })}
           </p>
         </motion.div>
       )}
@@ -76,16 +67,20 @@ export function BookView({ params }: { params: Promise<{ id: string }> }) {
             className="flex items-center gap-2 rounded-xl bg-accent px-6 py-3 font-bold text-accent-foreground"
           >
             <Download className="size-5" />
-            Скачать PDF
+            {t("book.download")}
           </a>
-          <Link
-            data-testid="order-print"
-            href={`/books/${book.id}/order`}
-            className="flex items-center gap-2 rounded-xl border-2 border-accent px-6 py-3 font-bold text-accent"
-          >
-            <Printer className="size-5" />
-            Заказать печатную книгу — от {formatKzt(COVER_PRICE_KZT.soft)}
-          </Link>
+          {country === "KZ" ? (
+            <Link
+              data-testid="order-print"
+              href={`/books/${book.id}/order`}
+              className="flex items-center gap-2 rounded-xl border-2 border-accent px-6 py-3 font-bold text-accent"
+            >
+              <Printer className="size-5" />
+              {t("book.order", { price: formatKzt(COVER_PRICE_KZT.soft) })}
+            </Link>
+          ) : (
+            <WantPrint bookId={book.id} />
+          )}
         </div>
       )}
 
@@ -95,7 +90,7 @@ export function BookView({ params }: { params: Promise<{ id: string }> }) {
         <section data-testid="talk-questions" className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-6">
           <h2 className="flex items-center gap-2 text-xl font-bold">
             <MessageCircleQuestion className="size-5 text-accent" />
-            Поговорите после чтения
+            {t("book.talk")}
           </h2>
           <ol className="list-decimal space-y-2 pl-6">
             {book.talkQuestions.map((question) => (
@@ -110,13 +105,14 @@ export function BookView({ params }: { params: Promise<{ id: string }> }) {
 
 /** While the book is being made: the hero, then each page as soon as it is drawn. */
 function Progress({ book }: { book: Book }) {
+  const { t } = useI18n();
   return (
     <div className="flex flex-col gap-6">
       {book.heroImageUrl && (
         <motion.img
           data-testid="hero-image"
           src={book.heroImageUrl}
-          alt="Герой книги"
+          alt={t("book.heroAlt")}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ type: "spring", bounce: 0.4 }}
@@ -137,7 +133,7 @@ function Progress({ book }: { book: Book }) {
               <motion.img
                 key={page.imageUrl}
                 src={page.imageUrl}
-                alt={`Иллюстрация к странице ${page.page}`}
+                alt={t("book.pageAlt", { page: page.page })}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.6 }}
@@ -156,14 +152,15 @@ function Progress({ book }: { book: Book }) {
 
 /** The toy's way into the book: the parent's photo, SAM 3.1's cut-out, Muse Image's character. */
 function ToyPipeline({ toy }: { toy: NonNullable<Book["toy"]> }) {
+  const { t } = useI18n();
   const steps = [
-    { label: "Ваше фото", url: toy.photoUrl, cover: true },
-    { label: "SAM 3.1 нашёл игрушку", url: toy.cutoutUrl, cover: false },
-    { label: "Muse Image нарисовал героя", url: toy.sheetUrl, cover: false },
+    { label: t("book.toy.photo"), url: toy.photoUrl, cover: true },
+    { label: t("book.toy.cutout"), url: toy.cutoutUrl, cover: false },
+    { label: t("book.toy.sheet"), url: toy.sheetUrl, cover: false },
   ];
   return (
     <section data-testid="toy-pipeline" className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5">
-      <h2 className="font-bold">{toy.name ? `${toy.name} в книге` : "Любимая игрушка в книге"}</h2>
+      <h2 className="font-bold">{toy.name ? t("book.toy.named", { name: toy.name }) : t("book.toy.title")}</h2>
       <ol className="grid grid-cols-3 gap-3">
         {steps.map((step, i) => (
           <li key={step.label} className="flex flex-col items-center gap-2 text-center">
@@ -185,5 +182,33 @@ function ToyPipeline({ toy }: { toy: NonNullable<Book["toy"]> }) {
         ))}
       </ol>
     </section>
+  );
+}
+
+/** Outside Kazakhstan there is no print partner yet: the button records demand instead. */
+function WantPrint({ bookId }: { bookId: string }) {
+  const { t } = useI18n();
+  const want = useMutation({ mutationFn: () => wantPrint(bookId) });
+  return (
+    <div className="flex flex-col items-center gap-2 text-center text-sm text-muted">
+      <span>{t("book.print.unavailable")}</span>
+      {want.isSuccess ? (
+        <span data-testid="want-print-thanks" className="flex items-center gap-1 text-emerald-600">
+          <Check className="size-4" />
+          {t("book.print.thanks")}
+        </span>
+      ) : (
+        <button
+          type="button"
+          data-testid="want-print"
+          disabled={want.isPending}
+          onClick={() => want.mutate()}
+          className="flex items-center gap-2 rounded-xl border-2 border-accent px-5 py-2 font-bold text-accent disabled:opacity-50"
+        >
+          <Printer className="size-4" />
+          {t("book.print.want")}
+        </button>
+      )}
+    </div>
   );
 }

@@ -21,7 +21,11 @@ import {
 import { basename } from 'node:path';
 import { MODEL_GATEWAY, type ModelGateway } from '../meta/model-gateway';
 import type { StoryBrief } from '../meta/prompts';
-import { questions, TemplatesService } from '../templates/templates.service';
+import {
+  questions,
+  questionsInAnyLanguage,
+  TemplatesService,
+} from '../templates/templates.service';
 import { toyUploadPath } from '../toy/toys.controller';
 import { PdfService } from '../pdf/pdf.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -116,6 +120,17 @@ export class BooksService {
     return this.toDto(row);
   }
 
+  /** Someone outside Kazakhstan wants this book printed; once per book. */
+  async recordPrintInterest(id: string, country: string | null) {
+    const book = await this.prisma.book.findUnique({ where: { id } });
+    if (!book) throw new NotFoundException(`book ${id} not found`);
+    await this.prisma.printInterest.upsert({
+      where: { bookId: id },
+      create: { bookId: id, country },
+      update: {},
+    });
+  }
+
   /** Books made with this visitor key, newest first. */
   async listMine(clientKey: string): Promise<MyBook[]> {
     const rows = await this.prisma.book.findMany({
@@ -154,7 +169,7 @@ export class BooksService {
     }
     const asked = questions(template);
     const answers = input.answers ?? {};
-    const problem = answersProblem(asked, answers);
+    const problem = answersProblem(questionsInAnyLanguage(template), answers);
     if (problem) throw new BadRequestException(problem);
     return {
       brief: {

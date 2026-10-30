@@ -133,6 +133,14 @@ export function Dashboard() {
         <Card title="Популярные книги">
           <Bars rows={s.templates.map((t) => ({ label: t.title, value: t.books }))} />
         </Card>
+        <Card title="Хотят печатную книгу (страны без печати)">
+          <Bars
+            rows={s.printInterest.map((p) => ({
+              label: p.country ? (regionName.of(p.country) ?? p.country) : "Страна не определена",
+              value: p.requests,
+            }))}
+          />
+        </Card>
       </div>
     </>
   );

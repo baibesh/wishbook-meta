@@ -8,6 +8,7 @@ import { AdminAuthController, AdminController } from './admin/admin.controller';
 import { AdminService } from './admin/admin.service';
 import { BooksController } from './books/books.controller';
 import { BooksService } from './books/books.service';
+import { GeoController } from './geo/geo.controller';
 import { GeoGuard } from './geo/geo.guard';
 import { GeoService } from './geo/geo.service';
 import { MetaModule } from './meta/meta.module';
@@ -50,6 +51,7 @@ class HealthController {
     QuotaController,
     OrdersController,
     TemplatesController,
+    GeoController,
     ToysController,
     AdminAuthController,
     AdminController,

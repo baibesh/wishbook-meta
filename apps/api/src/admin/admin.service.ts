@@ -58,6 +58,7 @@ export class AdminService {
       countries,
       templateCounts,
       templateRows,
+      printInterest,
     ] = await Promise.all([
       this.settings.paused(),
       this.prisma.book.count(),
@@ -81,6 +82,11 @@ export class AdminService {
       this.prisma.book.groupBy({ by: ['templateId'], _count: true }),
       this.prisma.bookTemplate.findMany({
         select: { id: true, slug: true, title: true },
+      }),
+      this.prisma.printInterest.groupBy({
+        by: ['country'],
+        _count: true,
+        orderBy: { _count: { country: 'desc' } },
       }),
     ]);
 
@@ -111,6 +117,10 @@ export class AdminService {
         purchases: purchases._sum.books ?? 0,
         purchasesKzt: purchases._sum.priceKzt ?? 0,
       },
+      printInterest: printInterest.map((p) => ({
+        country: p.country,
+        requests: p._count,
+      })),
       countries: countries.map((c) => ({
         country: c.country!,
         books: c._count,
