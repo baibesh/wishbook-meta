@@ -203,9 +203,9 @@ export function BookReader({ book }: { book: Book }) {
         >
           {wide ? (
             <>
-              <div className={`${half} left-0 overflow-hidden rounded-l-md shadow-xl`}>{underLeft}</div>
-              <div className={`${half} left-1/2 overflow-hidden rounded-r-md shadow-xl`}>{underRight}</div>
-              {(underLeft || underRight) && (
+              {underLeft && <div className={`${half} left-0 overflow-hidden rounded-l-md shadow-xl`}>{underLeft}</div>}
+              {underRight && <div className={`${half} left-1/2 overflow-hidden rounded-r-md shadow-xl`}>{underRight}</div>}
+              {underLeft && underRight && (
                 // The fold in the middle of an open book.
                 <div className="pointer-events-none absolute top-0 left-1/2 h-full w-8 -translate-x-1/2 bg-gradient-to-r from-transparent via-black/10 to-transparent" />
               )}
