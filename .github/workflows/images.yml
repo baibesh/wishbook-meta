@@ -5,6 +5,14 @@ name: Images
 on:
   push:
     branches: [main]
+    # Only when the shipped code changes: docs and test edits do not need new images.
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".dockerignore"
+      - ".github/workflows/images.yml"
   workflow_dispatch:
 
 permissions:
