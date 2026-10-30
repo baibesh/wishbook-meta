@@ -1,31 +1,32 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Headers,
-  Ip,
-  Param,
-  Post,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import {
   CreateBookSchema,
   type Book,
   type CreateBookInput,
 } from '@wishbook/shared';
+import { CurrentClient, type Client } from '../common/client';
 import { ZodPipe } from '../common/zod.pipe';
+import { QuotaService } from '../quota/quota.service';
 import { BooksService } from './books.service';
 
 @Controller('books')
 export class BooksController {
-  constructor(private readonly books: BooksService) {}
+  constructor(
+    private readonly books: BooksService,
+    private readonly quota: QuotaService,
+  ) {}
 
   @Post()
-  create(
+  async create(
     @Body(new ZodPipe(CreateBookSchema)) body: CreateBookInput,
-    @Headers('x-client-key') clientKey: string | undefined,
-    @Ip() ip: string,
+    @CurrentClient() client: Client,
   ): Promise<Book> {
-    return this.books.create(body.child, clientKey || ip);
+    await this.quota.assertCanCreate(client.key, client.demoCode);
+    return this.books.create(
+      body.child,
+      client.key,
+      this.quota.isDemo(client.demoCode),
+    );
   }
 
   @Get(':id')

@@ -1,0 +1,104 @@
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import {
+  BOOK_PRICE_KZT,
+  DAILY_CAP_REACHED,
+  LIMIT_REACHED,
+  type Quota,
+} from '@wishbook/shared';
+import { PrismaService } from '../prisma/prisma.service';
+
+/**
+ * Who may start a book: each visitor gets FREE_BOOKS, then buys more; a demo code
+ * (for judges) skips the per-visitor limit. A service-wide daily cap keeps a viral
+ * link from spending the whole model budget.
+ */
+@Injectable()
+export class QuotaService {
+  private readonly freeBooks: number;
+  private readonly dailyCap: number;
+  private readonly demoDailyCap: number;
+  private readonly demoCodes: Set<string>;
+
+  constructor(
+    private readonly prisma: PrismaService,
+    config: ConfigService,
+  ) {
+    this.freeBooks = Number(config.get('FREE_BOOKS', 3));
+    this.dailyCap = Number(config.get('DAILY_BOOK_CAP', 100));
+    this.demoDailyCap = Number(config.get('DEMO_DAILY_CAP', 50));
+    this.demoCodes = new Set(
+      config
+        .get<string>('DEMO_CODES', '')
+        .split(',')
+        .map((code) => code.trim().toUpperCase())
+        .filter(Boolean),
+    );
+  }
+
+  isDemo(code: string | undefined): boolean {
+    return !!code && this.demoCodes.has(code.trim().toUpperCase());
+  }
+
+  async quota(clientKey: string, demoCode?: string): Promise<Quota> {
+    const [used, credits] = await Promise.all([
+      this.prisma.book.count({
+        where: { clientKey, demo: false, status: { not: 'failed' } },
+      }),
+      this.prisma.credit.aggregate({
+        where: { clientKey },
+        _sum: { books: true },
+      }),
+    ]);
+    const limit = this.freeBooks + (credits._sum.books ?? 0);
+    return {
+      used,
+      limit,
+      remaining: Math.max(limit - used, 0),
+      demo: this.isDemo(demoCode),
+    };
+  }
+
+  /** Throws 402 when the visitor is out of books, 503 when today's cap is spent. */
+  async assertCanCreate(clientKey: string, demoCode?: string): Promise<void> {
+    const demo = this.isDemo(demoCode);
+    const today = await this.prisma.book.count({
+      where: { demo, createdAt: { gte: startOfDay() } },
+    });
+    if (today >= (demo ? this.demoDailyCap : this.dailyCap)) {
+      throw new HttpException(
+        {
+          code: DAILY_CAP_REACHED,
+          message: 'Сегодня книг больше не создать, приходите завтра',
+        },
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
+    }
+    if (demo) return;
+    const quota = await this.quota(clientKey);
+    if (quota.remaining <= 0) {
+      throw new HttpException(
+        {
+          code: LIMIT_REACHED,
+          message: 'Бесплатные книги закончились',
+          quota,
+        },
+        HttpStatus.PAYMENT_REQUIRED,
+      );
+    }
+  }
+
+  /** Demo payment: records one more book for the visitor without charging anything. */
+  async buyBook(clientKey: string): Promise<Quota> {
+    await this.prisma.credit.create({
+      data: { clientKey, books: 1, priceKzt: BOOK_PRICE_KZT },
+    });
+    return this.quota(clientKey);
+  }
+}
+
+function startOfDay(): Date {
+  const date = new Date();
+  date.setUTCHours(0, 0, 0, 0);
+  return date;
+}

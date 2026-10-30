@@ -1,30 +1,78 @@
-import { BookSchema, type Book, type ChildProfile } from "@wishbook/shared";
+import {
+  BookSchema,
+  OrderSchema,
+  QuotaSchema,
+  type Book,
+  type ChildProfile,
+  type CreateOrderInput,
+  type Order,
+  type Quota,
+} from "@wishbook/shared";
 
 const CLIENT_KEY = "wishbook.clientKey";
+const DEMO_CODE = "wishbook.demoCode";
+
+function stored(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
 
 /** Anonymous visitor id the free generation limit is counted against. */
 function clientKey(): string {
-  try {
-    let key = localStorage.getItem(CLIENT_KEY);
-    if (!key) {
-      key = crypto.randomUUID();
+  let key = stored(CLIENT_KEY);
+  if (!key) {
+    key = crypto.randomUUID();
+    try {
       localStorage.setItem(CLIENT_KEY, key);
+    } catch {
+      return "anonymous";
     }
-    return key;
+  }
+  return key;
+}
+
+export function demoCode(): string | null {
+  return stored(DEMO_CODE);
+}
+
+export function setDemoCode(code: string) {
+  try {
+    localStorage.setItem(DEMO_CODE, code.trim());
   } catch {
-    return "anonymous";
+    // Private mode: the code just isn't remembered.
+  }
+}
+
+/** An API error with the server's machine-readable code (e.g. limit_reached). */
+export class ApiError extends Error {
+  constructor(
+    readonly status: number,
+    readonly code: string | undefined,
+    message: string,
+  ) {
+    super(message);
   }
 }
 
 async function request(path: string, init?: RequestInit): Promise<unknown> {
+  const code = demoCode();
   const response = await fetch(path, {
     ...init,
-    headers: { "content-type": "application/json", "x-client-key": clientKey(), ...init?.headers },
+    headers: {
+      "content-type": "application/json",
+      "x-client-key": clientKey(),
+      ...(code ? { "x-demo-code": code } : {}),
+      ...init?.headers,
+    },
   });
   const body: unknown = await response.json().catch(() => null);
   if (!response.ok) {
-    const message = (body as { message?: string } | null)?.message ?? response.statusText;
-    throw new Error(message);
+    const error = (body ?? {}) as { code?: string; message?: unknown };
+    const message = typeof error.message === "string" ? error.message : response.statusText;
+    throw new ApiError(response.status, error.code, message);
   }
   return body;
 }
@@ -35,4 +83,21 @@ export async function createBook(child: ChildProfile): Promise<Book> {
 
 export async function getBook(id: string): Promise<Book> {
   return BookSchema.parse(await request(`/api/books/${id}`));
+}
+
+export async function getQuota(): Promise<Quota> {
+  return QuotaSchema.parse(await request("/api/quota"));
+}
+
+/** Demo checkout: one more book, nothing is charged. */
+export async function buyBook(): Promise<Quota> {
+  return QuotaSchema.parse(await request("/api/quota/purchase", { method: "POST" }));
+}
+
+export async function createOrder(order: CreateOrderInput): Promise<Order> {
+  return OrderSchema.parse(await request("/api/orders", { method: "POST", body: JSON.stringify(order) }));
+}
+
+export async function getOrder(id: string): Promise<Order> {
+  return OrderSchema.parse(await request(`/api/orders/${id}`));
 }

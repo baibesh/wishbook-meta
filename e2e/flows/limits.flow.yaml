@@ -1,0 +1,65 @@
+# Free limit: three books per visitor, then the demo checkout; a demo code skips the limit.
+device: none
+db: ${DATABASE_URL}
+params:
+  DATABASE_URL:
+    required: true
+    description: Postgres DSN of the e2e database (e2e/.env)
+env:
+  visitor: "e2e-limits-${Date.now()}"
+http:
+  baseUrl: ${API}
+  headers:
+    X-Client-Key: "${visitor}"
+commands:
+  - request:
+      url: /quota
+      assert:
+        json: { "$.used": 0, "$.limit": 3, "$.remaining": 3, "$.demo": false }
+  - repeat:
+      times: 3
+      commands:
+        - request:
+            method: POST
+            url: /books
+            json:
+              child: { name: "Лимит", age: 4, gender: girl, interests: [кошки], city: Алматы }
+            assert: { status: 201 }
+  - request:
+      method: POST
+      url: /books
+      json:
+        child: { name: "Лимит", age: 4, gender: girl, interests: [кошки], city: Алматы }
+      assert:
+        status: 402
+        json: { "$.code": limit_reached, "$.quota.remaining": 0 }
+  - request:
+      method: POST
+      url: /books
+      headers: { X-Demo-Code: e2e-demo }
+      json:
+        child: { name: "Лимит", age: 4, gender: girl, interests: [кошки], city: Алматы }
+      assert: { status: 201 }
+  - request:
+      method: POST
+      url: /quota/purchase
+      assert:
+        status: 201
+        json: { "$.limit": 4, "$.remaining": 1 }
+  - request:
+      method: POST
+      url: /books
+      json:
+        child: { name: "Лимит", age: 4, gender: girl, interests: [кошки], city: Алматы }
+      assert: { status: 201 }
+  - sql:
+      query: >-
+        select count(*)::int as books, count(*) filter (where demo)::int as demo
+        from "Book" where "clientKey" = $1
+      params: ["${visitor}"]
+      readOnly: true
+      assert:
+        first: { books: 5, demo: 1 }
+after:
+  - sql: { exec: "delete from \"Credit\" where \"clientKey\" = $1", params: ["${visitor}"] }
+  - sql: { exec: "delete from \"Book\" where \"clientKey\" = $1", params: ["${visitor}"] }

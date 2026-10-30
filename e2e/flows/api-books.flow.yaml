@@ -10,7 +10,7 @@ env:
 http:
   baseUrl: ${API}
   headers:
-    X-Client-Key: e2e-api
+    X-Client-Key: "e2e-${childName}"
 commands:
   - request:
       method: POST
@@ -50,6 +50,6 @@ commands:
       params: ["${bookId}"]
       readOnly: true
       assert:
-        first: { clientKey: e2e-api, language: kk }
+        first: { language: kk }
 after:
   - sql: { exec: "delete from \"Book\" where child->>'name' = $1", params: ["${childName}"] }

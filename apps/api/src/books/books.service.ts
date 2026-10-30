@@ -34,9 +34,13 @@ export class BooksService {
     this.pageCount = Number(config.get('PAGE_COUNT', 10));
   }
 
-  async create(child: ChildProfile, clientKey: string): Promise<Book> {
+  async create(
+    child: ChildProfile,
+    clientKey: string,
+    demo: boolean,
+  ): Promise<Book> {
     const row = await this.prisma.book.create({
-      data: { child, language: child.language, clientKey },
+      data: { child, language: child.language, clientKey, demo },
     });
     // Generation runs in the background; the client polls GET /books/:id.
     void this.generate(row.id, child).catch((error: unknown) =>
@@ -158,13 +162,19 @@ export class BooksService {
     });
   }
 
+  /** Never throws: a background generation must not take the process down with it. */
   private async fail(id: string, error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     this.logger.error(`book ${id} failed: ${message}`);
-    await this.prisma.book.update({
-      where: { id },
-      data: { status: 'failed', error: message.slice(0, 1000) },
-    });
+    try {
+      // updateMany: the book may have been deleted while it was generating.
+      await this.prisma.book.updateMany({
+        where: { id },
+        data: { status: 'failed', error: message.slice(0, 1000) },
+      });
+    } catch (problem) {
+      this.logger.error(`book ${id}: could not record the failure`, problem);
+    }
   }
 
   private toDto(row: BookRow): Book {

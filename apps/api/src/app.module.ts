@@ -5,8 +5,12 @@ import { resolve } from 'node:path';
 import { BooksController } from './books/books.controller';
 import { BooksService } from './books/books.service';
 import { MetaModule } from './meta/meta.module';
+import { OrdersController } from './orders/orders.controller';
+import { OrdersService } from './orders/orders.service';
 import { PdfModule } from './pdf/pdf.service';
 import { PrismaModule } from './prisma/prisma.service';
+import { QuotaController } from './quota/quota.controller';
+import { QuotaService } from './quota/quota.service';
 import { StorageModule } from './storage/storage.service';
 
 @Controller('health')
@@ -30,7 +34,12 @@ class HealthController {
     PdfModule,
     MetaModule,
   ],
-  controllers: [HealthController, BooksController],
-  providers: [BooksService],
+  controllers: [
+    HealthController,
+    BooksController,
+    QuotaController,
+    OrdersController,
+  ],
+  providers: [BooksService, QuotaService, OrdersService],
 })
 export class AppModule {}

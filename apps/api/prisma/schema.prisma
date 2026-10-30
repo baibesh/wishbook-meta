@@ -38,8 +38,44 @@ model Book {
   costUsd        Float      @default(0)
   /// Anonymous visitor key the free limit is counted against.
   clientKey      String
+  /// Set when the book was made with a demo code: it does not count against the visitor.
+  demo           Boolean    @default(false)
+  orders         Order[]
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 
   @@index([clientKey])
+}
+
+/// Books a visitor bought on top of the free ones (demo payment: nothing is charged).
+model Credit {
+  id        String   @id @default(cuid())
+  clientKey String
+  books     Int
+  priceKzt  Int
+  createdAt DateTime @default(now())
+
+  @@index([clientKey])
+}
+
+enum Cover {
+  soft
+  hard
+}
+
+/// A printed copy of a book (demo payment; the delivery timeline is simulated).
+model Order {
+  id            String   @id @default(cuid())
+  book          Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  bookId        String
+  recipientName String
+  phone         String
+  city          String
+  address       String
+  cover         Cover
+  quantity      Int
+  booksKzt      Int
+  deliveryKzt   Int
+  totalKzt      Int
+  createdAt     DateTime @default(now())
 }

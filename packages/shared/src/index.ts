@@ -81,3 +81,84 @@ export function progressFor(status: BookStatus, pagesDone = 0, pagesTotal = 0): 
       return 0;
   }
 }
+
+// ---- Free limit and purchased books ------------------------------------------
+
+/** Price of one more generated (digital) book once the free ones are used. */
+export const BOOK_PRICE_KZT = 2900;
+
+export const QuotaSchema = z.object({
+  /** Books this visitor has generated (failed ones are not counted). */
+  used: z.number().int(),
+  /** Free books plus purchased ones. */
+  limit: z.number().int(),
+  remaining: z.number().int(),
+  /** A demo code (for judges) lifts the per-visitor limit. */
+  demo: z.boolean(),
+});
+export type Quota = z.infer<typeof QuotaSchema>;
+
+/** Body of a 402 from POST /books. */
+export const LIMIT_REACHED = "limit_reached";
+/** Body of a 503 from POST /books when the service-wide daily cap is hit. */
+export const DAILY_CAP_REACHED = "daily_cap_reached";
+
+// ---- Printed book orders -------------------------------------------------------
+
+export const COVERS = ["soft", "hard"] as const;
+export const CoverSchema = z.enum(COVERS);
+export type Cover = z.infer<typeof CoverSchema>;
+
+export const COVER_PRICE_KZT: Record<Cover, number> = { soft: 9900, hard: 14900 };
+/** Cities our print partners deliver to for free; elsewhere delivery is a flat fee. */
+export const FREE_DELIVERY_CITIES = ["Алматы", "Астана"];
+export const DELIVERY_FEE_KZT = 1500;
+
+export const CreateOrderSchema = z.object({
+  bookId: z.string().min(1),
+  recipientName: z.string().trim().min(2).max(80),
+  /** Kazakhstan mobile number: +7 and 10 digits. */
+  phone: z
+    .string()
+    .transform((s) => s.replace(/[\s()-]/g, ""))
+    .pipe(z.string().regex(/^\+7\d{10}$/, "Номер в формате +7 XXX XXX XX XX")),
+  city: z.string().trim().min(2).max(60),
+  address: z.string().trim().min(5).max(200),
+  cover: CoverSchema,
+  quantity: z.coerce.number().int().min(1).max(5),
+});
+export type CreateOrderInput = z.infer<typeof CreateOrderSchema>;
+
+export function orderPrice(cover: Cover, quantity: number, city: string) {
+  const books = COVER_PRICE_KZT[cover] * quantity;
+  const delivery = FREE_DELIVERY_CITIES.includes(city.trim()) ? 0 : DELIVERY_FEE_KZT;
+  return { books, delivery, total: books + delivery };
+}
+
+/** Delivery stages, in order. The demo walks through them on a timer. */
+export const ORDER_STATUSES = ["paid", "printing", "shipped", "delivered"] as const;
+export const OrderStatusSchema = z.enum(ORDER_STATUSES);
+export type OrderStatus = z.infer<typeof OrderStatusSchema>;
+
+export const OrderSchema = z.object({
+  id: z.string(),
+  bookId: z.string(),
+  bookTitle: z.string().nullable(),
+  status: OrderStatusSchema,
+  recipientName: z.string(),
+  city: z.string(),
+  address: z.string(),
+  cover: CoverSchema,
+  quantity: z.number().int(),
+  booksKzt: z.number().int(),
+  deliveryKzt: z.number().int(),
+  totalKzt: z.number().int(),
+  createdAt: z.string(),
+});
+export type Order = z.infer<typeof OrderSchema>;
+
+/** Stage an order has reached `elapsedMs` after it was paid, given the time each stage takes. */
+export function orderStatusAt(elapsedMs: number, stageMs: number): OrderStatus {
+  const index = Math.min(Math.floor(elapsedMs / stageMs), ORDER_STATUSES.length - 1);
+  return ORDER_STATUSES[Math.max(index, 0)];
+}

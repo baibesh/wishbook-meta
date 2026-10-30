@@ -13,3 +13,6 @@ Things noticed while using tapstep on WishBook. Version: 0.13.11.
 4. **`TAPSTEP_NO_SANDBOX=1` is needed on a plain `ubuntu-latest` runner, not only in containers.**
    The docs mention it for containers; on GitHub's Ubuntu runner AppArmor blocks Chromium's sandbox
    too. Worth saying in the CI section, or detecting it and printing the fix.
+5. **The JSON report changes shape between a single flow and a directory.** A directory run gives
+   `{ passed, flows: [{ name, passed, steps }] }`, a single flow `{ passed, steps, platform }`, so
+   a script reading reports needs two code paths. One shape (a one-element `flows`) would be easier.

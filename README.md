@@ -22,6 +22,16 @@ $0.07 of model spend.
 All model calls live in `apps/api/src/meta/`. `MODELS=mock` swaps them for canned output, so tests and
 CI never call the API.
 
+## Limits and orders
+
+- Each visitor gets 3 free books (`FREE_BOOKS`), then a demo checkout sells more at 2 900 ₸ — nothing
+  is charged. A demo code from `DEMO_CODES` (sent as `X-Demo-Code`) skips the per-visitor limit for
+  judges. Service-wide daily caps (`DAILY_BOOK_CAP`, `DEMO_DAILY_CAP`) keep a viral link from spending
+  the whole model budget.
+- A finished book can be ordered in print: soft (9 900 ₸) or hard (14 900 ₸) cover, free delivery in
+  Almaty and Astana, 1 500 ₸ elsewhere. Payment is a demo and the print → ship → deliver timeline is
+  simulated (`ORDER_STAGE_MS` per stage).
+
 ## Stack
 
 - `apps/web`: Next.js 16, Tailwind 4, TanStack Query, react-hook-form + zod, lucide-react

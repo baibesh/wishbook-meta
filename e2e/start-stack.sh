@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 : "${DATABASE_URL:?set DATABASE_URL to the e2e database}"
 export MODELS=mock MOCK_DELAY_MS="${MOCK_DELAY_MS:-100}" PAGE_COUNT="${PAGE_COUNT:-4}"
+export FREE_BOOKS=3 DEMO_CODES=E2E-DEMO ORDER_STAGE_MS="${ORDER_STAGE_MS:-1500}"
 export STORAGE_DIR="${STORAGE_DIR:-$ROOT/apps/api/storage-e2e}" PORT=4000
 
 (cd "$ROOT/apps/api" && node dist/main.js > "$ROOT/e2e/api.log" 2>&1 &)

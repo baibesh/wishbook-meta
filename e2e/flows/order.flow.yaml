@@ -1,0 +1,52 @@
+# A finished book is ordered in print: price, demo payment, delivery timeline.
+appId: ${WEB}
+tags: [smoke, order]
+db: ${DATABASE_URL}
+params:
+  DATABASE_URL:
+    required: true
+    description: Postgres DSN of the e2e database (e2e/.env)
+env:
+  childName: "Заказ ${Date.now()}"
+before:
+  - request:
+      method: POST
+      url: ${API}/books
+      headers: { X-Client-Key: "e2e-${childName}" }
+      json:
+        child: { name: "${childName}", age: 6, gender: boy, interests: [динозавры], city: Астана }
+      extract: { bookId: "$.id" }
+      assert: { status: 201 }
+  - request:
+      url: ${API}/books/${bookId}
+      retryUntil: { status: 200, json: { "$.status": done } }
+      timeout: 30000
+commands:
+  - launchApp: { appId: "${WEB}/books/${bookId}", clearState: true }
+  - tapOn: { testId: order-print }
+  - waitForVisible: { testId: order-form }
+  - tapOn: { testId: cover-hard }
+  - selectOption: { testId: quantity, option: "2" }
+  - selectOption: { testId: city, option: "Шымкент" }
+  - assertVisible: { text: "31 300 ₸" }
+  - tapOn: { testId: recipient-name }
+  - inputText: "Айгерим Сапарова"
+  - tapOn: { testId: phone }
+  - inputText: "701 123 45 67"
+  - tapOn: { testId: address }
+  - inputText: "ул. Абая, 10, кв. 5"
+  - tapOn: { testId: place-order }
+  - waitForVisible: { text: "Заказ оформлен", timeout: 10000 }
+  - waitForVisible: { text: "Доставлен", timeout: 15000 }
+  - assertVisible: { text: "Итого: 31 300 ₸" }
+  - sql:
+      query: >-
+        select o.cover::text as cover, o.quantity, o."totalKzt" as total, o.phone
+        from "Order" o join "Book" b on b.id = o."bookId" where b.id = $1
+      params: ["${bookId}"]
+      readOnly: true
+      assert:
+        rows: 1
+        first: { cover: hard, quantity: 2, total: 31300, phone: "+77011234567" }
+after:
+  - sql: { exec: "delete from \"Book\" where child->>'name' = $1", params: ["${childName}"] }

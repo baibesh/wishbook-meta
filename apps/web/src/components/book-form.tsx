@@ -1,12 +1,14 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { LIMIT_REACHED } from "@wishbook/shared";
 import { BookOpen, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { createBook } from "@/lib/api";
+import { ApiError, createBook, getQuota } from "@/lib/api";
+import { Paywall } from "./paywall";
 
 const FormSchema = z.object({
   name: z.string().trim().min(1, "Введите имя").max(40),
@@ -31,6 +33,8 @@ export function BookForm() {
     defaultValues: { name: "", age: "5", gender: "girl", interests: "", pet: "", city: "Алматы", language: "ru" },
   });
   const errors = form.formState.errors;
+  const queryClient = useQueryClient();
+  const quota = useQuery({ queryKey: ["quota"], queryFn: getQuota });
 
   const create = useMutation({
     mutationFn: (values: FormValues) =>
@@ -43,13 +47,19 @@ export function BookForm() {
         city: values.city,
         language: values.language,
       }),
-    onSuccess: (book) => router.push(`/books/${book.id}`),
+    onSuccess: (book) => {
+      void queryClient.invalidateQueries({ queryKey: ["quota"] });
+      router.push(`/books/${book.id}`);
+    },
   });
+  const submit = form.handleSubmit((values) => create.mutate(values));
+  const limitReached = create.error instanceof ApiError && create.error.code === LIMIT_REACHED;
 
   return (
+    <div className="flex flex-col gap-4">
     <form
       data-testid="book-form"
-      onSubmit={form.handleSubmit((values) => create.mutate(values))}
+      onSubmit={submit}
       className="grid gap-5 rounded-3xl border border-border bg-card p-6 shadow-sm sm:grid-cols-2"
     >
       <label className={label}>
@@ -116,12 +126,21 @@ export function BookForm() {
           {create.isPending ? <Loader2 className="size-5 animate-spin" /> : <BookOpen className="size-5" />}
           Создать книгу
         </button>
-        {create.isError && (
+        {quota.data && (
+          <p data-testid="quota" className="text-center text-sm text-muted">
+            {quota.data.demo
+              ? "Демо-режим: без ограничений"
+              : `Бесплатных книг осталось: ${quota.data.remaining} из ${quota.data.limit}`}
+          </p>
+        )}
+        {create.isError && !limitReached && (
           <p role="alert" className="text-red-600">
             Не получилось начать: {create.error.message}
           </p>
         )}
       </div>
     </form>
+    {limitReached && <Paywall onUnlocked={() => void submit()} />}
+    </div>
   );
 }

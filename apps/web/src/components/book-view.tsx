@@ -1,10 +1,12 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import type { BookStatus } from "@wishbook/shared";
-import { AlertTriangle, Download, Sparkles } from "lucide-react";
+import { COVER_PRICE_KZT, type BookStatus } from "@wishbook/shared";
+import { AlertTriangle, Download, Printer, Sparkles } from "lucide-react";
+import Link from "next/link";
 import { use } from "react";
 import { getBook } from "@/lib/api";
+import { formatKzt } from "@/lib/format";
 
 const STAGE_LABELS: Record<BookStatus, string> = {
   queued: "В очереди",
@@ -50,15 +52,25 @@ export function BookView({ params }: { params: Promise<{ id: string }> }) {
       )}
 
       {book.pdfUrl && (
-        <a
-          data-testid="download-pdf"
-          href={book.pdfUrl}
-          download={`${book.title ?? "wishbook"}.pdf`}
-          className="flex w-fit items-center gap-2 rounded-xl bg-accent px-6 py-3 font-bold text-accent-foreground"
-        >
-          <Download className="size-5" />
-          Скачать PDF
-        </a>
+        <div className="flex flex-wrap gap-3">
+          <a
+            data-testid="download-pdf"
+            href={book.pdfUrl}
+            download={`${book.title ?? "wishbook"}.pdf`}
+            className="flex items-center gap-2 rounded-xl bg-accent px-6 py-3 font-bold text-accent-foreground"
+          >
+            <Download className="size-5" />
+            Скачать PDF
+          </a>
+          <Link
+            data-testid="order-print"
+            href={`/books/${book.id}/order`}
+            className="flex items-center gap-2 rounded-xl border-2 border-accent px-6 py-3 font-bold text-accent"
+          >
+            <Printer className="size-5" />
+            Заказать печатную книгу — от {formatKzt(COVER_PRICE_KZT.soft)}
+          </Link>
+        </div>
       )}
 
       {book.heroImageUrl && (
