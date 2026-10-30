@@ -34,6 +34,19 @@ CI never call the API.
 
 ## Where it is available
 
+I designed where the service runs and who it serves around Meta's rules from the start, not as an
+afterthought:
+
+- **The backend runs in Kazakhstan.** I already rent servers in Finland, but Meta has not enabled
+  the Model API there. Routing the calls through another country would break the policy's ban on
+  circumventing geographic access controls, so the service is hosted where I live, where the
+  market is and where Meta has enabled access.
+- **Children's data stays in Kazakhstan.** Kazakhstan's personal data law requires its citizens'
+  data to be stored in the country, and a book is full of it: a child's name, age, city, and
+  the parent's phone and address for a print order.
+- **Restricted countries are turned away before any model call.** The "CIS market" means
+  Kazakhstan and its neighbours, without Russia and Belarus.
+
 The service follows Meta's [Geographic Use Policy](https://dev.meta.ai/legal/geographic-use-policy):
 the backend runs in Kazakhstan, where Meta has enabled the Model API, and visitors from the
 policy's Restricted Territories (Russia, Belarus, China, Iran and the others) and from India,
