@@ -89,6 +89,7 @@ interface Turn {
 }
 
 const FLIP_SECONDS = 0.7;
+const FLIP_EASE = [0.45, 0, 0.25, 1] as const;
 
 /**
  * The finished book as a picture book: a two-page spread on wide screens (illustration left, text
@@ -164,6 +165,10 @@ export function BookReader({ book }: { book: Book }) {
   }
   // On a phone, turning back brings the previous page in from the left, so the leaf runs in reverse.
   const narrowBack = !wide && turn?.direction === -1;
+  // Where the book is headed: the front cover alone shows on the right half, the back cover on
+  // the left, so the book shifts by a quarter to keep the visible page centred.
+  const target = turn ? turn.to : view;
+  const shift = !wide ? "0%" : target === 0 ? "-25%" : target === views - 1 ? "25%" : "0%";
 
   const toggleFullscreen = () => {
     if (document.fullscreenElement) void document.exitFullscreen();
@@ -186,9 +191,13 @@ export function BookReader({ book }: { book: Book }) {
         ref={frameRef}
         className={`flex w-full items-center justify-center ${fullscreen ? "h-full bg-[#1c1712] p-6" : ""}`}
       >
-        <div
-          className={`relative select-none [perspective:2400px] ${wide ? "aspect-[2/1]" : "aspect-square"}`}
+        <motion.div
+          className={`relative cursor-pointer select-none [perspective:2400px] ${wide ? "aspect-[2/1]" : "aspect-square"}`}
           style={{ width: wide ? "min(100%, 1000px, calc(85vh * 2))" : "min(100%, 85vh)" }}
+          // A closed book (front or back cover alone) sits in the middle and slides aside as it opens.
+          initial={false}
+          animate={{ x: shift }}
+          transition={{ duration: FLIP_SECONDS, ease: FLIP_EASE }}
           onClick={(event) => {
             const box = event.currentTarget.getBoundingClientRect();
             go(event.clientX - box.left > box.width / 2 ? 1 : -1);
@@ -222,7 +231,7 @@ export function BookReader({ book }: { book: Book }) {
               }`}
               initial={{ rotateY: narrowBack ? -180 : 0 }}
               animate={{ rotateY: narrowBack ? 0 : leaf.side === "right" ? -180 : 180 }}
-              transition={{ duration: FLIP_SECONDS, ease: [0.45, 0, 0.25, 1] }}
+              transition={{ duration: FLIP_SECONDS, ease: FLIP_EASE }}
               onAnimationComplete={() => {
                 setView(turn.to);
                 setTurn(null);
@@ -234,7 +243,7 @@ export function BookReader({ book }: { book: Book }) {
               </div>
             </motion.div>
           )}
-        </div>
+        </motion.div>
       </div>
 
       <div className="flex items-center gap-3">
