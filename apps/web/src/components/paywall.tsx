@@ -1,30 +1,33 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { BOOK_PRICE_KZT, BOOK_PRICE_USD } from "@fabulka/shared";
+import type { BookKind } from "@fabulka/shared";
 import { KeyRound, Loader2, ShoppingBag } from "lucide-react";
 import { useState } from "react";
 import { buyBook, setDemoCode } from "@/lib/api";
 import { useI18n } from "@/i18n/i18n";
-import { formatKzt, formatUsd } from "@/lib/format";
+import { useBookPrice } from "@/lib/use-price";
 
-/** Shown when the free books are used up: the demo checkout, or a demo code for judges. */
-export function Paywall({ onUnlocked }: { onUnlocked: () => void }) {
+/**
+ * Shown when the free books are used up: the demo checkout for one more book of `kind` (a catalog
+ * book costs less than a story of your own), or a demo code for judges.
+ */
+export function Paywall({ kind, onUnlocked }: { kind: BookKind; onUnlocked: () => void }) {
   const queryClient = useQueryClient();
-  const { t, country } = useI18n();
-  const price = country === "KZ" ? formatKzt(BOOK_PRICE_KZT) : formatUsd(BOOK_PRICE_USD);
+  const { t } = useI18n();
+  const price = useBookPrice(kind);
   const [code, setCode] = useState("");
   const unlocked = () => {
     void queryClient.invalidateQueries({ queryKey: ["quota"] });
     onUnlocked();
   };
-  const buy = useMutation({ mutationFn: buyBook, onSuccess: unlocked });
+  const buy = useMutation({ mutationFn: () => buyBook(kind), onSuccess: unlocked });
 
   return (
     <section data-testid="paywall" className="flex flex-col gap-4 rounded-2xl border-2 border-accent bg-card p-5 sm:col-span-2">
       <div>
         <h2 className="text-lg font-extrabold">{t("paywall.title")}</h2>
-        <p className="text-muted">{t("paywall.text", { price })}</p>
+        <p className="text-muted">{t(`paywall.text.${kind}`, { price })}</p>
       </div>
       <button
         type="button"

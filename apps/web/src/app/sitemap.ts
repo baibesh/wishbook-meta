@@ -5,7 +5,7 @@ const site = process.env.SITE_URL ?? "https://fabulka.com";
 const CATALOG = ["first-day-kindergarten", "snow-leopard-alatau", "not-yet", "big-feelings", "nauryz-new-friend", "bath-time"];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  return ["", "/create", "/privacy", "/terms", ...CATALOG.map((slug) => `/catalog/${slug}`)].map((path) => ({
+  return ["", "/catalog", "/create", "/privacy", "/terms", ...CATALOG.map((slug) => `/catalog/${slug}`)].map((path) => ({
     url: `${site}${path}`,
   }));
 }

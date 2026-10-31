@@ -28,8 +28,10 @@ CI never call the API.
 
 ## Limits and orders
 
-- Each visitor gets 3 free books (`FREE_BOOKS`), then a demo checkout sells more at 2 900 ₸ — nothing
-  is charged. A demo code from `DEMO_CODES` (sent as `X-Demo-Code`) skips the per-visitor limit for
+- Each visitor gets 3 free books (`FREE_BOOKS`), then a demo checkout sells more — nothing is charged:
+  a catalog book is 1 900 ₸ ($3.90), a story of your own 2 900 ₸ ($5.90). `POST /quota/purchase`
+  takes `{ kind: "template" | "custom" }`. Prices and languages follow the country chosen on the site
+  (Kazakhstan, Uzbekistan, Kyrgyzstan or another one; `COUNTRY_INFO` in `packages/shared`). A demo code from `DEMO_CODES` (sent as `X-Demo-Code`) skips the per-visitor limit for
   judges. Service-wide daily caps (`DAILY_BOOK_CAP`, `DEMO_DAILY_CAP`) keep a viral link from spending
   the whole model budget.
 - A finished book can be ordered in print: soft (9 900 ₸) or hard (14 900 ₸) cover, free delivery in

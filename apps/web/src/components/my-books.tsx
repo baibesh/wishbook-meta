@@ -19,7 +19,7 @@ export function MyBooks() {
         <BookOpen className="size-10 text-accent" />
         <p className="text-lg font-bold">{t("my.empty.title")}</p>
         <p className="text-muted">{t("my.empty.text")}</p>
-        <Link href="/" className="rounded-xl bg-accent px-5 py-3 font-bold text-accent-foreground">
+        <Link href="/catalog" className="rounded-xl bg-accent px-5 py-3 font-bold text-accent-foreground">
           {t("my.empty.cta")}
         </Link>
       </div>

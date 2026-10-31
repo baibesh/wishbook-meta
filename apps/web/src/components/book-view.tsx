@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { COVER_PRICE_KZT, methodologyText, type Book, type BookStatus } from "@fabulka/shared";
+import { COUNTRY_INFO, COVER_PRICE_KZT, methodologyText, type Book, type BookStatus } from "@fabulka/shared";
 import { AlertTriangle, Check, Download, MessageCircleQuestion, Printer, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
@@ -69,7 +69,7 @@ export function BookView({ params }: { params: Promise<{ id: string }> }) {
             <Download className="size-5" />
             {t("book.download")}
           </a>
-          {country === "KZ" ? (
+          {COUNTRY_INFO[country].print ? (
             <Link
               data-testid="order-print"
               href={`/books/${book.id}/order`}

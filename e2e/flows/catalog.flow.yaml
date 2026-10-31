@@ -10,14 +10,15 @@ env:
   childName: "Каталог ${Date.now()}"
 commands:
   - launchApp: { appId: "${WEB}", clearState: true }
-  - openLink: "${WEB}/?lang=ru"
-  # The catalog renders only after hydration, by when the page has saved the language.
-  - waitForVisible: { testId: catalog }
-  - waitForVisible: { testId: catalog }
+  - openLink: "${WEB}/catalog?lang=ru"
+  # The books arrive only after hydration, by when the page has saved the language.
+  - waitForVisible: { testId: template-first-day-kindergarten }
   - assertVisible: "Тайна снежного барса"
   - tapOn: { testId: template-first-day-kindergarten }
   - waitForVisible: { testId: template-title }
   - assertVisible: { contains: "Социальная история" }
+  # A catalog book costs less than a story of your own.
+  - assertVisible: { text: "1 900 ₸", childOf: { testId: book-price } }
   - tapOn: { testId: child-name }
   - inputText: "${childName}"
   - tapOn: { testId: child-interests }

@@ -1,5 +1,6 @@
 "use client";
 
+import { COUNTRIES } from "@fabulka/shared";
 import Link from "next/link";
 import { setCountry, useI18n, type Country } from "@/i18n/i18n";
 import { Logo } from "./logo";
@@ -30,8 +31,11 @@ export function SiteFooter() {
             value={country}
             onChange={(e) => setCountry(e.target.value as Country)}
           >
-            <option value="KZ">{t("country.KZ")}</option>
-            <option value="other">{t("country.other")}</option>
+            {COUNTRIES.map((c) => (
+              <option key={c} value={c}>
+                {t(`country.${c}`)}
+              </option>
+            ))}
           </select>
         </nav>
       </div>

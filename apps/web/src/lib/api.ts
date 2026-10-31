@@ -9,6 +9,7 @@ import {
   TemplateSummarySchema,
   ToyUploadResultSchema,
   type Book,
+  type BookKind,
   type CreateBookInput,
   type CreateOrderInput,
   type ExampleBook,
@@ -143,9 +144,9 @@ export async function getQuota(): Promise<Quota> {
   return QuotaSchema.parse(await request("/api/quota"));
 }
 
-/** Demo checkout: one more book, nothing is charged. */
-export async function buyBook(): Promise<Quota> {
-  return QuotaSchema.parse(await request("/api/quota/purchase", { method: "POST" }));
+/** Demo checkout: one more book of this kind, nothing is charged. */
+export async function buyBook(kind: BookKind): Promise<Quota> {
+  return QuotaSchema.parse(await request("/api/quota/purchase", { method: "POST", body: JSON.stringify({ kind }) }));
 }
 
 export async function createOrder(order: CreateOrderInput): Promise<Order> {

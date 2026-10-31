@@ -1,4 +1,5 @@
-# Free limit: three books per visitor, then the demo checkout; a demo code skips the limit.
+# Free limit: three books per visitor, then the demo checkout (priced by the kind of book); a demo
+# code skips the limit.
 device: none
 db: ${DATABASE_URL}
 params:
@@ -40,12 +41,26 @@ commands:
       json:
         child: { name: "Лимит", age: 4, gender: girl, interests: [кошки], city: Алматы }
       assert: { status: 201 }
+  # The checkout has to know which kind of book is bought: the two are priced differently.
   - request:
       method: POST
       url: /quota/purchase
+      json: { kind: print }
+      assert: { status: 400 }
+  - request:
+      method: POST
+      url: /quota/purchase
+      json: { kind: template }
       assert:
         status: 201
         json: { "$.limit": 4, "$.remaining": 1 }
+  - sql:
+      query: >-
+        select sum("priceKzt")::int as paid from "Credit" where "clientKey" = $1
+      params: ["${visitor}"]
+      readOnly: true
+      assert:
+        first: { paid: 1900 }
   - request:
       method: POST
       url: /books

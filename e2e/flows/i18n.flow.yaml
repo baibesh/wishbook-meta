@@ -12,14 +12,16 @@ env:
 commands:
   - launchApp: { appId: "${WEB}", clearState: true }
   - openLink: "${WEB}/?lang=ru"
-  - waitForVisible: "Книга, где ваш ребёнок — главный герой"
+  # The hero's covers render only after hydration, when the switches start working.
+  - waitForVisible: { testId: hero-covers }
+  - assertVisible: "Книга, где ваш ребёнок — главный герой"
 
   - selectOption: { testId: ui-language, option: "ҚАЗ · Қазақша" }
   - waitForVisible: "Балаңыз басты кейіпкер болатын кітап"
-  - assertVisible: "Ақ барыстың құпиясы"
+  - tapOn: { testId: nav-catalog }
+  - waitForVisible: "Ақ барыстың құпиясы"
   - selectOption: { testId: ui-language, option: "EN · English" }
-  - waitForVisible: "A book where your child is the hero"
-  - assertVisible: "The Secret of the Snow Leopard"
+  - waitForVisible: "The Secret of the Snow Leopard"
 
   # A book made while the interface is in English defaults to an English book.
   - tapOn: { testId: nav-create }

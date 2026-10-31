@@ -4,8 +4,8 @@ tags: [smoke, form]
 commands:
   - launchApp: { appId: "${WEB}", clearState: true }
   - openLink: "${WEB}/?lang=ru"
-  # The catalog renders only after hydration, by when the page has saved the language.
-  - waitForVisible: { testId: catalog }
+  # The hero's covers render only after hydration, by when the page has saved the language.
+  - waitForVisible: { testId: hero-covers }
   - openLink: "${WEB}/create"
   - tapOn: { testId: create-book }
   - assertVisible: "Введите имя"

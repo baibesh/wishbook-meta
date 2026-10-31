@@ -1,4 +1,5 @@
-# Example books on the home page, set in the admin, and the pause told up front on the form.
+# Example books on the home page, set in the admin, and the pause told up front on the landing and
+# on the form.
 appId: ${WEB}
 tags: [smoke, examples]
 db: ${DATABASE_URL}
@@ -66,8 +67,8 @@ commands:
   # Every visitor sees it under the catalog and can open it.
   - launchApp: { appId: "${WEB}", clearState: true }
   - openLink: "${WEB}/?lang=ru"
-  # The catalog renders only after hydration, by when the page has saved the language.
-  - waitForVisible: { testId: catalog }
+  # The hero's covers render only after hydration, by when the page has saved the language.
+  - waitForVisible: { testId: hero-covers }
   - waitForVisible: { testId: examples }
   - assertVisible: "Примеры книг"
   - tapOn: { testId: "example-${bookId}" }
@@ -82,6 +83,8 @@ commands:
   - request:
       url: /status
       assert: { status: 200, json: { "$.paused": true } }
+  - openLink: "${WEB}/"
+  - waitForVisible: { testId: hero-paused }
   - openLink: "${WEB}/create"
   - waitForVisible: { testId: paused-notice }
   - assertVisible: "Создание новых книг временно приостановлено"

@@ -21,8 +21,91 @@ const ru = {
   "common.years": "{min}–{max} лет",
   "common.optional": "(необязательно)",
 
-  "home.title": "Книга, где ваш ребёнок — главный герой",
-  "home.lead":
+  "price.afterFree": "за книгу после бесплатных",
+
+  "landing.hero.title": "Книга, где ваш ребёнок — главный герой",
+  "landing.hero.lead":
+    "Сказка по методике детского развития и иллюстрации, на которых ребёнок узнаёт себя. На казахском, русском или английском — с печатью и доставкой по Казахстану.",
+  "landing.hero.cta": "Выбрать историю",
+  "landing.hero.example": "Полистать пример",
+  "landing.hero.price": "Первые книги — бесплатно, дальше — от {price}.",
+
+  "landing.trust.methods": "{count} методик детского развития",
+  "landing.trust.languages": "{count} языка: қазақша, русский, English",
+  "landing.trust.print": "Печать и доставка по Казахстану",
+  "landing.trust.data": "Данные детей хранятся в Казахстане",
+
+  "landing.how.title": "Как это работает",
+  "landing.how.choose.title": "Выберите историю",
+  "landing.how.choose.text": "Готовую из каталога или свою: о садике, страхах, новом братике — о чём угодно.",
+  "landing.how.tell.title": "Расскажите о ребёнке",
+  "landing.how.tell.text": "Имя, возраст, увлечения. Сфотографируйте любимую игрушку — она тоже попадёт в сказку.",
+  "landing.how.ready.title": "Через ~3 минуты книга готова",
+  "landing.how.ready.text": "Сказку пишет Muse Spark, рисует Muse Image. Листайте на экране или скачайте PDF.",
+  "landing.how.print.title": "Закажите печатную книгу",
+  "landing.how.print.text": "Мягкая или твёрдая обложка, бесплатная доставка в Алматы и Астану.",
+  "landing.how.print.elsewhere": "Печать пока только в Казахстане, а PDF легко распечатать самим.",
+
+  "landing.example.title": "Полистайте настоящую книгу",
+  "landing.example.lead": "Её сделали в Fabulka. Листайте стрелками, кликом или свайпом.",
+  "landing.example.open": "Открыть книгу",
+  "landing.example.all": "Все примеры",
+
+  "landing.toy.title": "Любимая игрушка станет героем",
+  "landing.toy.lead":
+    "Сфотографируйте игрушку, с которой ребёнок не расстаётся, — и она будет рядом с ним на каждой странице.",
+  "landing.toy.photo": "Фото от родителей",
+  "landing.toy.cutout": "SAM 3.1 вырезает игрушку",
+  "landing.toy.character": "Muse Image рисует героя",
+
+  "landing.catalog.title": "Истории из каталога",
+  "landing.catalog.lead": "Готовые сказки по детским методикам — или своя история, написанная с нуля.",
+  "landing.catalog.all": "Весь каталог",
+
+  "landing.methods.title": "Не просто сказка",
+  "landing.methods.lead":
+    "Каждая книга построена на методике детского развития: готовит к новому, учит понимать чувства и верить в себя.",
+
+  "landing.pricing.title": "Цены",
+  "landing.pricing.lead": "Начните бесплатно, а платите, только если захотите ещё.",
+  "landing.pricing.free": "Первые книги — бесплатно: попробуйте без оплаты и без регистрации.",
+  "landing.pricing.pdf": "PDF через ~3 минуты",
+  "landing.pricing.from": "от {price}",
+  "landing.pricing.template.title": "Книга из каталога",
+  "landing.pricing.template.plot": "Готовый сюжет по детской методике",
+  "landing.pricing.template.questions": "Пара вопросов о ребёнке — и история становится его",
+  "landing.pricing.custom.title": "Своя история",
+  "landing.pricing.custom.theme": "Любая тема своими словами",
+  "landing.pricing.custom.method": "Методика на выбор или по возрасту, сказка пишется с нуля",
+  "landing.pricing.print.title": "Печатная книга",
+  "landing.pricing.print.covers": "Мягкая обложка — {soft}, твёрдая — {hard}",
+  "landing.pricing.print.delivery": "Бесплатная доставка в Алматы и Астану, в другие города — {fee}",
+
+  "landing.faq.title": "Вопросы и ответы",
+  "landing.faq.time.q": "Сколько ждать книгу?",
+  "landing.faq.time.a":
+    "Обычно около трёх минут: сначала пишется сказка, потом рисуются герой и страницы. Прогресс видно на странице книги, а готовую можно сразу листать и скачать в PDF.",
+  "landing.faq.kazakh.q": "Можно ли сделать книгу на казахском?",
+  "landing.faq.kazakh.a":
+    "Да. Язык книги выбирается в форме: қазақша, русский или English. Сказка пишется сразу на этом языке, а не переводится.",
+  "landing.faq.data.q": "Что происходит с данными ребёнка?",
+  "landing.faq.data.a":
+    "Данные хранятся на серверах в Казахстане. Мы не просим фотографий детей: героя рисуют по описанию, а фото нужно только для игрушки, если захотите. Всё удалим по запросу на hello@fabulka.com.",
+  "landing.faq.print.q": "Как заказать печатную книгу?",
+  "landing.faq.print.a":
+    "На странице готовой книги нажмите «Заказать печатную книгу». Печать пока доступна только в Казахстане: в Алматы и Астану доставим бесплатно, в другие города — за небольшую плату.",
+  "landing.faq.account.q": "Нужно ли регистрироваться?",
+  "landing.faq.account.a":
+    "Нет. Книги сохраняются в вашем браузере, в разделе «Мои книги». Достаточно открыть каталог и выбрать историю.",
+  "landing.faq.dislike.q": "А если книга не понравится?",
+  "landing.faq.dislike.a":
+    "Сделайте новую: поменяйте ответы, тему или методику. Если что-то пошло не так, напишите нам на hello@fabulka.com — разберёмся.",
+
+  "landing.final.title": "Подарите ребёнку книгу о нём самом",
+  "landing.final.text": "Выберите историю — через несколько минут она будет готова.",
+
+  "catalog.title": "Каталог книг",
+  "catalog.lead":
     "Выберите историю, ответьте на пару вопросов — мы напишем сказку по детской методике и нарисуем иллюстрации, где ребёнок узнает себя на каждой странице.",
   "catalog.own.title": "Своя история",
   "catalog.own.text": "Расскажите, о чём книга, выберите методику — сказку напишут с нуля.",
@@ -72,7 +155,8 @@ const ru = {
   "form.paused.examples": "Смотреть примеры книг",
 
   "paywall.title": "Бесплатные книги закончились",
-  "paywall.text": "Каждая следующая книга — {price}. PDF сразу, печать — по желанию.",
+  "paywall.text.template": "Следующая книга из каталога — {price}. PDF сразу, печать — по желанию.",
+  "paywall.text.custom": "Следующая своя история — {price}. PDF сразу, печать — по желанию.",
   "paywall.buy": "Купить книгу — {price}",
   "paywall.demo": "Демо: оплата не списывается.",
   "paywall.code": "Демо-код",
@@ -146,6 +230,8 @@ const ru = {
   "region.text": "Книги создаются моделями Meta, а их правила не разрешают предлагать сервис в некоторых странах.",
 
   "country.KZ": "Казахстан",
+  "country.UZ": "Узбекистан",
+  "country.KG": "Кыргызстан",
   "country.other": "Другая страна",
 
   "notFound.text": "Такой страницы нет. Может, она ещё не написана?",
@@ -173,8 +259,92 @@ const kk: Messages = {
   "common.years": "{min}–{max} жас",
   "common.optional": "(міндетті емес)",
 
-  "home.title": "Балаңыз басты кейіпкер болатын кітап",
-  "home.lead":
+  "price.afterFree": "тегін кітаптардан кейінгі бағасы",
+
+  "landing.hero.title": "Балаңыз басты кейіпкер болатын кітап",
+  "landing.hero.lead":
+    "Бала дамуы әдістемесіне негізделген ертегі және бала өзін танитын суреттер. Қазақ, орыс немесе ағылшын тілінде — Қазақстан бойынша басып шығарып, жеткіземіз.",
+  "landing.hero.cta": "Ертегі таңдау",
+  "landing.hero.example": "Үлгіні парақтау",
+  "landing.hero.price": "Алғашқы кітаптар — тегін, одан кейін — {price} бастап.",
+
+  "landing.trust.methods": "Бала дамуының {count} әдістемесі",
+  "landing.trust.languages": "{count} тіл: қазақша, русский, English",
+  "landing.trust.print": "Қазақстан бойынша басып шығару және жеткізу",
+  "landing.trust.data": "Балалардың деректері Қазақстанда сақталады",
+
+  "landing.how.title": "Бұл қалай жұмыс істейді",
+  "landing.how.choose.title": "Ертегіні таңдаңыз",
+  "landing.how.choose.text":
+    "Каталогтан дайынын немесе өзіңіздікін: балабақша, қорқыныш, жаңа туған іні туралы — кез келген тақырыпта.",
+  "landing.how.tell.title": "Бала туралы айтыңыз",
+  "landing.how.tell.text": "Аты, жасы, қызығушылықтары. Сүйікті ойыншығын суретке түсіріңіз — ол да ертегіге кіреді.",
+  "landing.how.ready.title": "~3 минуттан кейін кітап дайын",
+  "landing.how.ready.text":
+    "Ертегіні Muse Spark жазады, суретін Muse Image салады. Экраннан парақтаңыз немесе PDF жүктеп алыңыз.",
+  "landing.how.print.title": "Басылған кітапқа тапсырыс беріңіз",
+  "landing.how.print.text": "Жұмсақ не қатты мұқаба, Алматы мен Астанаға жеткізу тегін.",
+  "landing.how.print.elsewhere": "Әзірге басып шығару тек Қазақстанда, ал PDF-ті өзіңіз оңай басып шығара аласыз.",
+
+  "landing.example.title": "Нағыз кітапты парақтап көріңіз",
+  "landing.example.lead": "Ол Fabulka-да жасалған. Көрсеткілермен, басу не сипау арқылы парақтаңыз.",
+  "landing.example.open": "Кітапты ашу",
+  "landing.example.all": "Барлық үлгілер",
+
+  "landing.toy.title": "Сүйікті ойыншық кейіпкерге айналады",
+  "landing.toy.lead": "Бала айырылмайтын ойыншықты суретке түсіріңіз — ол әр бетте баламен бірге болады.",
+  "landing.toy.photo": "Ата-ананың фотосы",
+  "landing.toy.cutout": "SAM 3.1 ойыншықты қиып алады",
+  "landing.toy.character": "Muse Image кейіпкерді салады",
+
+  "landing.catalog.title": "Каталогтағы ертегілер",
+  "landing.catalog.lead": "Балалар әдістемелері бойынша дайын ертегілер — немесе басынан жазылатын өз ертегіңіз.",
+  "landing.catalog.all": "Бүкіл каталог",
+
+  "landing.methods.title": "Жай ғана ертегі емес",
+  "landing.methods.lead":
+    "Әр кітап бала дамуы әдістемесіне негізделген: жаңаға дайындайды, сезімді түсінуге және өзіне сенуге үйретеді.",
+
+  "landing.pricing.title": "Бағалар",
+  "landing.pricing.lead": "Тегін бастаңыз, тағы қаласаңыз ғана төлейсіз.",
+  "landing.pricing.free": "Алғашқы кітаптар — тегін: төлемсіз және тіркелусіз байқап көріңіз.",
+  "landing.pricing.pdf": "PDF ~3 минутта",
+  "landing.pricing.from": "{price} бастап",
+  "landing.pricing.template.title": "Каталогтағы кітап",
+  "landing.pricing.template.plot": "Балалар әдістемесі бойынша дайын сюжет",
+  "landing.pricing.template.questions": "Бала туралы бірнеше сұрақ — және ертегі оныкі болады",
+  "landing.pricing.custom.title": "Өз ертегің",
+  "landing.pricing.custom.theme": "Кез келген тақырып өз сөзіңізбен",
+  "landing.pricing.custom.method": "Әдістемені өзіңіз таңдайсыз не жасына қарай таңдалады, ертегі басынан жазылады",
+  "landing.pricing.print.title": "Басылған кітап",
+  "landing.pricing.print.covers": "Жұмсақ мұқаба — {soft}, қатты — {hard}",
+  "landing.pricing.print.delivery": "Алматы мен Астанаға жеткізу тегін, басқа қалаларға — {fee}",
+
+  "landing.faq.title": "Сұрақтар мен жауаптар",
+  "landing.faq.time.q": "Кітапты қанша күту керек?",
+  "landing.faq.time.a":
+    "Әдетте үш минуттай: алдымен ертегі жазылады, содан кейін кейіпкер мен беттер салынады. Барысы кітап бетінде көрінеді, дайын кітапты бірден парақтап, PDF түрінде жүктеуге болады.",
+  "landing.faq.kazakh.q": "Кітапты қазақ тілінде жасауға бола ма?",
+  "landing.faq.kazakh.a":
+    "Иә. Кітап тілі формада таңдалады: қазақша, русский немесе English. Ертегі аударылмайды, бірден сол тілде жазылады.",
+  "landing.faq.data.q": "Баланың деректері не болады?",
+  "landing.faq.data.a":
+    "Деректер Қазақстандағы серверлерде сақталады. Біз балалардың фотосын сұрамаймыз: кейіпкер сипаттама бойынша салынады, ал фото тек ойыншық үшін, қаласаңыз ғана керек. Сұрауыңыз бойынша бәрін өшіреміз: hello@fabulka.com.",
+  "landing.faq.print.q": "Басылған кітапқа қалай тапсырыс беремін?",
+  "landing.faq.print.a":
+    "Дайын кітаптың бетінде «Басылған кітапқа тапсырыс» батырмасын басыңыз. Әзірге басып шығару тек Қазақстанда: Алматы мен Астанаға тегін, басқа қалаларға аз ақыға жеткіземіз.",
+  "landing.faq.account.q": "Тіркелу керек пе?",
+  "landing.faq.account.a":
+    "Жоқ. Кітаптар браузеріңізде, «Менің кітаптарым» бөлімінде сақталады. Каталогты ашып, ертегі таңдасаңыз жеткілікті.",
+  "landing.faq.dislike.q": "Кітап ұнамаса ше?",
+  "landing.faq.dislike.a":
+    "Жаңасын жасаңыз: жауаптарды, тақырыпты не әдістемені өзгертіңіз. Бірдеңе дұрыс болмаса, hello@fabulka.com поштасына жазыңыз — көмектесеміз.",
+
+  "landing.final.title": "Балаңызға өзі туралы кітап сыйлаңыз",
+  "landing.final.text": "Ертегіні таңдаңыз — бірнеше минуттан кейін ол дайын болады.",
+
+  "catalog.title": "Кітаптар каталогы",
+  "catalog.lead":
     "Ертегіні таңдаңыз, бірнеше сұраққа жауап беріңіз — біз балалар әдістемесі бойынша ертегі жазып, бала әр бетте өзін танитын суреттер саламыз.",
   "catalog.own.title": "Өз ертегің",
   "catalog.own.text": "Кітап не туралы екенін айтып, әдістемені таңдаңыз — ертегі басынан жазылады.",
@@ -224,7 +394,8 @@ const kk: Messages = {
   "form.paused.examples": "Кітап үлгілерін қарау",
 
   "paywall.title": "Тегін кітаптар бітті",
-  "paywall.text": "Әр келесі кітап — {price}. PDF бірден, басып шығару — қалауыңыз бойынша.",
+  "paywall.text.template": "Каталогтан келесі кітап — {price}. PDF бірден, басып шығару — қалауыңыз бойынша.",
+  "paywall.text.custom": "Келесі өз ертегің — {price}. PDF бірден, басып шығару — қалауыңыз бойынша.",
   "paywall.buy": "Кітап сатып алу — {price}",
   "paywall.demo": "Демо: ақша алынбайды.",
   "paywall.code": "Демо-код",
@@ -298,6 +469,8 @@ const kk: Messages = {
   "region.text": "Кітаптарды Meta модельдері жасайды, ал олардың ережелері кейбір елдерде сервисті ұсынуға рұқсат бермейді.",
 
   "country.KZ": "Қазақстан",
+  "country.UZ": "Өзбекстан",
+  "country.KG": "Қырғызстан",
   "country.other": "Басқа ел",
 
   "notFound.text": "Мұндай бет жоқ. Мүмкін, ол әлі жазылмаған шығар?",
@@ -322,8 +495,93 @@ const en: Messages = {
   "common.years": "ages {min}–{max}",
   "common.optional": "(optional)",
 
-  "home.title": "A book where your child is the hero",
-  "home.lead":
+  "price.afterFree": "per book after the free ones",
+
+  "landing.hero.title": "A book where your child is the hero",
+  "landing.hero.lead":
+    "A story built on a child-development method, illustrated so your child recognises themselves. In Kazakh, Russian or English, printed and delivered across Kazakhstan.",
+  "landing.hero.cta": "Choose a story",
+  "landing.hero.example": "Flip through an example",
+  "landing.hero.price": "Your first books are free, then from {price}.",
+
+  "landing.trust.methods": "{count} child-development methods",
+  "landing.trust.languages": "{count} languages: қазақша, русский, English",
+  "landing.trust.print": "Print and delivery across Kazakhstan",
+  "landing.trust.data": "Children's data stays in Kazakhstan",
+
+  "landing.how.title": "How it works",
+  "landing.how.choose.title": "Choose a story",
+  "landing.how.choose.text": "From the catalog or your own: kindergarten, fears, a new baby brother, anything at all.",
+  "landing.how.tell.title": "Tell us about your child",
+  "landing.how.tell.text": "Name, age, interests. Snap their favourite toy and it joins the story too.",
+  "landing.how.ready.title": "About 3 minutes later the book is ready",
+  "landing.how.ready.text":
+    "Muse Spark writes the story and Muse Image draws it. Read it on screen or download the PDF.",
+  "landing.how.print.title": "Order a printed copy",
+  "landing.how.print.text": "Softcover or hardcover, free delivery to Almaty and Astana.",
+  "landing.how.print.elsewhere": "Printing is only in Kazakhstan for now, but the PDF is easy to print yourself.",
+
+  "landing.example.title": "Flip through a real book",
+  "landing.example.lead": "It was made with Fabulka. Turn the pages with the arrows, a click or a swipe.",
+  "landing.example.open": "Open the book",
+  "landing.example.all": "All examples",
+
+  "landing.toy.title": "Their favourite toy becomes a hero",
+  "landing.toy.lead":
+    "Take a photo of the toy your child never lets go of, and it will be by their side on every page.",
+  "landing.toy.photo": "The parent's photo",
+  "landing.toy.cutout": "SAM 3.1 cuts the toy out",
+  "landing.toy.character": "Muse Image draws the character",
+
+  "landing.catalog.title": "Stories from the catalog",
+  "landing.catalog.lead":
+    "Ready-made stories built on child-development methods, or your own story written from scratch.",
+  "landing.catalog.all": "The whole catalog",
+
+  "landing.methods.title": "More than a fairy tale",
+  "landing.methods.lead":
+    "Every book follows a child-development method: it prepares for something new, helps understand feelings and builds confidence.",
+
+  "landing.pricing.title": "Prices",
+  "landing.pricing.lead": "Start for free and pay only if you want more.",
+  "landing.pricing.free": "Your first books are free: try it without paying or signing up.",
+  "landing.pricing.pdf": "The PDF in about 3 minutes",
+  "landing.pricing.from": "from {price}",
+  "landing.pricing.template.title": "A catalog book",
+  "landing.pricing.template.plot": "A ready plot built on a child-development method",
+  "landing.pricing.template.questions": "A few questions about your child make the story theirs",
+  "landing.pricing.custom.title": "Your own story",
+  "landing.pricing.custom.theme": "Any topic, in your own words",
+  "landing.pricing.custom.method": "Pick a method or let us choose by age; the story is written from scratch",
+  "landing.pricing.print.title": "Printed book",
+  "landing.pricing.print.covers": "Softcover {soft}, hardcover {hard}",
+  "landing.pricing.print.delivery": "Free delivery to Almaty and Astana, {fee} to other cities",
+
+  "landing.faq.title": "Questions and answers",
+  "landing.faq.time.q": "How long does it take?",
+  "landing.faq.time.a":
+    "Usually about three minutes: first the story is written, then the hero and the pages are drawn. You can watch the progress on the book's page, then read the finished book or download the PDF right away.",
+  "landing.faq.kazakh.q": "Can I make a book in Kazakh?",
+  "landing.faq.kazakh.a":
+    "Yes. You choose the book's language in the form: қазақша, русский or English. The story is written in that language, not translated.",
+  "landing.faq.data.q": "What happens to my child's data?",
+  "landing.faq.data.a":
+    "It is stored on servers in Kazakhstan. We never ask for photos of children: the hero is drawn from a description, and a photo is only needed for the toy, if you want one. We delete everything on request at hello@fabulka.com.",
+  "landing.faq.print.q": "How do I get a printed book?",
+  "landing.faq.print.a":
+    "On the finished book's page, press “Order a printed book”. Printing is available in Kazakhstan only for now: free delivery to Almaty and Astana, a small fee to other cities.",
+  "landing.faq.account.q": "Do I need to sign up?",
+  "landing.faq.account.a":
+    "No. Your books are kept in your browser under “My books”. Just open the catalog and choose a story.",
+  "landing.faq.dislike.q": "What if I don't like the book?",
+  "landing.faq.dislike.a":
+    "Make another one: change the answers, the topic or the method. If something went wrong, write to hello@fabulka.com and we'll sort it out.",
+
+  "landing.final.title": "Give your child a book about themselves",
+  "landing.final.text": "Choose a story, and in a few minutes it's ready.",
+
+  "catalog.title": "Book catalog",
+  "catalog.lead":
     "Pick a story and answer a few questions. We write a tale built on a child-development method and illustrate it so your child recognises themselves on every page.",
   "catalog.own.title": "Your own story",
   "catalog.own.text": "Tell us what the book is about and pick a method: the story is written from scratch.",
@@ -373,7 +631,8 @@ const en: Messages = {
   "form.paused.examples": "See example books",
 
   "paywall.title": "Your free books are used up",
-  "paywall.text": "Each next book is {price}. The PDF right away, print if you like.",
+  "paywall.text.template": "The next catalog book is {price}. The PDF right away, print if you like.",
+  "paywall.text.custom": "The next story of your own is {price}. The PDF right away, print if you like.",
   "paywall.buy": "Buy a book — {price}",
   "paywall.demo": "Demo: nothing is charged.",
   "paywall.code": "Demo code",
@@ -447,6 +706,8 @@ const en: Messages = {
   "region.text": "Books are made with Meta's models, and their rules do not allow offering the service in some countries.",
 
   "country.KZ": "Kazakhstan",
+  "country.UZ": "Uzbekistan",
+  "country.KG": "Kyrgyzstan",
   "country.other": "Another country",
 
   "notFound.text": "This page doesn't exist. Maybe it hasn't been written yet?",

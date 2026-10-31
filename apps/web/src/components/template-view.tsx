@@ -7,6 +7,7 @@ import { useI18n } from "@/i18n/i18n";
 import { getTemplate } from "@/lib/api";
 import { BookForm } from "./book-form";
 import { ErrorNotice } from "./error-notice";
+import { PriceTag } from "./price-tag";
 
 export function TemplateView({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -35,6 +36,7 @@ export function TemplateView({ params }: { params: Promise<{ slug: string }> }) 
           <p className="text-sm text-muted">
             {method.summary} {t("template.basis", { source: method.source })}
           </p>
+          <PriceTag kind="template" />
         </div>
       </header>
       <BookForm template={template} />

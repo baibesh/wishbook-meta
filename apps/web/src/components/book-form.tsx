@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  COUNTRY_INFO,
   GENERATION_PAUSED,
   LANGUAGES,
   LIMIT_REACHED,
@@ -49,7 +50,7 @@ const label = "flex flex-col gap-1.5 text-sm font-semibold";
 /** A book of your own, or, with `template`, a catalog book with its questions. */
 export function BookForm({ template }: { template?: Template }) {
   const router = useRouter();
-  const { t, locale } = useI18n();
+  const { t, locale, country } = useI18n();
   const ageOptions = template ? ages(template.ageMin, template.ageMax) : ages(2, 10);
   const form = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
@@ -72,6 +73,11 @@ export function BookForm({ template }: { template?: Template }) {
   useEffect(() => {
     if (!form.getFieldState("language").isDirty) form.setValue("language", locale);
   }, [form, locale]);
+  // Only the languages offered in the visitor's country; a choice the new country lacks is dropped.
+  const bookLanguages = COUNTRY_INFO[country].languages;
+  useEffect(() => {
+    if (!bookLanguages.includes(form.getValues("language"))) form.setValue("language", bookLanguages[0]);
+  }, [form, bookLanguages]);
   const methods = METHODOLOGIES.filter((m) => fitsAge(m.slug, age));
   const errors = form.formState.errors;
   const queryClient = useQueryClient();
@@ -189,7 +195,7 @@ export function BookForm({ template }: { template?: Template }) {
       <label className={label}>
         {t("form.bookLanguage")}
         <select data-testid="book-language" className={field} {...form.register("language")}>
-          {LANGUAGES.map((l) => (
+          {bookLanguages.map((l) => (
             <option key={l} value={l}>
               {LOCALE_NAMES[l]}
             </option>
@@ -326,7 +332,7 @@ export function BookForm({ template }: { template?: Template }) {
         )}
       </div>
     </form>
-    {limitReached && <Paywall onUnlocked={() => void submit()} />}
+    {limitReached && <Paywall kind={template ? "template" : "custom"} onUnlocked={() => void submit()} />}
     </div>
   );
 }

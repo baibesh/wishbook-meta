@@ -1,10 +1,11 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
-  BOOK_PRICE_KZT,
+  BOOK_PRICES,
   BUDGET_REACHED,
   DAILY_CAP_REACHED,
   LIMIT_REACHED,
+  type BookKind,
   type Quota,
 } from '@fabulka/shared';
 import { PrismaService } from '../prisma/prisma.service';
@@ -122,10 +123,13 @@ export class QuotaService {
     };
   }
 
-  /** Demo payment: records one more book for the visitor without charging anything. */
-  async buyBook(clientKey: string): Promise<Quota> {
+  /**
+   * Demo payment: records one more book for the visitor without charging anything, at the price
+   * of its kind. A credit is good for either kind, like the free books.
+   */
+  async buyBook(clientKey: string, kind: BookKind): Promise<Quota> {
     await this.prisma.credit.create({
-      data: { clientKey, books: 1, priceKzt: BOOK_PRICE_KZT },
+      data: { clientKey, books: 1, priceKzt: BOOK_PRICES[kind].KZT },
     });
     return this.quota(clientKey);
   }

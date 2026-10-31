@@ -20,7 +20,7 @@ export function Examples() {
 
   if (!shown) return null;
   return (
-    <section ref={section} id="examples" data-testid="examples" className="flex scroll-mt-6 flex-col gap-5">
+    <section ref={section} id="examples" data-testid="examples" className="flex scroll-mt-20 flex-col gap-5">
       <header className="flex flex-col gap-2">
         <h2 className="text-3xl font-extrabold">{t("examples.title")}</h2>
         <p className="text-muted">{t("examples.lead")}</p>

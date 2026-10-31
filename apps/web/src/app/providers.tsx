@@ -1,6 +1,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { countryFromIp } from "@fabulka/shared";
 import { useEffect, useState } from "react";
 import { countryChosen, setCountry, setLocale, useI18n } from "@/i18n/i18n";
 import { UI_LOCALES, type UiLocale } from "@/i18n/messages";
@@ -24,7 +25,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (countryChosen()) return;
     whereAmI()
-      .then((country) => setCountry(country && country !== "KZ" ? "other" : "KZ"))
+      .then((country) => setCountry(countryFromIp(country)))
       .catch(() => undefined);
   }, []);
 

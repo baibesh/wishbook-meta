@@ -1,0 +1,89 @@
+# The home page sells: hero, steps, a real example book to flip through, prices. The catalog lives
+# at /catalog, and the country decides the languages on offer and the currency.
+appId: ${WEB}
+tags: [smoke, landing]
+db: ${DATABASE_URL}
+params:
+  DATABASE_URL:
+    required: true
+    description: Postgres DSN of the e2e database (e2e/.env)
+env:
+  childName: "Лендинг ${Date.now()}"
+http:
+  baseUrl: ${API}
+  headers:
+    X-Client-Key: "e2e-${childName}"
+before:
+  # The newest example book is the one opened on the home page.
+  - request:
+      method: POST
+      url: /books
+      json:
+        child: { name: "${childName}", age: 5, gender: boy, interests: [динозавры], city: Астана, language: ru }
+      extract: { bookId: "$.id" }
+      assert: { status: 201 }
+  - request:
+      url: /books/${bookId}
+      retryUntil:
+        status: 200
+        json: { "$.status": done }
+      timeout: 30000
+  - sql: { exec: "update \"Book\" set featured = true where id = $1", params: ["${bookId}"] }
+commands:
+  - launchApp: { appId: "${WEB}", clearState: true }
+  - openLink: "${WEB}/?lang=ru"
+  # The hero's covers render only after hydration, by when the page has saved the language.
+  - waitForVisible: { testId: hero-covers }
+  - assertVisible: "Книга, где ваш ребёнок — главный герой"
+  - assertVisible: { contains: "Первые книги — бесплатно, дальше — от 1 900 ₸" }
+  - assertVisible: { testId: trust }
+  - assertVisible: "Как это работает"
+  - assertVisible: "Расскажите о ребёнке"
+
+  # "Flip through an example" leads to the newest example book, open right on the page.
+  - tapOn: { testId: hero-example }
+  - waitForVisible: { testId: book-reader }
+  - assertUrl: { contains: "#example" }
+  - assertVisible: { testId: reader-position, text: "1 / 8" }
+  - tapOn: { testId: reader-next }
+  - waitForVisible: { testId: reader-position, text: "2 / 8" }
+
+  # A tap brings the prices into view: scrolling by drag would pick up the catalog's cover links.
+  - tapOn: { testId: free-books }
+  - assertVisible: { text: "1 900 ₸", childOf: { testId: price-template } }
+  - assertVisible: { text: "2 900 ₸", childOf: { testId: price-custom } }
+  - assertVisible: { text: "от 9 900 ₸", childOf: { testId: price-print } }
+  - tapOn: "Нужно ли регистрироваться?"
+  - waitForVisible: { contains: "Книги сохраняются в вашем браузере" }
+
+  # The catalog has a page of its own.
+  - tapOn: { testId: nav-catalog }
+  - waitForVisible: { testId: template-first-day-kindergarten }
+  - assertUrl: { contains: "/catalog" }
+  - assertVisible: "Каталог книг"
+  - assertVisible: "Тайна снежного барса"
+  - assertVisible: { testId: custom-price, text: "2 900 ₸" }
+
+  # In Uzbekistan there is no Kazakh and prices are in dollars: a Kazakh interface gives way to Russian.
+  # In Kazakhstan the language switch starts with Kazakh.
+  - selectOption: { testId: ui-language, optionIndex: 0 }
+  - waitForVisible: "Кітаптар каталогы"
+  - selectOption: { testId: ui-country, option: "Өзбекстан" }
+  - waitForVisible: "Каталог книг"
+  - assertVisible: { testId: custom-price, text: "$5.90" }
+  - assertVisible: { testId: template-price, text: "$3.90", index: 0 }
+  # The switch now offers Russian and English only, and a Kazakh link opens in Russian.
+  - selectOption: { testId: ui-language, optionIndex: 1 }
+  - waitForVisible: "Book catalog"
+  - selectOption: { testId: ui-language, optionIndex: 0 }
+  - waitForVisible: "Каталог книг"
+  - openLink: "${WEB}/catalog?lang=kk"
+  - waitForVisible: { testId: template-first-day-kindergarten }
+  - assertVisible: "Каталог книг"
+  - assertNotVisible: "Кітаптар каталогы"
+  - tapOn: { testId: nav-home }
+  - waitForVisible: { testId: hero-covers }
+  - assertVisible: { contains: "Первые книги — бесплатно, дальше — от $3.90" }
+  - assertVisible: "Печать пока только в Казахстане, а PDF легко распечатать самим."
+after:
+  - sql: { exec: "delete from \"Book\" where child->>'name' = $1", params: ["${childName}"] }

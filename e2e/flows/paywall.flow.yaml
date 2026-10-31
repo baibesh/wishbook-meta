@@ -1,4 +1,5 @@
-# In the browser: after three free books the paywall appears; the demo checkout unlocks one more.
+# In the browser: after three free books the paywall appears; the demo checkout unlocks one more
+# at the price of a story of your own.
 appId: ${WEB}
 tags: [smoke, limits]
 db: ${DATABASE_URL}
@@ -11,8 +12,8 @@ env:
 before:
   - launchApp: { appId: "${WEB}", clearState: true }
   - openLink: "${WEB}/?lang=ru"
-  # The catalog renders only after hydration, by when the page has saved the language.
-  - waitForVisible: { testId: catalog }
+  # The hero's covers render only after hydration, by when the page has saved the language.
+  - waitForVisible: { testId: hero-covers }
   - openLink: "${WEB}/create"
 commands:
   - waitForVisible: { text: "Бесплатных книг осталось: 3 из 3" }
@@ -35,6 +36,8 @@ commands:
   - tapOn: { testId: create-book }
   - waitForVisible: { testId: paywall }
   - assertVisible: { contains: "Бесплатные книги закончились" }
+  # A story of your own is the dearer kind, and the checkout records it at that price.
+  - assertVisible: { testId: buy-book, contains: "2 900 ₸" }
   - tapOn: { testId: buy-book }
   - waitForVisible: { text: "Книга готова", timeout: 30000 }
   - sql:
@@ -44,6 +47,14 @@ commands:
       readOnly: true
       assert:
         first: { books: 4 }
+  - sql:
+      query: >-
+        select sum("priceKzt")::int as paid from "Credit"
+        where "clientKey" in (select "clientKey" from "Book" where child->>'name' = $1)
+      params: ["${childName}"]
+      readOnly: true
+      assert:
+        first: { paid: 2900 }
 after:
   - sql:
       exec: >-

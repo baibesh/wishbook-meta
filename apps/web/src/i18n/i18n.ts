@@ -1,5 +1,6 @@
 "use client";
 
+import { COUNTRIES, languageFor, type Country } from "@fabulka/shared";
 import { useSyncExternalStore } from "react";
 import { MESSAGES, UI_LOCALES, type MessageKey, type UiLocale } from "./messages";
 
@@ -7,8 +8,7 @@ const LOCALE_KEY = "fabulka.locale";
 const COUNTRY_KEY = "fabulka.country";
 const CHANGE = "fabulka:settings";
 
-/** Countries Fabulka prints and prices for; everywhere else gets the PDF in dollars. */
-export type Country = "KZ" | "other";
+export type { Country };
 
 function read(key: string): string | null {
   try {
@@ -39,14 +39,22 @@ function subscribe(onChange: () => void) {
 const isLocale = (value: string | null): value is UiLocale =>
   value !== null && (UI_LOCALES as readonly string[]).includes(value);
 
-/** ?lang= on this page, else the saved choice, else the browser's language, else Russian. */
+/** The saved country; Kazakhstan until one is detected or chosen. */
+function currentCountry(): Country {
+  const saved = read(COUNTRY_KEY);
+  return (COUNTRIES as readonly (string | null)[]).includes(saved) ? (saved as Country) : "KZ";
+}
+
+/**
+ * ?lang= on this page, else the saved choice, else the browser's language, else Russian; then
+ * narrowed to the languages offered in the visitor's country.
+ */
 function currentLocale(): UiLocale {
   const asked = new URLSearchParams(window.location.search).get("lang");
-  if (isLocale(asked)) return asked;
   const saved = read(LOCALE_KEY);
-  if (saved && (UI_LOCALES as readonly string[]).includes(saved)) return saved as UiLocale;
   const browser = navigator.language.slice(0, 2);
-  return (UI_LOCALES as readonly string[]).includes(browser) ? (browser as UiLocale) : "ru";
+  const wanted = [asked, saved, browser].find(isLocale) ?? "ru";
+  return languageFor(currentCountry(), wanted);
 }
 
 export function setLocale(locale: UiLocale) {
@@ -60,8 +68,14 @@ export function setLocale(locale: UiLocale) {
   document.documentElement.lang = locale;
 }
 
+/**
+ * Saves the country. The language on screen stays if the country offers it, else gives way to the
+ * country's first language; it is saved either way, so the switch never brings back an older one.
+ */
 export function setCountry(country: Country) {
+  const locale = languageFor(country, currentLocale());
   write(COUNTRY_KEY, country);
+  if (read(LOCALE_KEY) !== locale) setLocale(locale);
 }
 
 /** Whether the visitor has picked a country yet (otherwise it is detected once). */
@@ -74,7 +88,7 @@ function format(text: string, vars?: Record<string, string | number>) {
 /** Interface language and country. Pages render in Russian on the server, then switch. */
 export function useI18n() {
   const locale = useSyncExternalStore(subscribe, currentLocale, () => "ru" as UiLocale);
-  const country = useSyncExternalStore(subscribe, () => (read(COUNTRY_KEY) === "other" ? "other" : "KZ") as Country, () => "KZ" as Country);
+  const country = useSyncExternalStore(subscribe, currentCountry, () => "KZ" as Country);
   const t = (key: MessageKey, vars?: Record<string, string | number>) => format(MESSAGES[locale][key], vars);
   return { locale, country, t };
 }

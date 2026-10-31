@@ -236,12 +236,74 @@ export const ToyUploadSchema = z.object({
 });
 export const ToyUploadResultSchema = z.object({ upload: z.string() });
 
+// ---- Countries -----------------------------------------------------------------
+
+/**
+ * Countries the site prices and speaks for; "other" is everywhere else we may serve. Russia and
+ * Belarus are never listed: Meta's rules keep the service out of them (see the API's geo guard).
+ */
+export const COUNTRIES = ["KZ", "UZ", "KG", "other"] as const;
+export const CountrySchema = z.enum(COUNTRIES);
+export type Country = z.infer<typeof CountrySchema>;
+
+export type Currency = "KZT" | "USD";
+
+export interface CountryInfo {
+  /** Interface and book languages offered there; the first is the default. */
+  languages: readonly Language[];
+  currency: Currency;
+  /** A print partner delivers there. */
+  print: boolean;
+}
+
+export const COUNTRY_INFO: Record<Country, CountryInfo> = {
+  KZ: { languages: ["kk", "ru", "en"], currency: "KZT", print: true },
+  UZ: { languages: ["ru", "en"], currency: "USD", print: false },
+  KG: { languages: ["ru", "en"], currency: "USD", print: false },
+  other: { languages: ["en", "ru"], currency: "USD", print: false },
+};
+
+/**
+ * Our country for the ISO code of the visitor's IP: a listed one, else "other". An address with no
+ * country (a local one, say) is taken for Kazakhstan, the home market.
+ */
+export function countryFromIp(iso: string | null): Country {
+  if (!iso) return "KZ";
+  const code = iso.trim().toUpperCase();
+  return (COUNTRIES as readonly string[]).includes(code) ? (code as Country) : "other";
+}
+
+/** `language` when the country offers it, else the country's default language. */
+export function languageFor(country: Country, language: Language): Language {
+  const { languages } = COUNTRY_INFO[country];
+  return languages.includes(language) ? language : languages[0];
+}
+
 // ---- Free limit and purchased books ------------------------------------------
 
-/** Price of one more generated (digital) book once the free ones are used. */
-export const BOOK_PRICE_KZT = 2900;
-/** The same book outside Kazakhstan, where only the PDF is sold. */
-export const BOOK_PRICE_USD = 5.9;
+/** A catalog book (an adaptation of a ready plot) or a story of your own, written from scratch. */
+export const BOOK_KINDS = ["template", "custom"] as const;
+export const BookKindSchema = z.enum(BOOK_KINDS);
+export type BookKind = z.infer<typeof BookKindSchema>;
+
+/**
+ * Price of one more generated (digital) book once the free ones are used. Dollars are charged
+ * outside Kazakhstan, where only the PDF is sold.
+ */
+export const BOOK_PRICES: Record<BookKind, Record<Currency, number>> = {
+  template: { KZT: 1900, USD: 3.9 },
+  custom: { KZT: 2900, USD: 5.9 },
+};
+
+/** What one more book of this kind costs a visitor from `country`. */
+export function bookPrice(kind: BookKind, country: Country): { amount: number; currency: Currency } {
+  const currency = COUNTRY_INFO[country].currency;
+  return { amount: BOOK_PRICES[kind][currency], currency };
+}
+
+/** Body of POST /quota/purchase. */
+export const PurchaseSchema = z.object({ kind: BookKindSchema });
+export type Purchase = z.infer<typeof PurchaseSchema>;
 
 export const QuotaSchema = z.object({
   /** Books this visitor has generated (failed ones are not counted). */

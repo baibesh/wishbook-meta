@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  COUNTRIES,
+  COUNTRY_INFO,
   ChildProfileSchema,
   CreateBookSchema,
   METHODOLOGIES,
@@ -7,7 +9,11 @@ import {
   defaultMethodology,
   fitsAge,
   CreateOrderSchema,
+  PurchaseSchema,
   StorySchema,
+  bookPrice,
+  countryFromIp,
+  languageFor,
   orderPrice,
   orderStatusAt,
   progressFor,
@@ -102,5 +108,45 @@ describe("methodologies", () => {
       theme: "первый день в детском саду",
     });
     expect(result.methodology).toBe("social-story");
+  });
+});
+
+describe("countries", () => {
+  it("maps the visitor's IP country onto ours", () => {
+    expect(countryFromIp("KZ")).toBe("KZ");
+    expect(countryFromIp("uz")).toBe("UZ");
+    expect(countryFromIp("KG")).toBe("KG");
+    expect(countryFromIp("DE")).toBe("other");
+    expect(countryFromIp("other")).toBe("other");
+    expect(countryFromIp(null)).toBe("KZ");
+  });
+
+  it("never lists Russia or Belarus, and prints only in Kazakhstan", () => {
+    expect(COUNTRIES).not.toContain("RU");
+    expect(COUNTRIES).not.toContain("BY");
+    expect(COUNTRIES.filter((c) => COUNTRY_INFO[c].print)).toEqual(["KZ"]);
+  });
+
+  it("offers Kazakh only in Kazakhstan and falls back to the country's first language", () => {
+    expect(languageFor("KZ", "kk")).toBe("kk");
+    expect(languageFor("UZ", "kk")).toBe("ru");
+    expect(languageFor("KG", "en")).toBe("en");
+    expect(languageFor("other", "kk")).toBe("en");
+    expect(languageFor("other", "ru")).toBe("ru");
+  });
+});
+
+describe("book prices", () => {
+  it("charges less for a catalog book than for a story of your own", () => {
+    expect(bookPrice("template", "KZ")).toEqual({ amount: 1900, currency: "KZT" });
+    expect(bookPrice("custom", "KZ")).toEqual({ amount: 2900, currency: "KZT" });
+    expect(bookPrice("template", "UZ")).toEqual({ amount: 3.9, currency: "USD" });
+    expect(bookPrice("custom", "other")).toEqual({ amount: 5.9, currency: "USD" });
+  });
+
+  it("takes only a known kind of book to buy", () => {
+    expect(PurchaseSchema.parse({ kind: "custom" })).toEqual({ kind: "custom" });
+    expect(PurchaseSchema.safeParse({}).success).toBe(false);
+    expect(PurchaseSchema.safeParse({ kind: "print" }).success).toBe(false);
   });
 });

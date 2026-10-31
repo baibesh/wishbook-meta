@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { BookForm } from "@/components/book-form";
+import { PriceTag } from "@/components/price-tag";
 import { T } from "@/components/t";
 
 export default function CreatePage() {
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-10">
-      <Link href="/" className="text-sm font-semibold text-accent">
+      <Link href="/catalog" className="text-sm font-semibold text-accent">
         <T k="common.back.catalog" />
       </Link>
       <header className="flex flex-col gap-3">
@@ -15,6 +16,7 @@ export default function CreatePage() {
         <p className="text-lg text-muted">
           <T k="create.lead" />
         </p>
+        <PriceTag kind="custom" />
       </header>
       <BookForm />
     </main>

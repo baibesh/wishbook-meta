@@ -10,7 +10,7 @@ export default function NotFound() {
       <p className="text-lg text-muted">
         <T k="notFound.text" />
       </p>
-      <Link href="/" className="rounded-xl bg-accent px-5 py-3 font-bold text-accent-foreground">
+      <Link href="/catalog" className="rounded-xl bg-accent px-5 py-3 font-bold text-accent-foreground">
         <T k="notFound.cta" />
       </Link>
     </main>
