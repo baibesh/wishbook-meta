@@ -1,25 +1,37 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { methodology, methodologyText } from "@fabulka/shared";
+import { methodology, methodologyText, type Book, type Template } from "@fabulka/shared";
+import { ArrowDown, Baby, BookOpen, Camera, Heart, MapPin, MessageCircleQuestion, PawPrint } from "lucide-react";
 import { use } from "react";
 import { useI18n } from "@/i18n/i18n";
-import { getTemplate } from "@/lib/api";
+import { getBook, getTemplate } from "@/lib/api";
+import type { Highlight } from "@/lib/personalization";
 import { BookForm } from "./book-form";
+import { BookReader } from "./book-reader";
 import { ErrorNotice } from "./error-notice";
+import { primaryButton } from "./landing/section";
 import { PriceTag } from "./price-tag";
+
+const FORM_ID = "book-form-section";
 
 export function TemplateView({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const { t, locale } = useI18n();
   const { data: template, error } = useQuery({ queryKey: ["template", slug, locale], queryFn: () => getTemplate(slug, locale) });
+  const sampleId = template?.sampleBookId;
+  const { data: sample } = useQuery({
+    queryKey: ["book", sampleId],
+    queryFn: () => getBook(sampleId!),
+    enabled: Boolean(sampleId),
+  });
 
   if (error) return <ErrorNotice error={error} />;
   if (!template) return <p className="text-muted">{t("common.loading")}</p>;
   const method = { ...methodology(template.methodology), ...methodologyText(template.methodology, locale) };
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-10">
       <header className="grid items-center gap-6 sm:grid-cols-[14rem_1fr]">
         {template.coverUrl && (
           // eslint-disable-next-line @next/next/no-img-element -- covers are static files of any size
@@ -37,9 +49,91 @@ export function TemplateView({ params }: { params: Promise<{ slug: string }> }) 
             {method.summary} {t("template.basis", { source: method.source })}
           </p>
           <PriceTag kind="template" />
+          <a
+            href={`#${FORM_ID}`}
+            data-testid="template-start"
+            className={`${primaryButton} sm:self-start`}
+            onClick={(event) => {
+              event.preventDefault();
+              document.getElementById(FORM_ID)?.scrollIntoView({ behavior: "smooth" });
+            }}
+          >
+            {t("sample.cta")}
+            <ArrowDown className="size-5" />
+          </a>
         </div>
       </header>
-      <BookForm template={template} />
+      {sample?.status === "done" && <SampleBook book={sample} template={template} />}
+      <Changes template={template} method={method.name} />
+      <section id={FORM_ID} data-testid={FORM_ID} className="scroll-mt-20">
+        <BookForm template={template} />
+      </section>
     </div>
+  );
+}
+
+/** A finished book from this template, with the words that will be the parent's own marked. */
+function SampleBook({ book, template }: { book: Book; template: Template }) {
+  const { t } = useI18n();
+  const details = template.sampleDetails;
+  const toy = book.toy?.name ?? details?.toyName;
+  const highlights: Highlight[] = [
+    { value: book.childName, hint: t("sample.hint.name") },
+    ...(details ? [{ value: details.city, hint: t("sample.hint.city") }] : []),
+    ...(toy ? [{ value: toy, hint: t("sample.hint.toy") }] : []),
+    ...(details?.pet ? [{ value: details.pet, hint: t("sample.hint.pet") }] : []),
+    ...template.questions.flatMap((q) => {
+      const answer = details?.answers[q.key]?.trim();
+      return answer ? [{ value: answer, hint: t("sample.hint.answer", { label: q.label }) }] : [];
+    }),
+  ];
+
+  return (
+    <section data-testid="sample-book" className="flex flex-col gap-4">
+      <header className="flex flex-col gap-2">
+        <h2 className="text-3xl font-extrabold leading-tight">{t("sample.title")}</h2>
+        <p className="text-muted">{t("sample.lead", { name: book.childName })}</p>
+        <p className="text-sm text-muted">
+          <mark className="rounded bg-accent/20 px-1 font-semibold text-foreground underline decoration-accent decoration-dotted underline-offset-4">
+            {book.childName}
+          </mark>{" "}
+          — {t("sample.legend")}
+        </p>
+      </header>
+      <BookReader book={book} highlights={highlights} />
+    </section>
+  );
+}
+
+/** What the parent's answers change in the book, and what stays as the template has it. */
+function Changes({ template, method }: { template: Template; method: string }) {
+  const { t } = useI18n();
+  const items = [
+    { icon: Baby, text: t("template.changes.name") },
+    { icon: MapPin, text: t("template.changes.city") },
+    { icon: Heart, text: t("template.changes.interests") },
+    { icon: PawPrint, text: t("template.changes.pet") },
+    { icon: Camera, text: t("template.changes.toy") },
+    ...template.questions.map((q) => ({ icon: MessageCircleQuestion, text: `«${q.label}» — ${t("template.changes.answer")}` })),
+  ];
+
+  return (
+    <section data-testid="template-changes" className="flex flex-col gap-4 rounded-3xl border border-border bg-card p-5 shadow-sm sm:p-6">
+      <h2 className="text-2xl font-extrabold">{t("template.changes.title")}</h2>
+      <ul className="grid gap-3 sm:grid-cols-2">
+        {items.map(({ icon: Icon, text }) => (
+          <li key={text} className="flex items-start gap-3">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent/15 text-accent">
+              <Icon className="size-5" />
+            </span>
+            <span className="pt-1.5 text-sm leading-snug">{text}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="flex items-start gap-3 border-t border-border pt-4 text-sm text-muted">
+        <BookOpen className="mt-0.5 size-5 shrink-0" />
+        {t("template.changes.same", { method })}
+      </p>
+    </section>
   );
 }

@@ -25,10 +25,16 @@ commands:
 
   # A book made while the interface is in English defaults to an English book.
   - tapOn: { testId: nav-create }
+  - tapOn: { testId: voice-manual, contains: "Fill in by hand" }
   - tapOn: { testId: child-name }
   - inputText: "${childName}"
   - tapOn: { testId: child-interests }
   - inputText: "space"
+  - tapOn: { testId: wizard-next }
+  - tapOn: { testId: wizard-next }
+  - tapOn: { testId: wizard-next }
+  - waitForVisible: { testId: wizard-review }
+  - assertVisible: { text: "English" }
   - tapOn: { testId: create-book }
   - waitForVisible: { text: "The book is ready", timeout: 30000 }
   - assertVisible: { contains: "${childName} and the Starry Journey" }

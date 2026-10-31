@@ -4,7 +4,9 @@ import { BOOK_LABELS, type Book } from "@fabulka/shared";
 import { ChevronLeft, ChevronRight, Maximize2, Minimize2 } from "lucide-react";
 import { motion } from "motion/react";
 import { useI18n } from "@/i18n/i18n";
-import { type ReactNode, useEffect, useEffectEvent, useRef, useState, useSyncExternalStore } from "react";
+import { type Highlight, markPersonal } from "@/lib/personalization";
+import { type ReactNode, useEffect, useEffectEvent, useId, useRef, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 
 /** One page. Pages keep paper colors in dark mode: it is a printed book, not app chrome. */
 function Page({ hard, className = "", children }: { hard?: boolean; className?: string; children?: ReactNode }) {
@@ -15,27 +17,93 @@ function Page({ hard, className = "", children }: { hard?: boolean; className?: 
   );
 }
 
+/**
+ * A word that will be the parent's own in their book; its hint shows on hover, focus or a tap. The
+ * hint is portalled out of the page, whose overflow would clip it near the edges.
+ */
+function Mark({ text, hint }: { text: string; hint: string }) {
+  const id = useId();
+  const ref = useRef<HTMLElement>(null);
+  const [at, setAt] = useState<{ x: number; y: number } | null>(null);
+  const show = () => {
+    const box = ref.current?.getBoundingClientRect();
+    if (box) setAt({ x: box.left + box.width / 2, y: box.top });
+  };
+
+  // The hint is fixed on screen, so it follows the word while the page scrolls.
+  const open = at !== null;
+  const follow = useEffectEvent(show);
+  useEffect(() => {
+    if (!open) return;
+    const onScroll = () => follow();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [open]);
+
+  return (
+    <mark
+      ref={ref}
+      data-testid="sample-highlight"
+      tabIndex={0}
+      aria-describedby={at ? id : undefined}
+      onMouseEnter={show}
+      onMouseLeave={() => setAt(null)}
+      onFocus={show}
+      onBlur={() => setAt(null)}
+      // A tap shows the hint instead of turning the page.
+      onClick={(event) => {
+        event.stopPropagation();
+        show();
+      }}
+      className="cursor-help rounded-[0.2em] bg-[#e8833a]/20 px-[0.1em] text-inherit underline decoration-[#e8833a]/70 decoration-dotted underline-offset-[0.2em] outline-none focus-visible:ring-2 focus-visible:ring-[#e8833a]"
+    >
+      {text}
+      {at &&
+        createPortal(
+          <span
+            id={id}
+            role="tooltip"
+            style={{ left: Math.min(Math.max(at.x, 124), window.innerWidth - 124), top: at.y - 6 }}
+            className="pointer-events-none fixed z-50 w-max max-w-56 -translate-x-1/2 -translate-y-full rounded-lg bg-[#2b2118] px-2.5 py-1.5 text-center text-xs leading-snug font-semibold text-white shadow-lg"
+          >
+            {hint}
+          </span>,
+          document.fullscreenElement ?? document.body,
+        )}
+    </mark>
+  );
+}
+
+/** Text with the highlighted words marked, or as is without highlights. */
+function personal(text: string, highlights: Highlight[] | undefined): ReactNode {
+  if (!highlights?.length) return text;
+  return markPersonal(text, highlights).map((piece, i) =>
+    typeof piece === "string" ? piece : <Mark key={i} text={piece.text} hint={piece.hint} />,
+  );
+}
+
 /** The pages of a book in reading order: cover, opening spread, illustration and text per page, the end. */
-function bookPages(book: Book): ReactNode[] {
+function bookPages(book: Book, highlights?: Highlight[]): ReactNode[] {
   const labels = BOOK_LABELS[book.language];
+  const mark = (text: string) => personal(text, highlights);
   const pages: ReactNode[] = [
     <Page key="cover" hard className="flex flex-col items-center justify-center gap-[5%] p-[8%] text-center">
       {book.heroImageUrl && (
         // eslint-disable-next-line @next/next/no-img-element -- generated files, served by the API
         <img src={book.heroImageUrl} alt="" className="h-[58%] w-[58%] rounded-[6%] bg-white object-contain shadow-md" />
       )}
-      <h2 className="text-[6.5cqw] font-extrabold leading-tight">{book.title}</h2>
+      <h2 className="text-[6.5cqw] font-extrabold leading-tight">{book.title && mark(book.title)}</h2>
     </Page>,
     <Page key="dedication" className="flex flex-col items-center justify-center gap-4 p-[10%] text-center">
       <span className="text-[9cqw] text-[#e8833a]">✦</span>
-      <p className="text-[5.5cqw] font-bold leading-snug">{labels.madeFor(book.childName)}</p>
+      <p className="text-[5.5cqw] font-bold leading-snug">{mark(labels.madeFor(book.childName))}</p>
     </Page>,
     <Page key="hero" className="flex flex-col items-center justify-center gap-[4%] p-[10%] text-center">
       {book.heroImageUrl && (
         // eslint-disable-next-line @next/next/no-img-element -- generated files, served by the API
         <img src={book.heroImageUrl} alt="" className="h-[70%] w-[70%] object-contain" />
       )}
-      <p className="text-[6cqw] font-extrabold">{book.childName}</p>
+      <p className="text-[6cqw] font-extrabold">{mark(book.childName)}</p>
     </Page>,
   ];
   for (const page of book.pages) {
@@ -49,7 +117,7 @@ function bookPages(book: Book): ReactNode[] {
         )}
       </Page>,
       <Page key={`text-${page.page}`} className="relative flex items-center p-[11%]">
-        <p className="text-[4.6cqw] leading-relaxed">{page.text}</p>
+        <p className="text-[4.6cqw] leading-relaxed">{mark(page.text)}</p>
         <span className="absolute right-[8%] bottom-[6%] text-[2.6cqw] text-[#b3a493]">{page.page}</span>
       </Page>,
     );
@@ -96,10 +164,11 @@ const FLIP_EASE = [0.45, 0, 0.25, 1] as const;
  * The finished book as a picture book: a two-page spread on wide screens (illustration left, text
  * right), one page at a time on phones. Pages turn with a 3D flip that only animates while turning,
  * so the page is idle between turns. Arrow keys, clicks on either half and swipes turn pages.
+ * With `highlights`, the words that came from the parent are marked and explained (a sample book).
  */
-export function BookReader({ book }: { book: Book }) {
+export function BookReader({ book, highlights }: { book: Book; highlights?: Highlight[] }) {
   const { t } = useI18n();
-  const pages = bookPages(book);
+  const pages = bookPages(book, highlights);
   const wide = useSyncExternalStore(subscribeWide, () => window.matchMedia(wideQuery).matches, () => true);
   // Wide: view k shows pages 2k-1 (left) and 2k (right); view 0 is the cover alone.
   // Narrow: view k shows page k.

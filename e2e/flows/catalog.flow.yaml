@@ -19,16 +19,26 @@ commands:
   - assertVisible: { contains: "Социальная история" }
   # A catalog book costs less than a story of your own.
   - assertVisible: { text: "1 900 ₸", childOf: { testId: book-price } }
+  - tapOn: { testId: voice-manual }
   - tapOn: { testId: child-name }
   - inputText: "${childName}"
   - tapOn: { testId: child-interests }
   - inputText: "машинки"
-  # A required answer is missing: the form stops and says which one.
-  - tapOn: { testId: create-book }
+  - tapOn: { testId: wizard-next }
+  # A required answer is missing: the questions step stops and says which one.
+  - waitForVisible: { testId: template-questions }
+  - tapOn: { testId: wizard-next }
   - assertVisible: "Ответьте на вопрос «Какую игрушку возьмёт с собой?»"
+  - assertVisible: { css: "[data-step=story]" }
   - tapOn: { testId: answer-toy }
   - inputText: "плюшевый зайка"
   - selectOption: { testId: answer-goodbye, option: "машем в окно" }
+  - tapOn: { testId: wizard-next }
+  - tapOn: { testId: wizard-next }
+  # The review repeats the answers and the catalog price.
+  - waitForVisible: { testId: wizard-review }
+  - assertVisible: { text: "плюшевый зайка" }
+  - assertVisible: { contains: "1 900 ₸", childOf: { testId: review-price } }
   - tapOn: { testId: create-book }
   - waitForVisible: { text: "Книга готова", timeout: 30000 }
   - assertVisible: { contains: "${childName}: Первый день в детском саду" }

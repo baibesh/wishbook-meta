@@ -16,23 +16,32 @@ before:
   - waitForVisible: { testId: hero-covers }
   - openLink: "${WEB}/create"
 commands:
-  - waitForVisible: { text: "Бесплатных книг осталось: 3 из 3" }
   - repeat:
       times: 3
       commands:
         - openLink: "${WEB}/create"
+        - tapOn: { testId: voice-manual }
         - tapOn: { testId: child-name }
         - inputText: "${childName}"
         - tapOn: { testId: child-interests }
         - inputText: "мячи"
+        - tapOn: { testId: wizard-next }
+        - tapOn: { testId: wizard-next }
+        - tapOn: { testId: wizard-next }
+        # The quota line sits next to the button that spends it.
+        - waitForVisible: { testId: quota, contains: "Бесплатных книг осталось:" }
         - tapOn: { testId: create-book }
         - waitForVisible: { testId: book-status }
   - openLink: "${WEB}/create"
-  - waitForVisible: { text: "Бесплатных книг осталось: 0 из 3" }
+  - tapOn: { testId: voice-manual }
   - tapOn: { testId: child-name }
   - inputText: "${childName}"
   - tapOn: { testId: child-interests }
   - inputText: "мячи"
+  - tapOn: { testId: wizard-next }
+  - tapOn: { testId: wizard-next }
+  - tapOn: { testId: wizard-next }
+  - waitForVisible: { text: "Бесплатных книг осталось: 0 из 3" }
   - tapOn: { testId: create-book }
   - waitForVisible: { testId: paywall }
   - assertVisible: { contains: "Бесплатные книги закончились" }

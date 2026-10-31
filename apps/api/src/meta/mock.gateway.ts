@@ -3,8 +3,9 @@ import type {
   GeneratedImage,
   GeneratedStory,
   ModelGateway,
+  PrefillFields,
 } from './model-gateway';
-import type { StoryBrief } from './prompts';
+import type { PrefillBrief, StoryBrief } from './prompts';
 
 const COLORS = [
   '#F9D9A8',
@@ -70,6 +71,11 @@ const MOCK_TEXT: Record<
     ],
   },
 };
+
+/** What the mock "hears" in any recording, and the fields it pulls out of it. */
+export const MOCK_TRANSCRIPT =
+  'Нашу дочку зовут Алия, ей пять лет, мы живём в Алматы, она любит динозавров и рисование, ' +
+  'у нас есть кот Барсик';
 
 /** Canned model output: no network, no cost, same result every run. */
 export class MockGateway implements ModelGateway {
@@ -143,6 +149,39 @@ export class MockGateway implements ModelGateway {
       data: placeholder('pet', '#FFFFFF'),
       ext: 'svg',
       ref: 'mock-pet',
+      costUsd: 0,
+    };
+  }
+
+  async transcribe() {
+    await sleep(this.delayMs);
+    return { text: MOCK_TRANSCRIPT, costUsd: 0 };
+  }
+
+  /** The same child every time; a template's choice questions get their first option. */
+  async extractPrefill({
+    questions = [],
+    theme,
+  }: PrefillBrief): Promise<{ fields: PrefillFields; costUsd: number }> {
+    await sleep(this.delayMs);
+    const answers = Object.fromEntries(
+      questions.flatMap((q) =>
+        q.kind === 'choice' && q.options?.length ? [[q.key, q.options[0]]] : [],
+      ),
+    );
+    return {
+      fields: {
+        child: {
+          name: 'Алия',
+          age: 5,
+          gender: 'girl',
+          interests: ['динозавры', 'рисование'],
+          pet: 'кот Барсик',
+          city: 'Алматы',
+        },
+        ...(theme && { theme: 'динозавры и рисование' }),
+        ...(Object.keys(answers).length && { answers }),
+      },
       costUsd: 0,
     };
   }

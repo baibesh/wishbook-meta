@@ -7,6 +7,8 @@ export MODELS=mock MOCK_DELAY_MS="${MOCK_DELAY_MS:-100}" PAGE_COUNT="${PAGE_COUN
 export FREE_BOOKS=3 DEMO_CODES=E2E-DEMO ORDER_STAGE_MS="${ORDER_STAGE_MS:-1500}"
 # Needs apps/api/geoip/country.mmdb: pnpm --filter @fabulka/api geoip
 export GEO_BLOCK=true
+# Filling in the form by voice (mocked transcription), for the api-voice flow.
+export VOICE_INPUT=true
 # Test-only admin account for the admin flow.
 export ADMIN_EMAIL=admin@e2e.test ADMIN_PASSWORD=e2e-admin-password ADMIN_SECRET=e2e-secret
 export STORAGE_DIR="${STORAGE_DIR:-$ROOT/apps/api/storage-e2e}" PORT=4000

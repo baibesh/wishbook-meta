@@ -12,10 +12,14 @@ commands:
   # Ordering is allowed only from the browser the book belongs to, so the book is made here.
   - launchApp: { appId: "${WEB}", clearState: true }
   - openLink: "${WEB}/create?lang=ru"
+  - tapOn: { testId: voice-manual }
   - tapOn: { testId: child-name }
   - inputText: "${childName}"
   - tapOn: { testId: child-interests }
   - inputText: "динозавры"
+  - tapOn: { testId: wizard-next }
+  - tapOn: { testId: wizard-next }
+  - tapOn: { testId: wizard-next }
   - tapOn: { testId: create-book }
   - waitForVisible: { text: "Книга готова", timeout: 30000 }
   - tapOn: { testId: order-print }

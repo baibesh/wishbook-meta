@@ -1,14 +1,20 @@
 import OpenAI from 'openai';
 import type { Response, Tool } from 'openai/resources/responses/responses';
-import { StorySchema, type Story } from '@fabulka/shared';
+import { StorySchema, type Language, type Story } from '@fabulka/shared';
 import { z } from 'zod';
 import type {
   GeneratedImage,
   GeneratedStory,
   ModelGateway,
+  PrefillFields,
 } from './model-gateway';
 import { cutout } from '../toy/cutout';
+import { sanitizePrefill } from '../voice/prefill';
 import {
+  LANGUAGE_NAMES,
+  PREFILL_INSTRUCTIONS,
+  prefillPrompt,
+  type PrefillBrief,
   REVIEW_INSTRUCTIONS,
   reviewPrompt,
   STORY_INSTRUCTIONS,
@@ -29,6 +35,15 @@ const SPARK_OUTPUT_PER_M = 4.25;
 const IMAGE_PRICE = 0.01;
 /** SAM 3.1: $2.50 per 1,000 images. */
 const SAM_PRICE = 0.0025;
+/** Muse Voice Transcribe: $0.18 per hour of audio, metered in whole seconds. */
+const TRANSCRIBE_PER_SECOND = 0.18 / 3600;
+const TRANSCRIBE_MODEL = 'muse-voice-transcribe-1.0';
+/** Languages the speech model is biased toward; Kazakh speakers often switch to Russian. */
+const LANGUAGE_BIAS: Record<Language, string[]> = {
+  ru: [LANGUAGE_NAMES.ru],
+  kk: [LANGUAGE_NAMES.kk, LANGUAGE_NAMES.ru],
+  en: [LANGUAGE_NAMES.en],
+};
 /** What SAM is asked to find in the parent's photo. */
 const TOY_CONCEPT = 'toy';
 const STORY_ATTEMPTS = 3;
@@ -201,6 +216,74 @@ export class MetaGateway implements ModelGateway {
     );
   }
 
+  /** POST /asr/transcribe is not part of the OpenAI SDK: a multipart request of its own. */
+  async transcribe(
+    wav: Buffer,
+    language: Language,
+  ): Promise<{ text: string; costUsd: number }> {
+    const form = new FormData();
+    form.append(
+      'request',
+      new Blob(
+        [
+          JSON.stringify({
+            model: TRANSCRIBE_MODEL,
+            audioEncoding: 'WAV',
+            mode: 'PUSH_TO_TALK',
+            languageBias: LANGUAGE_BIAS[language],
+          }),
+        ],
+        { type: 'application/json' },
+      ),
+    );
+    form.append(
+      'audio',
+      new Blob([new Uint8Array(wav)], { type: 'audio/wav' }),
+      'recording.wav',
+    );
+    const response = await fetch(`${this.options.baseURL}/asr/transcribe`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.options.apiKey}`,
+        Accept: 'application/json',
+      },
+      body: form,
+      signal: AbortSignal.timeout(60_000),
+    });
+    if (!response.ok) {
+      const detail = (await response.text().catch(() => '')).slice(0, 300);
+      throw new Error(
+        `Muse Voice Transcribe answered ${response.status}: ${detail}`,
+      );
+    }
+    const body = TranscribeResponseSchema.parse(await response.json());
+    return {
+      text: body.transcript.trim(),
+      costUsd: Math.floor(body.audioDurationMs / 1000) * TRANSCRIBE_PER_SECOND,
+    };
+  }
+
+  async extractPrefill(
+    brief: PrefillBrief,
+  ): Promise<{ fields: PrefillFields; costUsd: number }> {
+    const response = await this.client.responses.create({
+      model: this.options.storyModel,
+      instructions: PREFILL_INSTRUCTIONS,
+      input: prefillPrompt(brief),
+      text: { format: { type: 'json_object' } },
+    });
+    let raw: unknown = {};
+    try {
+      raw = JSON.parse(response.output_text || '{}');
+    } catch {
+      // Unreadable JSON fills in nothing; the transcript is still shown.
+    }
+    return {
+      fields: sanitizePrefill(raw, brief.questions, brief.theme),
+      costUsd: tokenCost(response),
+    };
+  }
+
   private async draw(
     prompt: string,
     size: '1024x1024' | '1536x1024',
@@ -267,6 +350,10 @@ function tokenCost(response: Response): number {
 }
 
 const ReviewSchema = z.object({ safe: z.boolean(), reason: z.string() });
+const TranscribeResponseSchema = z.object({
+  transcript: z.string(),
+  audioDurationMs: z.number().default(0),
+});
 
 function dataUrl(jpeg: Buffer): string {
   return `data:image/jpeg;base64,${jpeg.toString('base64')}`;

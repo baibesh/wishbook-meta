@@ -1,4 +1,4 @@
-# The form refuses to start a book without the required answers.
+# The wizard checks each step before the next one and never starts a book half filled in.
 appId: ${WEB}
 tags: [smoke, form]
 commands:
@@ -7,7 +7,48 @@ commands:
   # The hero's covers render only after hydration, by when the page has saved the language.
   - waitForVisible: { testId: hero-covers }
   - openLink: "${WEB}/create"
-  - tapOn: { testId: create-book }
+  # Voice input is on in e2e: the first step offers a recording, the link skips it.
+  - waitForVisible: { css: "[data-step=voice]" }
+  - assertVisible: { contains: "Шаг 1 из 5", childOf: { testId: wizard-step } }
+  - assertVisible: "Мы не сохраняем запись — только распознаём текст."
+  - tapOn: { testId: voice-manual }
+
+  # About the child: nothing entered, Next stays on the step and names the missing fields.
+  - waitForVisible: { css: "[data-step=child]" }
+  - assertVisible: { contains: "Шаг 2 из 5", childOf: { testId: wizard-step } }
+  - tapOn: { testId: wizard-next }
   - assertVisible: "Введите имя"
   - assertVisible: "Назовите хотя бы одно увлечение"
+  - assertVisible: { css: "[data-step=child]" }
+  - tapOn: { testId: child-name }
+  - inputText: "Тимур"
+  - tapOn: { testId: wizard-next }
+  - assertNotVisible: "Введите имя"
+  - assertVisible: "Назовите хотя бы одно увлечение"
+  # Enter in a field moves on rather than creating the book.
+  - tapOn: { testId: child-interests }
+  - inputText: "футбол"
+  - pressKey: enter
+  - waitForVisible: { css: "[data-step=story]" }
+  - assertVisible: { testId: book-theme }
+
+  # Back keeps what was entered.
+  - tapOn: { testId: wizard-back }
+  - waitForVisible: { css: "[data-step=child]" }
+  - assertVisible: { testId: child-name, value: "Тимур" }
+  - tapOn: { testId: wizard-next }
+  - tapOn: { testId: wizard-next }
+  - waitForVisible: { css: "[data-step=toy]" }
+  - assertVisible: { testId: toy-name }
+  - tapOn: { testId: wizard-next }
+
+  # The review shows it all; an edit link goes back to its step.
+  - waitForVisible: { testId: wizard-review }
+  - assertVisible: { text: "Тимур" }
+  - assertVisible: { text: "футбол" }
+  - assertVisible: { contains: "2 900 ₸", childOf: { testId: review-price } }
+  - assertVisible: { testId: create-book, enabled: true }
+  - tapOn: { testId: wizard-edit-child }
+  - waitForVisible: { css: "[data-step=child]" }
+  - assertVisible: { testId: child-interests, value: "футбол" }
   - assertUrl: { equals: "${WEB}/create" }

@@ -88,6 +88,15 @@ commands:
   - openLink: "${WEB}/create"
   - waitForVisible: { testId: paused-notice }
   - assertVisible: "Создание новых книг временно приостановлено"
+  # The wizard can still be filled in, but its last step will not start the book.
+  - tapOn: { testId: voice-manual }
+  - tapOn: { testId: child-name }
+  - inputText: "${childName}"
+  - tapOn: { testId: child-interests }
+  - inputText: "лошади"
+  - tapOn: { testId: wizard-next }
+  - tapOn: { testId: wizard-next }
+  - tapOn: { testId: wizard-next }
   - assertVisible: { testId: create-book, enabled: false }
   - tapOn: { testId: paused-examples }
   - waitForVisible: { testId: examples }
@@ -101,6 +110,14 @@ commands:
   - openLink: "${WEB}/create"
   - waitForVisible: { testId: book-form }
   - assertNotVisible: { testId: paused-notice }
+  - tapOn: { testId: voice-manual }
+  - tapOn: { testId: child-name }
+  - inputText: "${childName}"
+  - tapOn: { testId: child-interests }
+  - inputText: "лошади"
+  - tapOn: { testId: wizard-next }
+  - tapOn: { testId: wizard-next }
+  - tapOn: { testId: wizard-next }
   - assertVisible: { testId: create-book, enabled: true }
 after:
   - sql: { exec: "delete from \"Setting\" where key = 'generation_paused'" }

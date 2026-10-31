@@ -1,0 +1,105 @@
+# A catalog book's sample: the admin picks a finished book, and the book's page shows it with the
+# parent's own words marked, next to what a book of your own changes (mock models).
+appId: ${WEB}
+tags: [catalog, sample]
+db: ${DATABASE_URL}
+params:
+  DATABASE_URL:
+    required: true
+    description: Postgres DSN of the e2e database (e2e/.env)
+env:
+  childName: "Алия ${Date.now()}"
+  slug: snow-leopard-alatau
+  # The test-only admin account from e2e/start-stack.sh.
+  adminEmail: admin@e2e.test
+  adminPassword: e2e-admin-password
+http:
+  baseUrl: ${API}
+  headers:
+    X-Client-Key: "e2e-${childName}"
+    X-Demo-Code: E2E-DEMO
+commands:
+  # A finished (mock) book from the template; the mock story names the child and the city.
+  - request:
+      method: POST
+      url: /books
+      json:
+        child: { name: "${childName}", age: 5, gender: girl, interests: [динозавры], pet: "рыжий кот Барсик", city: Алматы, language: ru }
+        template: ${slug}
+        answers: { friend: Айша, color: зелёный }
+      extract: { bookId: "$.id" }
+      assert: { status: 201 }
+  - request:
+      url: /books/${bookId}
+      retryUntil:
+        status: 200
+        json: { "$.status": done }
+      timeout: 30000
+
+  # Only the admin sets the sample.
+  - request:
+      method: PATCH
+      url: /admin/templates/${slug}
+      json: { sampleBookId: "${bookId}" }
+      assert: { status: 401 }
+  - request:
+      method: POST
+      url: /admin/login
+      json: { email: "${adminEmail}", password: "${adminPassword}" }
+      assert: { status: 204 }
+  - request:
+      method: PATCH
+      url: /admin/templates/${slug}
+      json: { sampleBookId: "${bookId}" }
+      assert: { status: 200 }
+  - request:
+      url: /templates/${slug}?lang=ru
+      extract: { sampleId: "$.sampleBookId", sampleCity: "$.sampleDetails.city", sampleFriend: "$.sampleDetails.answers.friend" }
+      assert: { status: 200 }
+  # Assert values are taken as written, so the extracted ones are compared here.
+  - assertTrue: { equals: ["${sampleId}", "${bookId}"] }
+  - assertTrue: { equals: ["${sampleCity}", "Алматы"] }
+  - assertTrue: { equals: ["${sampleFriend}", "Айша"] }
+
+  # The page shows the sample with the child's name marked and explained, and what will change.
+  - launchApp: { appId: "${WEB}", clearState: true }
+  - openLink: "${WEB}/catalog/${slug}?lang=ru"
+  # The sample arrives only after hydration, by when the page has saved the language.
+  - waitForVisible: { testId: sample-book }
+  - assertVisible: "Так выглядит книга — у вас будет своя"
+  # The button in the header leads down to the form (tapped first: lower down the sticky header
+  # covers it).
+  - tapOn: { testId: template-start }
+  - assertVisible: { testId: book-form-section }
+  - assertUrl: { contains: "/catalog/${slug}" }
+  - assertVisible: { testId: sample-highlight }
+  - hover: { testId: sample-highlight }
+  - assertVisible: "Здесь будет имя вашего ребёнка"
+  # The child's fields, one line per question of the template, and what stays the same.
+  - assertVisible:
+      testId: template-changes
+      containsDescendants:
+        - "Что изменится в книге"
+        - { contains: "Город — история случится там, где вы живёте" }
+        - { contains: "«Лучший друг, который отправится в путь вместе с героем» — в книге будет ваш ответ" }
+        - { contains: "Не меняется: сюжет и методика — Приключение." }
+  # The page text marks the city too.
+  - tapOn: { testId: reader-next }
+  - tapOn: { testId: reader-next }
+  - assertVisible: { testId: sample-highlight, text: "Алматы" }
+
+  # Cleared: the page goes back to the changes and the form alone.
+  - request:
+      method: PATCH
+      url: /admin/templates/${slug}
+      json: { sampleBookId: null }
+      assert: { status: 200 }
+  - request:
+      url: /templates/${slug}
+      assert: { status: 200, json: { "$.sampleBookId": null, "$.sampleDetails": null } }
+  - openLink: "${WEB}/catalog/${slug}?lang=ru"
+  - waitForVisible: { testId: template-changes }
+  - assertNotVisible: { testId: sample-book }
+after:
+  # Deleting the book unsets the sample too (on delete set null).
+  - sql: { exec: "delete from \"Book\" where child->>'name' = $1", params: ["${childName}"] }

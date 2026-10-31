@@ -65,6 +65,21 @@ export type TemplateSummary = z.infer<typeof TemplateSummarySchema>;
 
 export const TemplateSchema = TemplateSummarySchema.extend({
   questions: z.array(TemplateQuestionSchema),
+  /** A finished book made from this template to show as an example (GET /books/:id), or null. */
+  sampleBookId: z.string().nullable(),
+  /**
+   * What the sample book was made from, so its page can point out what a book of your own changes;
+   * null without a sample. Answers are by question key, as the sample's parent gave them.
+   */
+  sampleDetails: z
+    .object({
+      name: z.string(),
+      city: z.string(),
+      pet: z.string().nullable(),
+      toyName: z.string().nullable(),
+      answers: z.record(z.string(), z.string()),
+    })
+    .nullable(),
 });
 export type Template = z.infer<typeof TemplateSchema>;
 
@@ -202,6 +217,8 @@ export type ExampleBook = z.infer<typeof ExampleBookSchema>;
 export const ServiceStatusSchema = z.object({
   /** New books are not being created (paused in the admin). */
   paused: z.boolean(),
+  /** The form can be filled in by voice (POST /voice; VOICE_INPUT on the API). */
+  voice: z.boolean(),
 });
 export type ServiceStatus = z.infer<typeof ServiceStatusSchema>;
 
@@ -235,6 +252,39 @@ export const ToyUploadSchema = z.object({
     .max(8_000_000, "Фотография слишком большая"),
 });
 export const ToyUploadResultSchema = z.object({ upload: z.string() });
+
+// ---- Voice input -------------------------------------------------------------
+
+/** Fields of POST /voice next to the `audio` file (a 16 kHz mono WAV, at most 60 s). */
+export const VoiceRequestSchema = z.object({
+  /** The interface language; the parent speaks it and the template's options are in it. */
+  language: LanguageSchema,
+  /** Catalog book slug when the parent is on its form; then `answers` are filled in. */
+  template: z.string().min(1).max(80).optional(),
+});
+export type VoiceRequest = z.infer<typeof VoiceRequestSchema>;
+
+/**
+ * What the parent's recording filled in. Only fields the parent actually said are present, each
+ * valid for the form; `answers` hold exact option strings of the template's choice questions.
+ */
+export const VoicePrefillSchema = z.object({
+  transcript: z.string(),
+  child: ChildProfileSchema.omit({ language: true }).partial(),
+  toyName: z.string().trim().min(1).max(40).optional(),
+  /** What a book of your own is about (no template). */
+  theme: z.string().trim().min(3).max(200).optional(),
+  /** Answers to the template's questions, by question key. */
+  answers: AnswersSchema.optional(),
+});
+export type VoicePrefill = z.infer<typeof VoicePrefillSchema>;
+
+/** Body of a 404 from POST /voice when voice input is off (VOICE_INPUT). */
+export const VOICE_DISABLED = "voice_disabled";
+/** Body of a 429 from POST /voice: too many recordings from this visitor in the last hour. */
+export const VOICE_RATE_LIMITED = "voice_rate_limited";
+/** Body of a 502 from POST /voice: the speech or language model could not be reached. */
+export const VOICE_FAILED = "voice_failed";
 
 // ---- Countries -----------------------------------------------------------------
 
@@ -470,7 +520,7 @@ export type AdminOrder = z.infer<typeof AdminOrderSchema>;
 
 export const UpdateOrderStatusSchema = z.object({ status: OrderStatusSchema });
 
-export const AdminTemplateSchema = TemplateSchema.extend({
+export const AdminTemplateSchema = TemplateSchema.omit({ sampleDetails: true }).extend({
   published: z.boolean(),
   sortOrder: z.number().int(),
   theme: z.string(),
@@ -491,6 +541,8 @@ export const UpdateTemplateSchema = z
     plot: z.array(z.string().trim().min(3).max(300)).min(3).max(12),
     questions: z.array(TemplateQuestionSchema).max(8),
     stylePrompt: z.string().trim().max(400).nullable(),
+    /** A finished book made from this template to show on its page, or null for none. */
+    sampleBookId: z.string().min(1).nullable(),
     published: z.boolean(),
     sortOrder: z.number().int(),
   })

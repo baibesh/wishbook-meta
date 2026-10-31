@@ -1,5 +1,5 @@
-import type { Story } from '@fabulka/shared';
-import type { Companions, StoryBrief } from './prompts';
+import type { Language, Story, VoicePrefill } from '@fabulka/shared';
+import type { Companions, PrefillBrief, StoryBrief } from './prompts';
 
 export const MODEL_GATEWAY = Symbol('MODEL_GATEWAY');
 
@@ -10,6 +10,9 @@ export interface GeneratedImage {
   ref: string;
   costUsd: number;
 }
+
+/** The form fields a voice recording filled in, everything but the transcript. */
+export type PrefillFields = Omit<VoicePrefill, 'transcript'>;
 
 export interface GeneratedStory {
   story: Story;
@@ -59,4 +62,16 @@ export interface ModelGateway {
     companions: Companions,
     style?: string,
   ): Promise<GeneratedImage>;
+  /** Muse Voice Transcribe: the parent's recording (a 16 kHz mono WAV) as text. Nothing is kept. */
+  transcribe(
+    wav: Buffer,
+    language: Language,
+  ): Promise<{ text: string; costUsd: number }>;
+  /**
+   * Muse Spark reads the transcript and fills in the order form. Invalid or guessed fields are left
+   * out rather than failing the call.
+   */
+  extractPrefill(
+    brief: PrefillBrief,
+  ): Promise<{ fields: PrefillFields; costUsd: number }>;
 }

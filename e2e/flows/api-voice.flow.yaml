@@ -1,0 +1,57 @@
+# Filling in the form by voice: a WAV goes up as multipart, the fields come back (transcription and
+# extraction are mocked). The bodies are raw multipart; the audio is a 64-sample 8 kHz WAV whose
+# bytes are all below 0x80, so the YAML string carries it unchanged.
+device: none
+env:
+  clientKey: "e2e-voice-${Date.now()}"
+http:
+  baseUrl: ${API}
+  headers:
+    X-Client-Key: "${clientKey}"
+    Content-Type: "multipart/form-data; boundary=fabulka"
+commands:
+  - request:
+      url: /status
+      assert: { status: 200, json: { "$.voice": true } }
+
+  # A book of your own: the child and what the book is about.
+  - request:
+      method: POST
+      url: /voice
+      body: "--fabulka\r\nContent-Disposition: form-data; name=\"language\"\r\n\r\nru\r\n--fabulka\r\nContent-Disposition: form-data; name=\"audio\"; filename=\"x.wav\"\r\nContent-Type: audio/wav\r\n\r\nRIFFd\0\0\0WAVEfmt \x10\0\0\0\x01\0\x01\0@\x1F\0\0@\x1F\0\0\x01\0\x08\0data@\0\0\0@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\r\n--fabulka--\r\n"
+      assert:
+        status: 200
+        json:
+          "$.transcript": { contains: "Алия" }
+          "$.child.name": Алия
+          "$.child.age": 5
+          "$.child.gender": girl
+          "$.child.city": Алматы
+          "$.theme": { contains: "динозавры" }
+
+  # A catalog book: its choice questions are answered with one of their options.
+  - request:
+      method: POST
+      url: /voice
+      body: "--fabulka\r\nContent-Disposition: form-data; name=\"language\"\r\n\r\nru\r\n--fabulka\r\nContent-Disposition: form-data; name=\"template\"\r\n\r\nfirst-day-kindergarten\r\n--fabulka\r\nContent-Disposition: form-data; name=\"audio\"; filename=\"x.wav\"\r\nContent-Type: audio/wav\r\n\r\nRIFFd\0\0\0WAVEfmt \x10\0\0\0\x01\0\x01\0@\x1F\0\0@\x1F\0\0\x01\0\x08\0data@\0\0\0@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\r\n--fabulka--\r\n"
+      assert:
+        status: 200
+        json:
+          "$.child.pet": кот Барсик
+          "$.answers.goodbye": обнимаемся
+
+  - request:
+      method: POST
+      url: /voice
+      body: "--fabulka\r\nContent-Disposition: form-data; name=\"language\"\r\n\r\nru\r\n--fabulka\r\nContent-Disposition: form-data; name=\"template\"\r\n\r\nno-such-book\r\n--fabulka\r\nContent-Disposition: form-data; name=\"audio\"; filename=\"x.wav\"\r\nContent-Type: audio/wav\r\n\r\nRIFFd\0\0\0WAVEfmt \x10\0\0\0\x01\0\x01\0@\x1F\0\0@\x1F\0\0\x01\0\x08\0data@\0\0\0@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\r\n--fabulka--\r\n"
+      assert: { status: 404 }
+  - request:
+      method: POST
+      url: /voice
+      body: "--fabulka\r\nContent-Disposition: form-data; name=\"language\"\r\n\r\nru\r\n--fabulka\r\nContent-Disposition: form-data; name=\"audio\"; filename=\"x.wav\"\r\nContent-Type: audio/wav\r\n\r\nnot a wav file\r\n--fabulka--\r\n"
+      assert: { status: 400, json: { "$.message": { contains: "WAV" } } }
+  - request:
+      method: POST
+      url: /voice
+      body: "--fabulka\r\nContent-Disposition: form-data; name=\"language\"\r\n\r\nde\r\n--fabulka\r\nContent-Disposition: form-data; name=\"audio\"; filename=\"x.wav\"\r\nContent-Type: audio/wav\r\n\r\nRIFFd\0\0\0WAVEfmt \x10\0\0\0\x01\0\x01\0@\x1F\0\0@\x1F\0\0\x01\0\x08\0data@\0\0\0@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\r\n--fabulka--\r\n"
+      assert: { status: 400 }

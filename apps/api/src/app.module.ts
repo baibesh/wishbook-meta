@@ -24,6 +24,8 @@ import { StorageModule } from './storage/storage.service';
 import { TemplatesController } from './templates/templates.controller';
 import { ToysController, ToyUploadsCleaner } from './toy/toys.controller';
 import { TemplatesService } from './templates/templates.service';
+import { VoiceController } from './voice/voice.controller';
+import { VoiceService } from './voice/voice.service';
 
 @Controller('health')
 class HealthController {
@@ -57,6 +59,7 @@ class HealthController {
     ToysController,
     AdminAuthController,
     AdminController,
+    VoiceController,
   ],
   providers: [
     GeoService,
@@ -69,6 +72,7 @@ class HealthController {
     ToyUploadsCleaner,
     AdminAuthService,
     AdminService,
+    VoiceService,
   ],
 })
 export class AppModule {}

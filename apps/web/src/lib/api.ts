@@ -8,6 +8,7 @@ import {
   TemplateSchema,
   TemplateSummarySchema,
   ToyUploadResultSchema,
+  VoicePrefillSchema,
   type Book,
   type BookKind,
   type CreateBookInput,
@@ -19,6 +20,7 @@ import {
   type ServiceStatus,
   type Template,
   type TemplateSummary,
+  type VoicePrefill,
 } from "@fabulka/shared";
 
 const CLIENT_KEY = "wishbook.clientKey";
@@ -101,6 +103,31 @@ export async function createBook(input: CreateBookInput): Promise<Book> {
 export async function uploadToy(image: string): Promise<string> {
   const result = ToyUploadResultSchema.parse(await request("/api/toys", { method: "POST", body: JSON.stringify({ image }) }));
   return result.upload;
+}
+
+/**
+ * Fills in the form from the parent's recording: a 16 kHz mono WAV, at most 60 s. `template` is the
+ * catalog book's slug on its form, so the answers to its questions come back too. Sent as multipart,
+ * so the browser sets the content type with its boundary.
+ */
+export async function transcribeVoice(audio: Blob, language: Language, template?: string): Promise<VoicePrefill> {
+  const form = new FormData();
+  form.append("audio", audio, "recording.wav");
+  form.append("language", language);
+  if (template) form.append("template", template);
+  const code = demoCode();
+  const response = await fetch("/api/voice", {
+    method: "POST",
+    body: form,
+    headers: { "x-client-key": clientKey(), ...(code ? { "x-demo-code": code } : {}) },
+  });
+  const body: unknown = await response.json().catch(() => null);
+  if (!response.ok) {
+    const error = (body ?? {}) as { code?: string; message?: unknown };
+    const message = typeof error.message === "string" ? error.message : response.statusText;
+    throw new ApiError(response.status, error.code, message);
+  }
+  return VoicePrefillSchema.parse(body);
 }
 
 export async function listTemplates(lang: Language): Promise<TemplateSummary[]> {

@@ -29,7 +29,7 @@ model Book {
   methodology     String          @default("adventure-quest")
   /// What the parent asked the book to be about, if anything.
   theme           String?
-  template        BookTemplate?   @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  template        BookTemplate?   @relation("TemplateBooks", fields: [templateId], references: [id], onDelete: SetNull)
   templateId      String?
   /// Answers to the catalog book's questions, by question key.
   answers         Json?
@@ -63,6 +63,8 @@ model Book {
   featured        Boolean         @default(false)
   orders          Order[]
   printInterest   PrintInterest[]
+  /// The catalog book this one is the sample of, if the admin picked it.
+  sampleOf        BookTemplate?   @relation("TemplateSample")
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
@@ -139,7 +141,10 @@ model BookTemplate {
   translations Json     @default("{}")
   published    Boolean  @default(true)
   sortOrder    Int      @default(0)
-  books        Book[]
+  books        Book[]   @relation("TemplateBooks")
+  /// A finished book made from this template, shown on its page as an example.
+  sampleBook   Book?    @relation("TemplateSample", fields: [sampleBookId], references: [id], onDelete: SetNull)
+  sampleBookId String?  @unique
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }

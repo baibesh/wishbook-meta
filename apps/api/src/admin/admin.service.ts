@@ -240,6 +240,7 @@ export class AdminService {
         );
       }
     }
+    if (patch.sampleBookId) await this.assertSample(slug, patch.sampleBookId);
     await this.prisma.bookTemplate.update({
       where: { slug },
       data: {
@@ -247,6 +248,22 @@ export class AdminService {
       },
     });
     return this.template(slug);
+  }
+
+  /** A template's sample must be a finished book that is not already another template's sample. */
+  private async assertSample(slug: string, bookId: string): Promise<void> {
+    const book = await this.prisma.book.findUnique({
+      where: { id: bookId },
+      select: { status: true, sampleOf: { select: { slug: true } } },
+    });
+    if (!book) throw new BadRequestException(`Книги ${bookId} нет`);
+    if (book.status !== 'done')
+      throw new BadRequestException('Образцом может быть только готовая книга');
+    if (book.sampleOf && book.sampleOf.slug !== slug) {
+      throw new BadRequestException(
+        `Эта книга уже образец для «${book.sampleOf.slug}»`,
+      );
+    }
   }
 
   setPaused(paused: boolean) {
@@ -269,6 +286,7 @@ export class AdminService {
       theme: row.theme,
       plot: row.plot as string[],
       stylePrompt: row.stylePrompt,
+      sampleBookId: row.sampleBookId,
       books,
     };
   }

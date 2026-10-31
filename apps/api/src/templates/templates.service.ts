@@ -7,6 +7,8 @@ import {
 import type { BookTemplate, Prisma } from '@prisma/client';
 import {
   LANGUAGES,
+  type Answers,
+  type ChildProfile,
   type Language,
   type MethodologySlug,
   type Template,
@@ -70,7 +72,30 @@ export class TemplatesService implements OnModuleInit {
 
   async get(slug: string, lang: Language = 'ru'): Promise<Template> {
     const row = await this.find(slug);
-    return { ...summary(row, lang), questions: localizedQuestions(row, lang) };
+    // The sample is shown only once it is a finished book; a deleted one is unset by the database.
+    const sample = row.sampleBookId
+      ? await this.prisma.book.findFirst({
+          where: { id: row.sampleBookId, status: 'done' },
+          select: { id: true, child: true, toyName: true, answers: true },
+        })
+      : null;
+    // The sample's child is shown publicly anyway: the admin picked the book to be seen.
+    const child = sample?.child as unknown as ChildProfile | undefined;
+    return {
+      ...summary(row, lang),
+      questions: localizedQuestions(row, lang),
+      sampleBookId: sample?.id ?? null,
+      sampleDetails:
+        sample && child
+          ? {
+              name: child.name,
+              city: child.city,
+              pet: child.pet ?? null,
+              toyName: sample.toyName,
+              answers: (sample.answers as Answers | null) ?? {},
+            }
+          : null,
+    };
   }
 
   /** The published catalog book, or a 404. */

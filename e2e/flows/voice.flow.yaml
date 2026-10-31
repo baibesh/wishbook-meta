@@ -1,0 +1,36 @@
+# Filling the form in by voice. The browser has no microphone, so ?voiceTest=1 offers a silent test
+# recording; the mock models hear the same parent every time and fill in the same child.
+appId: ${WEB}
+tags: [smoke, voice]
+commands:
+  - launchApp: { appId: "${WEB}", clearState: true }
+  - openLink: "${WEB}/catalog/first-day-kindergarten?lang=ru&voiceTest=1"
+  - waitForVisible: { css: "[data-step=voice]" }
+  - assertVisible: "Мы не сохраняем запись — только распознаём текст."
+  - assertVisible: { testId: voice-start }
+  - tapOn: { testId: voice-sample }
+
+  # The fields it named are filled in, and the parent is taken to check them.
+  - waitForVisible: { css: "[data-step=child]", timeout: 15000 }
+  - assertVisible: { testId: voice-transcript }
+  - assertVisible: "Проверьте поля — мы могли что-то расслышать неправильно."
+  - assertVisible: { testId: child-name, value: "Алия" }
+  - assertVisible: { testId: child-interests, value: "динозавры, рисование" }
+  - assertVisible: { testId: child-city, value: "Алматы" }
+  - tapOn: { testId: wizard-next }
+
+  # A choice question gets the option the recording named (the mock picks the first one).
+  - waitForVisible: { testId: template-questions }
+  - assertVisible: { testId: answer-goodbye, value: "обнимаемся" }
+  - tapOn: { testId: answer-toy }
+  - inputText: "зайка Бусинка"
+  - tapOn: { testId: wizard-next }
+  - waitForVisible: { css: "[data-step=toy]" }
+  - assertVisible: { testId: child-pet, value: "кот Барсик" }
+  - tapOn: { testId: wizard-next }
+
+  - waitForVisible: { testId: wizard-review }
+  - assertVisible: { text: "Алия" }
+  - assertVisible: { text: "кот Барсик" }
+  - assertVisible: { text: "зайка Бусинка" }
+  - assertVisible: { testId: create-book, enabled: true }
