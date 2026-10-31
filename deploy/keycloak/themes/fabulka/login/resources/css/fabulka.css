@@ -1,0 +1,275 @@
+/*
+ * Fabulka login theme. Loaded after keycloak.v2's styles.css, so it only
+ * overrides colours, type and shapes; the markup is the stock keycloak.v2 one.
+ * Palette matches apps/web/src/app/globals.css.
+ * Nunito is bundled (SIL Open Font License 1.1, see ../fonts/OFL.txt).
+ */
+
+@font-face {
+    font-family: "Nunito";
+    font-style: normal;
+    font-weight: 400 800;
+    font-display: swap;
+    src: url("../fonts/nunito-cyrillic-ext.woff2") format("woff2");
+    unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+
+@font-face {
+    font-family: "Nunito";
+    font-style: normal;
+    font-weight: 400 800;
+    font-display: swap;
+    src: url("../fonts/nunito-cyrillic.woff2") format("woff2");
+    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+@font-face {
+    font-family: "Nunito";
+    font-style: normal;
+    font-weight: 400 800;
+    font-display: swap;
+    src: url("../fonts/nunito-latin.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+    --fabulka-bg: #fffaf3;
+    --fabulka-fg: #2b2118;
+    --fabulka-muted: #7a6a5c;
+    --fabulka-card: #ffffff;
+    --fabulka-border: #eadfce;
+    --fabulka-input-border: #d6c3a8;
+    --fabulka-accent: #e8833a;
+    --fabulka-accent-hover: #d57028;
+    --fabulka-accent-soft: #fde3c8;
+    --fabulka-radius: 20px;
+    --fabulka-radius-sm: 12px;
+
+    /* PatternFly v5 tokens used by keycloak.v2 */
+    --pf-v5-global--FontFamily--text: "Nunito", ui-rounded, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --pf-v5-global--FontFamily--heading: var(--pf-v5-global--FontFamily--text);
+    --pf-v5-global--FontFamily--redhatfont--text: var(--pf-v5-global--FontFamily--text);
+    --pf-v5-global--FontFamily--redhatfont--heading: var(--pf-v5-global--FontFamily--text);
+    --pf-v5-global--Color--100: var(--fabulka-fg);
+    --pf-v5-global--Color--200: var(--fabulka-muted);
+    --pf-v5-global--BorderColor--100: var(--fabulka-border);
+    --pf-v5-global--BorderColor--200: #d9c9b3;
+    --pf-v5-global--primary-color--100: var(--fabulka-accent);
+    --pf-v5-global--primary-color--200: var(--fabulka-accent-hover);
+    --pf-v5-global--link--Color: #c4621d;
+    --pf-v5-global--link--Color--hover: #9e4c12;
+    --pf-v5-global--active-color--100: var(--fabulka-accent);
+    --pf-v5-global--BackgroundColor--100: var(--fabulka-card);
+
+    --keycloak-card-top-color: transparent;
+}
+
+html.login-pf,
+.login-pf body {
+    background: var(--fabulka-bg) !important;
+    color: var(--fabulka-fg);
+    font-family: var(--pf-v5-global--FontFamily--text);
+}
+
+.pf-v5-c-login {
+    --pf-v5-c-login--BackgroundColor: var(--fabulka-bg);
+    background: var(--fabulka-bg);
+    min-height: 100vh;
+}
+
+.pf-v5-c-login__container {
+    grid-template-columns: minmax(0, 30rem);
+    padding-inline: 16px;
+}
+
+/* Brand: logo + "Fabulka" */
+.pf-v5-c-login__header {
+    display: flex;
+    justify-content: center;
+    padding-block: 32px 20px;
+}
+
+#kc-header-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--fabulka-fg) !important;
+    font-size: 30px;
+    font-weight: 800;
+    text-transform: none;
+    letter-spacing: -0.01em;
+    line-height: 1;
+}
+
+#kc-header-wrapper::before {
+    content: "";
+    flex: none;
+    width: 44px;
+    height: 44px;
+    background: url("../img/logo.svg") no-repeat center / contain;
+}
+
+/* Card */
+.pf-v5-c-login__main {
+    background: var(--fabulka-card);
+    border: 1px solid var(--fabulka-border);
+    border-radius: var(--fabulka-radius);
+    box-shadow: 0 10px 30px -12px rgba(122, 74, 30, 0.18);
+    overflow: hidden;
+}
+
+.pf-v5-c-login__main-header {
+    border-top: 0;
+    padding-top: 28px;
+}
+
+#kc-page-title,
+.pf-v5-c-title {
+    font-family: var(--pf-v5-global--FontFamily--heading);
+    font-weight: 800;
+    color: var(--fabulka-fg);
+}
+
+#kc-page-title {
+    font-size: 26px;
+    line-height: 1.25;
+}
+
+/* Inputs */
+.pf-v5-c-form-control {
+    --pf-v5-c-form-control--BorderRadius: var(--fabulka-radius-sm);
+    --pf-v5-c-form-control--before--BorderColor: var(--fabulka-input-border);
+    --pf-v5-c-form-control--after--BorderColor: var(--fabulka-input-border);
+    --pf-v5-c-form-control--before--BorderWidth: 1px;
+    --pf-v5-c-form-control--after--BorderWidth: 0;
+    --pf-v5-c-form-control--hover--after--BorderBottomColor: var(--fabulka-accent);
+    --pf-v5-c-form-control--focus--after--BorderBottomColor: var(--fabulka-accent);
+    border-radius: var(--fabulka-radius-sm);
+    background: #fffdf9;
+}
+
+.pf-v5-c-form-control::before,
+.pf-v5-c-form-control::after {
+    border-radius: var(--fabulka-radius-sm);
+}
+
+/* PatternFly draws the field outline with ::before and the underline with ::after. */
+.pf-v5-c-form-control::before {
+    border: 1px solid var(--fabulka-input-border) !important;
+}
+
+.pf-v5-c-form-control::after {
+    border-bottom-width: 0 !important;
+}
+
+.pf-v5-c-form-control:hover::before,
+.pf-v5-c-form-control:focus-within::before {
+    border-color: var(--fabulka-accent) !important;
+}
+
+.pf-v5-c-form-control.pf-m-error::before {
+    border-color: #c9190b !important;
+}
+
+.pf-v5-c-form-control:focus-within {
+    box-shadow: 0 0 0 3px var(--fabulka-accent-soft);
+}
+
+.pf-v5-c-form__label-text {
+    font-weight: 700;
+    color: var(--fabulka-fg);
+}
+
+/* Buttons */
+.pf-v5-c-button {
+    border-radius: 999px;
+    font-weight: 700;
+}
+
+.pf-v5-c-button.pf-m-primary {
+    --pf-v5-c-button--m-primary--BackgroundColor: var(--fabulka-accent);
+    --pf-v5-c-button--m-primary--hover--BackgroundColor: var(--fabulka-accent-hover);
+    --pf-v5-c-button--m-primary--focus--BackgroundColor: var(--fabulka-accent-hover);
+    --pf-v5-c-button--m-primary--active--BackgroundColor: var(--fabulka-accent-hover);
+    --pf-v5-c-button--m-primary--Color: #ffffff;
+    padding-block: 12px;
+    font-size: 17px;
+}
+
+.pf-v5-c-button.pf-m-secondary {
+    --pf-v5-c-button--m-secondary--Color: #c4621d;
+    --pf-v5-c-button--m-secondary--after--BorderColor: var(--fabulka-accent);
+    --pf-v5-c-button--m-secondary--hover--Color: #9e4c12;
+    --pf-v5-c-button--m-secondary--hover--after--BorderColor: var(--fabulka-accent-hover);
+}
+
+.pf-v5-c-button.pf-m-control {
+    border-radius: var(--fabulka-radius-sm);
+}
+
+/* The input+button group (password visibility) keeps square inner corners */
+.pf-v5-c-input-group .pf-v5-c-form-control,
+.pf-v5-c-input-group .pf-v5-c-form-control::before,
+.pf-v5-c-input-group .pf-v5-c-form-control::after {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+}
+
+.pf-v5-c-input-group .pf-v5-c-button.pf-m-control,
+.pf-v5-c-input-group .pf-v5-c-button.pf-m-control::after {
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+}
+
+/* Google and other providers */
+#kc-social-providers .pf-v5-c-button.pf-m-tertiary {
+    --pf-v5-c-button--m-tertiary--Color: var(--fabulka-fg);
+    --pf-v5-c-button--m-tertiary--hover--Color: var(--fabulka-fg);
+    --pf-v5-c-button--m-tertiary--after--BorderColor: var(--fabulka-border);
+    --pf-v5-c-button--m-tertiary--hover--after--BorderColor: var(--fabulka-accent);
+    background: #ffffff;
+    padding-block: 11px;
+}
+
+.kc-login-divider {
+    color: var(--fabulka-muted);
+    font-size: 14px;
+}
+
+/* Alerts */
+.pf-v5-c-alert {
+    border-radius: var(--fabulka-radius-sm);
+}
+
+/* Links and footer band */
+a {
+    color: var(--pf-v5-global--link--Color);
+}
+
+a:hover {
+    color: var(--pf-v5-global--link--Color--hover);
+}
+
+.pf-v5-c-login__main-footer-band {
+    border-color: var(--fabulka-border);
+    color: var(--fabulka-muted);
+}
+
+/* Language select */
+#login-select-toggle {
+    font-family: inherit;
+}
+
+.pf-v5-c-check__input {
+    accent-color: var(--fabulka-accent);
+}
+
+@media (max-width: 480px) {
+    .pf-v5-c-login__container {
+        padding-inline: 12px;
+    }
+
+    #kc-page-title {
+        font-size: 22px;
+    }
+}

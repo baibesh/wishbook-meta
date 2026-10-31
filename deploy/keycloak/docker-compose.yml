@@ -1,0 +1,101 @@
+# Fabulka identity provider: Keycloak + its own Postgres.
+# Lives on the Finland server in /opt/fabulka-auth (copy of this folder + .env).
+# Holds parent accounts only (email, name, Google link); children's data stays on fabulka.com.
+#
+#   docker compose pull && docker compose up -d     # never build images on that server
+#   ./configure.sh                                   # secrets, Google, SMTP, broker flow, admin
+#
+# Host nginx terminates TLS for auth.fabulka.com and proxies to 127.0.0.1:${KC_HTTP_HOST_PORT}.
+# The management port (9000: health) is not published.
+
+name: fabulka-auth
+
+services:
+  db:
+    image: postgres:17.10-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${KC_DB_PASSWORD:?set KC_DB_PASSWORD in .env}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    mem_limit: 512m
+    security_opt: [no-new-privileges:true]
+    logging: &logging
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "5"
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.1
+    restart: unless-stopped
+    # --import-realm imports realm-fabulka.json only if the realm does not exist yet,
+    # so restarts never overwrite changes made in the admin console or by configure.sh.
+    command: ["start", "--import-realm"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+      KC_HOSTNAME: https://auth.fabulka.com
+      KC_HTTP_ENABLED: "true"
+      KC_HTTP_PORT: "8080"
+      KC_PROXY_HEADERS: xforwarded
+      # Only the docker gateway (host nginx via docker-proxy) may set X-Forwarded-*.
+      KC_PROXY_TRUSTED_ADDRESSES: ${KC_PROXY_TRUSTED_ADDRESSES:-172.29.50.1}
+      KC_HEALTH_ENABLED: "true"
+      KC_CACHE: local
+      KC_LOG: console
+      KC_LOG_LEVEL: info
+      # Used once, on the very first start, to create a temporary master admin.
+      # configure.sh replaces it with a permanent admin and deletes the temporary one.
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_BOOTSTRAP_ADMIN_USERNAME:-bootstrap-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD:?set KC_BOOTSTRAP_ADMIN_PASSWORD in .env}
+      JAVA_OPTS_KC_HEAP: ${KC_JAVA_HEAP:--Xms256m -Xmx768m}
+    ports:
+      - "127.0.0.1:${KC_HTTP_HOST_PORT:-18480}:8080"
+    volumes:
+      # Theme edits need `docker compose restart keycloak` (production caches themes).
+      - ./themes/fabulka:/opt/keycloak/themes/fabulka:ro
+      - ./realm-fabulka.json:/opt/keycloak/data/import/realm-fabulka.json:ro
+    tmpfs:
+      # Keycloak keeps gzipped theme files here; tmpfs so a restart drops stale copies.
+      - /opt/keycloak/data/tmp:size=64m,mode=1777
+    networks: [internal]
+    healthcheck:
+      # The image has no curl; bash can talk HTTP over /dev/tcp to the management port.
+      # /health/ready answers 200 when ready and 503 otherwise.
+      test:
+        - CMD-SHELL
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/9000 &&
+          printf 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 &&
+          head -n 1 <&3 | grep -q ' 200 '
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 120s
+    mem_limit: 1536m
+    security_opt: [no-new-privileges:true]
+    logging: *logging
+
+networks:
+  internal:
+    ipam:
+      config:
+        - subnet: ${KC_NETWORK_SUBNET:-172.29.50.0/24}
+          gateway: ${KC_PROXY_TRUSTED_ADDRESSES:-172.29.50.1}
+
+volumes:
+  db-data:
