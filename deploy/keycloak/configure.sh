@@ -179,8 +179,12 @@ for user in $(env_get FABULKA_ADMINS | tr ',' ' '); do
     uid=$(kc get "realms/$REALM/users" -q exact=true -q "email=$user" --fields id --format csv --noquotes | head -n 1)
     if [[ -z $uid ]]; then echo "admin: $user has not signed up yet, skipped" >&2; continue; fi
     kc add-roles -r "$REALM" --uid "$uid" --rolename admin >/dev/null
-    kc update "realms/$REALM/users/$uid" -s 'requiredActions=["CONFIGURE_TOTP"]' >/dev/null
-    echo "admin: role granted to $user, authenticator app required"
+    if kc get "realms/$REALM/users/$uid/credentials" --fields type --format csv --noquotes | grep -qx otp; then
+        echo "admin: role granted to $user (authenticator app already set up)"
+    else
+        kc update "realms/$REALM/users/$uid" -s 'requiredActions=["CONFIGURE_TOTP"]' >/dev/null
+        echo "admin: role granted to $user, authenticator app required"
+    fi
 done
 
 echo "done"
