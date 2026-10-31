@@ -68,6 +68,7 @@ export function BooksTable() {
                     {book.childName}
                     {book.template ? " · из каталога" : " · своя история"}
                     {book.demo && " · демо-код"}
+                    {book.featured && " · в примерах"}
                     {book.orders > 0 && ` · заказов: ${book.orders}`}
                   </div>
                 </td>

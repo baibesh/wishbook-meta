@@ -15,6 +15,7 @@ import {
   type Book,
   type ChildProfile,
   type CreateBookInput,
+  type ExampleBook,
   type Language,
   type MethodologySlug,
   type MyBook,
@@ -52,6 +53,9 @@ interface Job {
   /** The uploaded toy photo, when the parent sent one. */
   toyUpload?: string;
 }
+
+/** Example books shown on the home page at most. */
+const EXAMPLE_COUNT = 12;
 
 /** Page illustrations generated at once; each chains from the hero sheet, not from each other. */
 const PAGE_CONCURRENCY = 4;
@@ -170,6 +174,21 @@ export class BooksService implements OnModuleInit {
       language: row.language as Language,
       heroImageUrl: this.storage.url(row.heroImagePath),
       createdAt: row.createdAt.toISOString(),
+    }));
+  }
+
+  /** Finished books the admin picked as examples, newest first. */
+  async listExamples(): Promise<ExampleBook[]> {
+    const rows = await this.prisma.book.findMany({
+      where: { featured: true, status: 'done', title: { not: null } },
+      orderBy: { createdAt: 'desc' },
+      take: EXAMPLE_COUNT,
+    });
+    return rows.map((row) => ({
+      id: row.id,
+      title: row.title!,
+      language: row.language as Language,
+      heroImageUrl: this.storage.url(row.heroImagePath),
     }));
   }
 

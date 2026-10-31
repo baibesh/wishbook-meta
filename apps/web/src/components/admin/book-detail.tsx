@@ -1,12 +1,12 @@
 "use client";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { methodology } from "@fabulka/shared";
-import { Download, ExternalLink, Trash2 } from "lucide-react";
+import { Download, ExternalLink, Star, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use } from "react";
-import { adminBook, deleteBook } from "@/lib/admin-api";
+import { adminBook, deleteBook, setFeatured } from "@/lib/admin-api";
 import { Badge, BOOK_STATUS, Card, formatDate, formatUsd, ghostButton, PageTitle } from "./ui";
 
 export function BookDetail({ params }: { params: Promise<{ id: string }> }) {
@@ -14,6 +14,11 @@ export function BookDetail({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const book = useQuery({ queryKey: ["admin", "book", id], queryFn: () => adminBook(id) });
   const remove = useMutation({ mutationFn: () => deleteBook(id), onSuccess: () => router.replace("/admin/books") });
+  const queryClient = useQueryClient();
+  const feature = useMutation({
+    mutationFn: (featured: boolean) => setFeatured(id, featured),
+    onSuccess: (updated) => queryClient.setQueryData(["admin", "book", id], updated),
+  });
 
   if (book.isError) return <p role="alert" className="text-red-600">{book.error.message}</p>;
   if (!book.data) return <p className="text-muted">Загружаем…</p>;
@@ -43,6 +48,20 @@ export function BookDetail({ params }: { params: Promise<{ id: string }> }) {
               <ExternalLink className="size-4" />
               Открыть
             </Link>
+            {/* Only a finished book goes on the home page; one already there can always come off. */}
+            {(b.status === "done" || b.featured) && (
+              <button
+                type="button"
+                data-testid="feature-toggle"
+                data-featured={b.featured}
+                disabled={feature.isPending}
+                onClick={() => feature.mutate(!b.featured)}
+                className={`${ghostButton} flex items-center gap-2 ${b.featured ? "border-accent text-accent" : ""}`}
+              >
+                <Star className={`size-4 ${b.featured ? "fill-current" : ""}`} />
+                {b.featured ? "В примерах — убрать" : "Показывать в примерах"}
+              </button>
+            )}
             {b.pdfUrl && (
               <a href={b.pdfUrl} download className={`${ghostButton} flex items-center gap-2`}>
                 <Download className="size-4" />
@@ -69,7 +88,9 @@ export function BookDetail({ params }: { params: Promise<{ id: string }> }) {
       <div>
         <Badge tone={BOOK_STATUS[b.status].tone}>{BOOK_STATUS[b.status].label}</Badge>
         {b.demo && <span className="ml-2 text-sm text-muted">создана по демо-коду</span>}
+        {b.featured && <span className="ml-2 text-sm text-muted">показывается на главной в примерах</span>}
       </div>
+      {feature.isError && <p role="alert" className="text-red-600">{feature.error.message}</p>}
       {b.error && <p role="alert" className="rounded-xl bg-red-500/10 p-4 text-sm text-red-600">{b.error}</p>}
 
       <div className="grid gap-4 lg:grid-cols-[1fr_2fr]">

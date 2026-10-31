@@ -13,6 +13,7 @@ import {
   GENERATION_PAUSED,
   type Book,
   type CreateBookInput,
+  type ExampleBook,
   type MyBook,
 } from '@fabulka/shared';
 import { CurrentClient, type Client } from '../common/client';
@@ -59,6 +60,12 @@ export class BooksController {
   @Get()
   mine(@CurrentClient() client: Client): Promise<MyBook[]> {
     return this.books.listMine(client.key);
+  }
+
+  /** Books for every visitor to open; declared before :id so "examples" is not taken for an id. */
+  @Get('examples')
+  examples(): Promise<ExampleBook[]> {
+    return this.books.listExamples();
   }
 
   @Post(':id/print-interest')

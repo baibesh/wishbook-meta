@@ -189,6 +189,22 @@ export const MyBookSchema = z.object({
 });
 export type MyBook = z.infer<typeof MyBookSchema>;
 
+/** A finished book the admin picked to show every visitor on the home page. */
+export const ExampleBookSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  language: LanguageSchema,
+  heroImageUrl: z.string().nullable(),
+});
+export type ExampleBook = z.infer<typeof ExampleBookSchema>;
+
+/** GET /status: what visitors are told before they fill in the form. */
+export const ServiceStatusSchema = z.object({
+  /** New books are not being created (paused in the admin). */
+  paused: z.boolean(),
+});
+export type ServiceStatus = z.infer<typeof ServiceStatusSchema>;
+
 /** Progress shown for each stage while the book is generating. */
 export function progressFor(status: BookStatus, pagesDone = 0, pagesTotal = 0): number {
   switch (status) {
@@ -359,6 +375,7 @@ export const AdminBookRowSchema = z.object({
   template: z.string().nullable(),
   country: z.string().nullable(),
   demo: z.boolean(),
+  featured: z.boolean(),
   costUsd: z.number(),
   orders: z.number().int(),
   createdAt: z.string(),
@@ -371,10 +388,16 @@ export const AdminBookSchema = BookSchema.extend({
   answers: AnswersSchema.nullable(),
   country: z.string().nullable(),
   demo: z.boolean(),
+  /** Shown on the home page among the example books. */
+  featured: z.boolean(),
   costUsd: z.number(),
   clientKey: z.string(),
 });
 export type AdminBook = z.infer<typeof AdminBookSchema>;
+
+/** Body of PATCH /admin/books/:id. */
+export const UpdateBookSchema = z.object({ featured: z.boolean() });
+export type UpdateBook = z.infer<typeof UpdateBookSchema>;
 
 export const AdminOrderSchema = OrderSchema.extend({
   phone: z.string(),

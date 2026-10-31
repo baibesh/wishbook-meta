@@ -1,0 +1,104 @@
+# Example books on the home page, set in the admin, and the pause told up front on the form.
+appId: ${WEB}
+tags: [smoke, examples]
+db: ${DATABASE_URL}
+params:
+  DATABASE_URL:
+    required: true
+    description: Postgres DSN of the e2e database (e2e/.env)
+env:
+  childName: "Пример ${Date.now()}"
+  # The test-only admin account from e2e/start-stack.sh.
+  adminEmail: admin@e2e.test
+  adminPassword: e2e-admin-password
+http:
+  baseUrl: ${API}
+  headers:
+    X-Client-Key: "e2e-${childName}"
+commands:
+  # A finished (mock) book to show.
+  - request:
+      method: POST
+      url: /books
+      json:
+        child: { name: "${childName}", age: 6, gender: girl, interests: [лошади], city: Алматы, language: ru }
+      extract: { bookId: "$.id" }
+      assert: { status: 201 }
+  - request:
+      url: /books/${bookId}
+      retryUntil:
+        status: 200
+        json: { "$.status": done }
+      timeout: 30000
+      extract: { title: "$.title" }
+
+  # Only the admin picks examples; the session cookie from the login is carried on.
+  - request:
+      method: PATCH
+      url: /admin/books/${bookId}
+      json: { featured: true }
+      assert: { status: 401 }
+  - request:
+      method: POST
+      url: /admin/login
+      json: { email: "${adminEmail}", password: "${adminPassword}" }
+      assert: { status: 204 }
+  - request:
+      method: PATCH
+      url: /admin/books/${bookId}
+      json: { featured: "yes" }
+      assert: { status: 400 }
+  - request:
+      method: PATCH
+      url: /admin/books/${bookId}
+      json: { featured: true }
+      assert:
+        status: 200
+        json: { "$.featured": true }
+  - request:
+      url: /books/examples
+      extract: { exampleId: "$[0].id", exampleTitle: "$[0].title" }
+      assert: { status: 200 }
+  # Assert values are taken as written, so the extracted ones are compared here.
+  - assertTrue: { equals: ["${exampleId}", "${bookId}"] }
+  - assertTrue: { equals: ["${exampleTitle}", "${title}"] }
+
+  # Every visitor sees it under the catalog and can open it.
+  - launchApp: { appId: "${WEB}", clearState: true }
+  - openLink: "${WEB}/?lang=ru"
+  # The catalog renders only after hydration, by when the page has saved the language.
+  - waitForVisible: { testId: catalog }
+  - waitForVisible: { testId: examples }
+  - assertVisible: "Примеры книг"
+  - tapOn: { testId: "example-${bookId}" }
+  - waitForVisible: { testId: book-title }
+  - assertVisible: { contains: "${title}" }
+
+  # Paused: the form says so before anything is filled in, and will not submit.
+  - sql:
+      exec: >-
+        insert into "Setting" (key, value, "updatedAt") values ('generation_paused', 'true', now())
+        on conflict (key) do update set value = 'true', "updatedAt" = now()
+  - request:
+      url: /status
+      assert: { status: 200, json: { "$.paused": true } }
+  - openLink: "${WEB}/create"
+  - waitForVisible: { testId: paused-notice }
+  - assertVisible: "Создание новых книг временно приостановлено"
+  - assertVisible: { testId: create-book, enabled: false }
+  - tapOn: { testId: paused-examples }
+  - waitForVisible: { testId: examples }
+  - assertUrl: { contains: "/#examples" }
+
+  # Lifted: the notice is gone.
+  - sql: { exec: "delete from \"Setting\" where key = 'generation_paused'" }
+  - request:
+      url: /status
+      assert: { status: 200, json: { "$.paused": false } }
+  - openLink: "${WEB}/create"
+  - waitForVisible: { testId: book-form }
+  - assertNotVisible: { testId: paused-notice }
+  - assertVisible: { testId: create-book, enabled: true }
+after:
+  - sql: { exec: "delete from \"Setting\" where key = 'generation_paused'" }
+  - sql: { exec: "delete from \"Book\" where child->>'name' = $1", params: ["${childName}"] }

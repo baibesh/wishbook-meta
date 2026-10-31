@@ -155,6 +155,7 @@ export class AdminService {
       template: row.template?.slug ?? null,
       country: row.country,
       demo: row.demo,
+      featured: row.featured,
       costUsd: row.costUsd,
       orders: row._count.orders,
       createdAt: row.createdAt.toISOString(),
@@ -174,9 +175,26 @@ export class AdminService {
       answers: row.answers as Answers | null,
       country: row.country,
       demo: row.demo,
+      featured: row.featured,
       costUsd: row.costUsd,
       clientKey: row.clientKey,
     };
+  }
+
+  /** Shows a book on the home page as an example, or takes it off; only a finished one goes on. */
+  async setFeatured(id: string, featured: boolean): Promise<AdminBook> {
+    const row = await this.prisma.book.findUnique({
+      where: { id },
+      select: { status: true },
+    });
+    if (!row) throw new NotFoundException(`book ${id} not found`);
+    if (featured && row.status !== 'done') {
+      throw new BadRequestException(
+        'В примеры можно поставить только готовую книгу',
+      );
+    }
+    await this.prisma.book.update({ where: { id }, data: { featured } });
+    return this.book(id);
   }
 
   /** Deletes a book, its orders and its files, e.g. when a parent asks to. */

@@ -59,6 +59,8 @@ model Book {
   demo            Boolean         @default(false)
   /// Visitor's country (ISO code) when blocking by country is on; shows demand in the admin.
   country         String?
+  /// Picked in the admin to show every visitor on the home page as an example (done books only).
+  featured        Boolean         @default(false)
   orders          Order[]
   printInterest   PrintInterest[]
   createdAt       DateTime        @default(now())
@@ -66,6 +68,7 @@ model Book {
 
   @@index([clientKey])
   @@index([createdAt, demo])
+  @@index([featured, createdAt])
 }
 
 /// Books a visitor bought on top of the free ones (demo payment: nothing is charged).

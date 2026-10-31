@@ -19,6 +19,7 @@ import { PrismaModule } from './prisma/prisma.service';
 import { QuotaController } from './quota/quota.controller';
 import { QuotaService } from './quota/quota.service';
 import { SettingsService } from './settings/settings.service';
+import { StatusController } from './settings/status.controller';
 import { StorageModule } from './storage/storage.service';
 import { TemplatesController } from './templates/templates.controller';
 import { ToysController, ToyUploadsCleaner } from './toy/toys.controller';
@@ -52,6 +53,7 @@ class HealthController {
     OrdersController,
     TemplatesController,
     GeoController,
+    StatusController,
     ToysController,
     AdminAuthController,
     AdminController,

@@ -1,17 +1,21 @@
 import {
   BookSchema,
+  ExampleBookSchema,
   MyBookSchema,
   OrderSchema,
   QuotaSchema,
+  ServiceStatusSchema,
   TemplateSchema,
   TemplateSummarySchema,
   ToyUploadResultSchema,
   type Book,
   type CreateBookInput,
   type CreateOrderInput,
+  type ExampleBook,
   type Language,
   type Order,
   type Quota,
+  type ServiceStatus,
   type Template,
   type TemplateSummary,
 } from "@fabulka/shared";
@@ -108,6 +112,16 @@ export async function getTemplate(slug: string, lang: Language): Promise<Templat
 
 export async function listMyBooks() {
   return MyBookSchema.array().parse(await request("/api/books"));
+}
+
+/** Finished books the admin picked for every visitor to open. */
+export async function listExamples(): Promise<ExampleBook[]> {
+  return ExampleBookSchema.array().parse(await request("/api/books/examples"));
+}
+
+/** Whether new books are being created right now. */
+export async function getStatus(): Promise<ServiceStatus> {
+  return ServiceStatusSchema.parse(await request("/api/status"));
 }
 
 export async function getBook(id: string): Promise<Book> {

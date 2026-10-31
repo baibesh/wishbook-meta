@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  GENERATION_PAUSED,
   LANGUAGES,
   LIMIT_REACHED,
   METHODOLOGIES,
@@ -12,12 +13,13 @@ import {
   type MethodologySlug,
   type Template,
 } from "@fabulka/shared";
-import { BookOpen, Loader2, X } from "lucide-react";
+import { BookOpen, CirclePause, Loader2, X } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
-import { ApiError, createBook, getQuota, uploadToy } from "@/lib/api";
+import { ApiError, createBook, getQuota, getStatus, uploadToy } from "@/lib/api";
 import { toJpegDataUrl } from "@/lib/toy-photo";
 import { useI18n } from "@/i18n/i18n";
 import { LOCALE_NAMES } from "@/i18n/messages";
@@ -74,6 +76,9 @@ export function BookForm({ template }: { template?: Template }) {
   const errors = form.formState.errors;
   const queryClient = useQueryClient();
   const quota = useQuery({ queryKey: ["quota"], queryFn: getQuota });
+  // Said up front, so a parent does not fill in the whole form only to be turned away.
+  const status = useQuery({ queryKey: ["status"], queryFn: getStatus });
+  const paused = status.data?.paused === true;
 
   const [toyPhoto, setToyPhoto] = useState<File | null>(null);
   const toyPreview = useMemo(() => (toyPhoto ? URL.createObjectURL(toyPhoto) : null), [toyPhoto]);
@@ -118,6 +123,10 @@ export function BookForm({ template }: { template?: Template }) {
       void queryClient.invalidateQueries({ queryKey: ["quota"] });
       router.push(`/books/${book.id}`);
     },
+    onError: (error) => {
+      // Paused after the page loaded: show the notice instead of leaving a bare error.
+      if (error instanceof ApiError && error.code === GENERATION_PAUSED) void queryClient.invalidateQueries({ queryKey: ["status"] });
+    },
   });
   const submit = form.handleSubmit((values) => {
     const problem = template && answersProblem(template.questions, values.answers);
@@ -131,6 +140,18 @@ export function BookForm({ template }: { template?: Template }) {
 
   return (
     <div className="flex flex-col gap-4">
+    {paused && (
+      <section data-testid="paused-notice" role="status" className="flex gap-4 rounded-2xl border-2 border-accent bg-card p-5">
+        <CirclePause className="size-8 shrink-0 text-accent" />
+        <div className="flex flex-col gap-2">
+          <h2 className="text-lg font-extrabold">{t("form.paused.title")}</h2>
+          <p className="text-muted">{t("form.paused.text")}</p>
+          <Link href="/#examples" data-testid="paused-examples" className="self-start font-semibold text-accent">
+            {t("form.paused.examples")} →
+          </Link>
+        </div>
+      </section>
+    )}
     <form
       data-testid="book-form"
       onSubmit={submit}
@@ -285,7 +306,7 @@ export function BookForm({ template }: { template?: Template }) {
         <button
           type="submit"
           data-testid="create-book"
-          disabled={create.isPending}
+          disabled={create.isPending || paused}
           className="flex items-center justify-center gap-2 rounded-xl bg-accent px-6 py-4 text-lg font-bold text-accent-foreground disabled:opacity-60"
         >
           {create.isPending ? <Loader2 className="size-5 animate-spin" /> : <BookOpen className="size-5" />}
@@ -298,7 +319,7 @@ export function BookForm({ template }: { template?: Template }) {
               : t("form.quota.left", { remaining: quota.data.remaining, limit: quota.data.limit })}
           </p>
         )}
-        {create.isError && !limitReached && (
+        {create.isError && !limitReached && !paused && (
           <p role="alert" className="text-red-600">
             {t("form.error", { message: create.error.message })}
           </p>

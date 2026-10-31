@@ -14,9 +14,11 @@ import {
 import {
   AdminLoginSchema,
   PauseSchema,
+  UpdateBookSchema,
   UpdateOrderStatusSchema,
   UpdateTemplateSchema,
   type AdminLogin,
+  type UpdateBook,
   type UpdateTemplate,
 } from '@fabulka/shared';
 import type { Response } from 'express';
@@ -82,6 +84,14 @@ export class AdminController {
   @Get('books/:id')
   book(@Param('id') id: string) {
     return this.admin.book(id);
+  }
+
+  @Patch('books/:id')
+  updateBook(
+    @Param('id') id: string,
+    @Body(new ZodPipe(UpdateBookSchema)) body: UpdateBook,
+  ) {
+    return this.admin.setFeatured(id, body.featured);
   }
 
   @Delete('books/:id')

@@ -136,6 +136,33 @@ describe('BooksService', () => {
     });
   });
 
+  it('lists finished featured books as examples, newest first', async () => {
+    const findMany = jest.fn().mockResolvedValue([
+      {
+        id: 'b2',
+        title: 'Арман и снежный барс',
+        language: 'kk',
+        heroImagePath: null,
+      },
+    ]);
+
+    const examples = await makeService({ book: { findMany } }).listExamples();
+
+    expect(findMany).toHaveBeenCalledWith({
+      where: { featured: true, status: 'done', title: { not: null } },
+      orderBy: { createdAt: 'desc' },
+      take: 12,
+    });
+    expect(examples).toEqual([
+      {
+        id: 'b2',
+        title: 'Арман и снежный барс',
+        language: 'kk',
+        heroImageUrl: null,
+      },
+    ]);
+  });
+
   describe('a catalog book', () => {
     const row = {
       id: 'b2',

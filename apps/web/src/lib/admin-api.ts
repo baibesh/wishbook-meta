@@ -36,6 +36,10 @@ export async function adminBook(id: string): Promise<AdminBook> {
   return AdminBookSchema.parse(await request(`/api/admin/books/${id}`));
 }
 
+export async function setFeatured(id: string, featured: boolean): Promise<AdminBook> {
+  return AdminBookSchema.parse(await request(`/api/admin/books/${id}`, json("PATCH", { featured })));
+}
+
 export const deleteBook = (id: string) => request(`/api/admin/books/${id}`, { method: "DELETE" });
 
 export async function adminOrders(): Promise<AdminOrder[]> {

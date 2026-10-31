@@ -27,6 +27,9 @@ const ru = {
   "catalog.own.title": "Своя история",
   "catalog.own.text": "Расскажите, о чём книга, выберите методику — сказку напишут с нуля.",
 
+  "examples.title": "Примеры книг",
+  "examples.lead": "Откройте и полистайте готовые книги — так выглядит то, что получит ваш ребёнок.",
+
   "create.title": "Своя история",
   "create.lead": "Расскажите о ребёнке и о чём должна быть книга. Сказку напишут с нуля по выбранной методике.",
 
@@ -64,6 +67,9 @@ const ru = {
   "form.quota.demo": "Демо-режим: без ограничений",
   "form.quota.left": "Бесплатных книг осталось: {remaining} из {limit}",
   "form.error": "Не получилось начать: {message}",
+  "form.paused.title": "Создание новых книг временно приостановлено",
+  "form.paused.text": "Скоро мы снова откроем его. А пока загляните в готовые книги — их можно открыть и полистать.",
+  "form.paused.examples": "Смотреть примеры книг",
 
   "paywall.title": "Бесплатные книги закончились",
   "paywall.text": "Каждая следующая книга — {price}. PDF сразу, печать — по желанию.",
@@ -173,6 +179,9 @@ const kk: Messages = {
   "catalog.own.title": "Өз ертегің",
   "catalog.own.text": "Кітап не туралы екенін айтып, әдістемені таңдаңыз — ертегі басынан жазылады.",
 
+  "examples.title": "Кітап үлгілері",
+  "examples.lead": "Дайын кітаптарды ашып, парақтап көріңіз — балаңыз да дәл осындай кітап алады.",
+
   "create.title": "Өз ертегің",
   "create.lead": "Бала туралы және кітап не туралы болатынын айтыңыз. Ертегі таңдалған әдістеме бойынша басынан жазылады.",
 
@@ -210,6 +219,9 @@ const kk: Messages = {
   "form.quota.demo": "Демо режим: шектеусіз",
   "form.quota.left": "Тегін кітаптар қалды: {limit} ішінен {remaining}",
   "form.error": "Бастау мүмкін болмады: {message}",
+  "form.paused.title": "Жаңа кітап жасау уақытша тоқтатылды",
+  "form.paused.text": "Жақында қайта ашамыз. Әзірге дайын кітаптарды қараңыз — оларды ашып, парақтауға болады.",
+  "form.paused.examples": "Кітап үлгілерін қарау",
 
   "paywall.title": "Тегін кітаптар бітті",
   "paywall.text": "Әр келесі кітап — {price}. PDF бірден, басып шығару — қалауыңыз бойынша.",
@@ -316,6 +328,9 @@ const en: Messages = {
   "catalog.own.title": "Your own story",
   "catalog.own.text": "Tell us what the book is about and pick a method: the story is written from scratch.",
 
+  "examples.title": "Example books",
+  "examples.lead": "Open a finished book and turn the pages: this is what your child will get.",
+
   "create.title": "Your own story",
   "create.lead": "Tell us about your child and what the book should be about. The story is written from scratch with the method you choose.",
 
@@ -353,6 +368,9 @@ const en: Messages = {
   "form.quota.demo": "Demo mode: no limits",
   "form.quota.left": "Free books left: {remaining} of {limit}",
   "form.error": "Could not start: {message}",
+  "form.paused.title": "Creating new books is paused for now",
+  "form.paused.text": "We'll be back soon. Meanwhile, have a look at finished books: you can open them and turn the pages.",
+  "form.paused.examples": "See example books",
 
   "paywall.title": "Your free books are used up",
   "paywall.text": "Each next book is {price}. The PDF right away, print if you like.",

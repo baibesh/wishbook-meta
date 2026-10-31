@@ -1,4 +1,5 @@
 import { Catalog } from "@/components/catalog";
+import { Examples } from "@/components/examples";
 import { T } from "@/components/t";
 
 export default function Home() {
@@ -13,6 +14,7 @@ export default function Home() {
         </p>
       </header>
       <Catalog />
+      <Examples />
     </main>
   );
 }
