@@ -55,6 +55,9 @@ model Book {
   costUsd         Float           @default(0)
   /// Anonymous visitor key the free limit is counted against.
   clientKey       String
+  /// The signed-in parent's account; anonymous books move here when they sign in.
+  user            User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId          String?
   /// Set when the book was made with a demo code: it does not count against the visitor.
   demo            Boolean         @default(false)
   /// Visitor's country (ISO code) when blocking by country is on; shows demand in the admin.
@@ -69,8 +72,18 @@ model Book {
   updatedAt       DateTime        @updatedAt
 
   @@index([clientKey])
+  @@index([userId])
   @@index([createdAt, demo])
   @@index([featured, createdAt])
+}
+
+/// A parent who signed in with Keycloak. Only the Keycloak subject is kept here: the email and
+/// name stay in Keycloak (and in the signed session cookie), children's data stays in Book.
+model User {
+  id        String   @id @default(cuid())
+  sub       String   @unique
+  books     Book[]
+  createdAt DateTime @default(now())
 }
 
 /// Books a visitor bought on top of the free ones (demo payment: nothing is charged).
@@ -96,6 +109,10 @@ model Order {
   bookId        String
   recipientName String
   phone         String
+  /// Where the confirmation and status emails go.
+  email         String
+  /// Language of those emails (ru, kk, en); the book's language when not set.
+  locale        String?
   city          String
   address       String
   cover         Cover

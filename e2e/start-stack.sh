@@ -9,8 +9,11 @@ export FREE_BOOKS=3 DEMO_CODES=E2E-DEMO ORDER_STAGE_MS="${ORDER_STAGE_MS:-1500}"
 export GEO_BLOCK=true
 # Filling in the form by voice (mocked transcription), for the api-voice flow.
 export VOICE_INPUT=true
-# Test-only admin account for the admin flow.
+# Test-only admin account for the admin flow (the password sign-in is off unless asked for).
 export ADMIN_EMAIL=admin@e2e.test ADMIN_PASSWORD=e2e-admin-password ADMIN_SECRET=e2e-secret
+export ADMIN_PASSWORD_LOGIN=true
+# Sign-in through the API's fake identity provider; emails are kept in memory (GET /api/test/mails).
+export AUTH_MOCK=true AUTH_SECRET=e2e-auth-secret PUBLIC_URL=http://localhost:3000 RESEND_API_KEY=
 export STORAGE_DIR="${STORAGE_DIR:-$ROOT/apps/api/storage-e2e}" PORT=4000
 
 (cd "$ROOT/apps/api" && node dist/main.js > "$ROOT/e2e/api.log" 2>&1 &)

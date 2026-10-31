@@ -6,13 +6,18 @@ import {
 import { ConfigService } from '@nestjs/config';
 import type { Book as BookRow, Order as OrderRow } from '@prisma/client';
 import {
+  LanguageSchema,
   orderPrice,
   orderStatusAt,
   type AdminOrder,
   type CreateOrderInput,
+  type Language,
   type Order,
   type OrderStatus,
 } from '@fabulka/shared';
+import { ownsBook } from '../books/books.service';
+import { MailService } from '../mail/mail.service';
+import { orderConfirmation, orderStatusChanged } from '../mail/templates';
 import { PrismaService } from '../prisma/prisma.service';
 
 /**
@@ -25,17 +30,22 @@ export class OrdersService {
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly mail: MailService,
     config: ConfigService,
   ) {
     this.stageMs = Number(config.get('ORDER_STAGE_MS', 20_000));
   }
 
-  /** Only the browser that made the book can order it. */
-  async create(input: CreateOrderInput, clientKey: string): Promise<Order> {
+  /** Only the browser that made the book, or the account it belongs to, can order it. */
+  async create(
+    input: CreateOrderInput,
+    clientKey: string,
+    userId?: string | null,
+  ): Promise<Order> {
     const book = await this.prisma.book.findUnique({
       where: { id: input.bookId },
     });
-    if (book?.clientKey !== clientKey) {
+    if (!book || !ownsBook(book, clientKey, userId)) {
       throw new NotFoundException(`book ${input.bookId} not found`);
     }
     if (book.status !== 'done') {
@@ -50,16 +60,28 @@ export class OrdersService {
         totalKzt: price.total,
       },
     });
+    void this.mail.send(
+      row.email,
+      orderConfirmation(
+        this.mailData(row, book),
+        this.locale(row, book),
+        this.mail.publicUrl,
+      ),
+    );
     return this.toDto(row, book);
   }
 
-  /** An order carries a name and address: only the browser that placed it can see it. */
-  async get(id: string, clientKey: string): Promise<Order> {
+  /** An order carries a name and address: only whoever may order the book can see it. */
+  async get(
+    id: string,
+    clientKey: string,
+    userId?: string | null,
+  ): Promise<Order> {
     const row = await this.prisma.order.findUnique({
       where: { id },
       include: { book: true },
     });
-    if (row?.book.clientKey !== clientKey) {
+    if (!row || !ownsBook(row.book, clientKey, userId)) {
       throw new NotFoundException(`order ${id} not found`);
     }
     return this.toDto(row, row.book);
@@ -75,14 +97,61 @@ export class OrdersService {
     return rows.map((row) => this.adminDto(row, row.book));
   }
 
-  /** Sets the stage by hand; from then on the demo timer no longer moves it. */
+  /**
+   * Sets the stage by hand; from then on the demo timer no longer moves it. The parent gets an
+   * email when the stage they see changes.
+   */
   async setStatus(id: string, status: OrderStatus): Promise<AdminOrder> {
+    const before = await this.prisma.order.findUnique({ where: { id } });
+    if (!before) throw new NotFoundException(`order ${id} not found`);
     const row = await this.prisma.order
       .update({ where: { id }, data: { status }, include: { book: true } })
       .catch(() => {
         throw new NotFoundException(`order ${id} not found`);
       });
+    if (this.statusOf(before) !== status) {
+      void this.mail.send(
+        row.email,
+        orderStatusChanged(
+          this.mailData(row, row.book),
+          status,
+          this.locale(row, row.book),
+          this.mail.publicUrl,
+        ),
+      );
+    }
     return this.adminDto(row, row.book);
+  }
+
+  /** The stage the parent sees: set by hand, else where the demo timer is. */
+  private statusOf(row: OrderRow): OrderStatus {
+    return (
+      (row.status as OrderStatus | null) ??
+      orderStatusAt(Date.now() - row.createdAt.getTime(), this.stageMs)
+    );
+  }
+
+  /** Emails go in the language the parent ordered in, else the book's. */
+  private locale(row: OrderRow, book: BookRow): Language {
+    return (
+      LanguageSchema.safeParse(row.locale).data ??
+      LanguageSchema.safeParse(book.language).data ??
+      'ru'
+    );
+  }
+
+  private mailData(row: OrderRow, book: BookRow) {
+    return {
+      id: row.id,
+      bookId: row.bookId,
+      bookTitle: book.title,
+      recipientName: row.recipientName,
+      city: row.city,
+      address: row.address,
+      cover: row.cover,
+      quantity: row.quantity,
+      totalKzt: row.totalKzt,
+    };
   }
 
   private adminDto(row: OrderRow, book: BookRow): AdminOrder {
@@ -98,10 +167,9 @@ export class OrdersService {
       id: row.id,
       bookId: row.bookId,
       bookTitle: book.title,
-      status:
-        (row.status as OrderStatus | null) ??
-        orderStatusAt(Date.now() - row.createdAt.getTime(), this.stageMs),
+      status: this.statusOf(row),
       recipientName: row.recipientName,
+      email: row.email,
       city: row.city,
       address: row.address,
       cover: row.cover,

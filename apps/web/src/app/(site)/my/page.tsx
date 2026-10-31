@@ -1,4 +1,4 @@
-import { MyBooks } from "@/components/my-books";
+import { MyAccountNote, MyBooks } from "@/components/my-books";
 import { T } from "@/components/t";
 
 export default function MyBooksPage() {
@@ -7,6 +7,7 @@ export default function MyBooksPage() {
       <h1 className="text-3xl font-extrabold">
         <T k="my.title" />
       </h1>
+      <MyAccountNote />
       <MyBooks />
     </main>
   );

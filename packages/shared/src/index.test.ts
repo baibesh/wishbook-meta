@@ -64,13 +64,22 @@ describe("orders", () => {
       bookId: "b",
       recipientName: "Айгерим",
       phone: "+7 (701) 123-45-67",
+      email: " parent@example.com ",
       city: "Алматы",
       address: "ул. Абая, 1",
       cover: "soft",
       quantity: "1",
     });
     expect(order.phone).toBe("+77011234567");
+    expect(order.email).toBe("parent@example.com");
     expect(CreateOrderSchema.shape.phone.safeParse("8701").success).toBe(false);
+  });
+
+  it("requires a real email and takes an optional email language", () => {
+    expect(CreateOrderSchema.shape.email.safeParse("not-an-email").success).toBe(false);
+    expect(CreateOrderSchema.shape.email.safeParse(`${"a".repeat(196)}@x.kz`).success).toBe(false);
+    expect(CreateOrderSchema.shape.locale.safeParse("kk").success).toBe(true);
+    expect(CreateOrderSchema.shape.locale.safeParse("de").success).toBe(false);
   });
 
   it("walks the order through its stages", () => {

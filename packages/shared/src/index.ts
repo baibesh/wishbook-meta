@@ -351,8 +351,15 @@ export function bookPrice(kind: BookKind, country: Country): { amount: number; c
   return { amount: BOOK_PRICES[kind][currency], currency };
 }
 
-/** Body of POST /quota/purchase. */
-export const PurchaseSchema = z.object({ kind: BookKindSchema });
+/** An email a parent typed: for order and receipt emails. */
+export const EmailSchema = z.string().trim().max(200).pipe(z.email("Проверьте адрес почты"));
+
+/** Body of POST /quota/purchase. The email (else the signed-in parent's) gets a receipt. */
+export const PurchaseSchema = z.object({
+  kind: BookKindSchema,
+  email: EmailSchema.optional(),
+  locale: LanguageSchema.optional(),
+});
 export type Purchase = z.infer<typeof PurchaseSchema>;
 
 export const QuotaSchema = z.object({
@@ -394,10 +401,14 @@ export const CreateOrderSchema = z.object({
     .string()
     .transform((s) => s.replace(/[\s()-]/g, ""))
     .pipe(z.string().regex(/^\+7\d{10}$/, "Номер в формате +7 XXX XXX XX XX")),
+  /** The confirmation and status emails go here. */
+  email: EmailSchema,
   city: z.string().trim().min(2).max(60),
   address: z.string().trim().min(5).max(200),
   cover: CoverSchema,
   quantity: z.coerce.number().int().min(1).max(5),
+  /** Language of the emails; the book's language when left out. */
+  locale: LanguageSchema.optional(),
 });
 export type CreateOrderInput = z.infer<typeof CreateOrderSchema>;
 
@@ -418,6 +429,7 @@ export const OrderSchema = z.object({
   bookTitle: z.string().nullable(),
   status: OrderStatusSchema,
   recipientName: z.string(),
+  email: z.string(),
   city: z.string(),
   address: z.string(),
   cover: CoverSchema,
@@ -439,6 +451,13 @@ export function orderStatusAt(elapsedMs: number, stageMs: number): OrderStatus {
 
 /** Body of a 503 from POST /books while generation is paused in the admin. */
 export const GENERATION_PAUSED = "generation_paused";
+
+/** Body of a 404 from POST /admin/login: password sign-in is off (ADMIN_PASSWORD_LOGIN), use Keycloak. */
+export const PASSWORD_LOGIN_DISABLED = "password_login_disabled";
+
+/** GET /admin/login-options: which ways into the admin are on. */
+export const AdminLoginOptionsSchema = z.object({ password: z.boolean(), keycloak: z.boolean() });
+export type AdminLoginOptions = z.infer<typeof AdminLoginOptionsSchema>;
 
 export const AdminLoginSchema = z.object({
   email: z.string().trim().min(1),
@@ -548,3 +567,25 @@ export const UpdateTemplateSchema = z
   })
   .partial();
 export type UpdateTemplate = z.infer<typeof UpdateTemplateSchema>;
+
+// ---- Sign-in (Keycloak) -------------------------------------------------------------
+
+/** The signed-in parent, from the session cookie (email and name live in Keycloak, not our DB). */
+export const AuthUserSchema = z.object({
+  email: z.string().nullable(),
+  name: z.string().nullable(),
+  /** Has the Keycloak realm role `admin`: the admin session cookie is set too. */
+  admin: z.boolean(),
+});
+export type AuthUser = z.infer<typeof AuthUserSchema>;
+
+/** GET /auth/me. `enabled` is false when neither Keycloak nor the test provider is configured. */
+export const AuthMeSchema = z.object({ enabled: z.boolean(), user: AuthUserSchema.nullable() });
+export type AuthMe = z.infer<typeof AuthMeSchema>;
+
+/** POST /auth/logout: where to send the browser to end the Keycloak session too. */
+export const AuthLogoutSchema = z.object({ url: z.string() });
+export type AuthLogout = z.infer<typeof AuthLogoutSchema>;
+
+/** The `auth` query parameter the callback adds to the return path when sign-in failed. */
+export const AUTH_ERROR = "error";

@@ -18,11 +18,13 @@ import {
   UpdateOrderStatusSchema,
   UpdateTemplateSchema,
   type AdminLogin,
+  type AdminLoginOptions,
   type UpdateBook,
   type UpdateTemplate,
 } from '@fabulka/shared';
 import type { Response } from 'express';
 import type { z } from 'zod';
+import { AuthService } from '../auth/auth.service';
 import { CurrentClient, type Client } from '../common/client';
 import { ZodPipe } from '../common/zod.pipe';
 import { OrdersService } from '../orders/orders.service';
@@ -32,8 +34,21 @@ import { AdminService } from './admin.service';
 
 @Controller('admin')
 export class AdminAuthController {
-  constructor(private readonly auth: AdminAuthService) {}
+  constructor(
+    private readonly auth: AdminAuthService,
+    private readonly signIn: AuthService,
+  ) {}
 
+  /** Which ways in the login page offers: Keycloak (/api/auth/login?return=/admin), the password. */
+  @Get('login-options')
+  loginOptions(): AdminLoginOptions {
+    return {
+      password: this.auth.passwordLoginReady,
+      keycloak: this.signIn.enabled,
+    };
+  }
+
+  /** The emergency email/password sign-in: 404 password_login_disabled unless ADMIN_PASSWORD_LOGIN=true. */
   @Post('login')
   @HttpCode(204)
   login(

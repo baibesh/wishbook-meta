@@ -1,10 +1,11 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen } from "lucide-react";
+import { BookOpen, LogIn, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useI18n } from "@/i18n/i18n";
 import { listMyBooks } from "@/lib/api";
+import { loginUrl, useMe } from "@/lib/auth";
 import { ErrorNotice } from "./error-notice";
 
 export function MyBooks() {
@@ -45,5 +46,30 @@ export function MyBooks() {
         </li>
       ))}
     </ul>
+  );
+}
+
+/** Where the books live: the account once signed in, else a hint that signing in keeps them everywhere. */
+export function MyAccountNote() {
+  const { t, locale } = useI18n();
+  const me = useMe();
+  if (!me.data?.enabled) return null;
+  const user = me.data.user;
+  if (user) {
+    return (
+      <p data-testid="my-account" className="flex items-center gap-2 text-muted">
+        <UserRound className="size-4 shrink-0 text-accent" />
+        <span className="min-w-0 truncate">{t("my.account", { email: user.email ?? user.name ?? "" })}</span>
+      </p>
+    );
+  }
+  return (
+    <p data-testid="my-signin" className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted">
+      {t("my.signin")}
+      <a href={loginUrl("/my", locale)} className="flex items-center gap-1 font-semibold text-accent">
+        <LogIn className="size-4" />
+        {t("auth.login")}
+      </a>
+    </p>
   );
 }

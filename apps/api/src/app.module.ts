@@ -1,4 +1,10 @@
-import { Controller, Get, Module } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Module,
+  type MiddlewareConsumer,
+  type NestModule,
+} from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ServeStaticModule } from '@nestjs/serve-static';
@@ -6,11 +12,16 @@ import { resolve } from 'node:path';
 import { AdminAuthService } from './admin/admin-auth.service';
 import { AdminAuthController, AdminController } from './admin/admin.controller';
 import { AdminService } from './admin/admin.service';
+import { AuthController } from './auth/auth.controller';
+import { AuthService } from './auth/auth.service';
+import { SessionMiddleware } from './auth/current-user';
 import { BooksController } from './books/books.controller';
 import { BooksService } from './books/books.service';
 import { GeoController } from './geo/geo.controller';
 import { GeoGuard } from './geo/geo.guard';
 import { GeoService } from './geo/geo.service';
+import { MailService } from './mail/mail.service';
+import { TestMailsController } from './mail/test-mails.controller';
 import { MetaModule } from './meta/meta.module';
 import { OrdersController } from './orders/orders.controller';
 import { OrdersService } from './orders/orders.service';
@@ -59,6 +70,8 @@ class HealthController {
     ToysController,
     AdminAuthController,
     AdminController,
+    AuthController,
+    TestMailsController,
     VoiceController,
   ],
   providers: [
@@ -72,7 +85,13 @@ class HealthController {
     ToyUploadsCleaner,
     AdminAuthService,
     AdminService,
+    AuthService,
+    MailService,
     VoiceService,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(SessionMiddleware).forRoutes('*path');
+  }
+}

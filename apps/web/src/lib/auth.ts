@@ -1,0 +1,36 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { AuthLogoutSchema, AuthMeSchema, type AuthMe } from "@fabulka/shared";
+import type { UiLocale } from "@/i18n/messages";
+import { clientKey, request } from "./api";
+
+const SIGNED_OUT: AuthMe = { enabled: false, user: null };
+
+/** Whether sign-in is on and who is signed in. An unreachable API counts as sign-in being off. */
+async function getMe(): Promise<AuthMe> {
+  try {
+    return AuthMeSchema.parse(await request("/api/auth/me"));
+  } catch {
+    return SIGNED_OUT;
+  }
+}
+
+export function useMe() {
+  return useQuery({ queryKey: ["me"], queryFn: getMe, staleTime: 60_000 });
+}
+
+/**
+ * The sign-in address. The anonymous key travels along (a redirect carries no x-client-key), so the
+ * books made in this browser move to the account; `returnTo` is the page to come back to.
+ */
+export function loginUrl(returnTo: string, locale: UiLocale): string {
+  const query = new URLSearchParams({ return: returnTo, key: clientKey(), lang: locale });
+  return `/api/auth/login?${query}`;
+}
+
+/** Ends the session here and at Keycloak: the API answers with the address to go to. */
+export async function logout() {
+  const { url } = AuthLogoutSchema.parse(await request("/api/auth/logout", { method: "POST" }));
+  window.location.href = url;
+}

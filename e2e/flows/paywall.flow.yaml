@@ -47,6 +47,9 @@ commands:
   - assertVisible: { contains: "Бесплатные книги закончились" }
   # A story of your own is the dearer kind, and the checkout records it at that price.
   - assertVisible: { testId: buy-book, contains: "2 900 ₸" }
+  # The receipt's address is optional; one typed here goes along with the purchase.
+  - tapOn: { testId: paywall-email }
+  - inputText: "pay+${Date.now()}@e2e.test"
   - tapOn: { testId: buy-book }
   - waitForVisible: { text: "Книга готова", timeout: 30000 }
   - sql:

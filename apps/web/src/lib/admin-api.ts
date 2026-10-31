@@ -1,5 +1,6 @@
 import {
   AdminBookRowSchema,
+  AdminLoginOptionsSchema,
   AdminBookSchema,
   AdminOrderSchema,
   AdminStatsSchema,
@@ -7,6 +8,7 @@ import {
   type AdminBook,
   type AdminBookRow,
   type AdminLogin,
+  type AdminLoginOptions,
   type AdminOrder,
   type AdminStats,
   type AdminTemplate,
@@ -18,6 +20,11 @@ import { request } from "./api";
 const json = (method: string, body: unknown): RequestInit => ({ method, body: JSON.stringify(body) });
 
 export const adminLogin = (login: AdminLogin) => request("/api/admin/login", json("POST", login));
+
+/** Which ways into the admin are on: Keycloak (role admin) and the emergency password. */
+export async function adminLoginOptions(): Promise<AdminLoginOptions> {
+  return AdminLoginOptionsSchema.parse(await request("/api/admin/login-options"));
+}
 export const adminLogout = () => request("/api/admin/logout", { method: "POST" });
 export const adminMe = () => request("/api/admin/me");
 

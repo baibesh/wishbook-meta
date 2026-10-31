@@ -1,24 +1,51 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
-import { PurchaseSchema, type Purchase, type Quota } from '@fabulka/shared';
+import {
+  BOOK_PRICES,
+  PurchaseSchema,
+  type Purchase,
+  type Quota,
+} from '@fabulka/shared';
+import { CurrentUser, type SessionUser } from '../auth/current-user';
 import { CurrentClient, type Client } from '../common/client';
 import { ZodPipe } from '../common/zod.pipe';
+import { MailService } from '../mail/mail.service';
+import { purchaseReceipt } from '../mail/templates';
 import { QuotaService } from './quota.service';
 
 @Controller('quota')
 export class QuotaController {
-  constructor(private readonly quota: QuotaService) {}
+  constructor(
+    private readonly quota: QuotaService,
+    private readonly mail: MailService,
+  ) {}
 
   @Get()
   get(@CurrentClient() client: Client): Promise<Quota> {
     return this.quota.quota(client.key, client.demoCode);
   }
 
-  /** Demo checkout for one more book of the given kind: nothing is charged. */
+  /**
+   * Demo checkout for one more book of the given kind: nothing is charged. The receipt goes to
+   * the email typed at checkout, else to the signed-in parent's.
+   */
   @Post('purchase')
-  purchase(
+  async purchase(
     @CurrentClient() client: Client,
+    @CurrentUser() user: SessionUser | null,
     @Body(new ZodPipe(PurchaseSchema)) body: Purchase,
   ): Promise<Quota> {
-    return this.quota.buyBook(client.key, body.kind);
+    const quota = await this.quota.buyBook(client.key, body.kind);
+    const email = body.email ?? user?.email;
+    if (email) {
+      void this.mail.send(
+        email,
+        purchaseReceipt(
+          { kind: body.kind, priceKzt: BOOK_PRICES[body.kind].KZT },
+          body.locale ?? 'ru',
+          this.mail.publicUrl,
+        ),
+      );
+    }
+    return quota;
   }
 }

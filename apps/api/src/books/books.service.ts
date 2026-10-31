@@ -45,6 +45,33 @@ interface StoredPage {
 export type BookWithTemplate = BookRow & { template: { slug: string } | null };
 export const withTemplate = { template: { select: { slug: true } } } as const;
 
+/** Books made in this browser before anyone signed in to it: they move to whoever signs in. */
+export function anonymousBooksOf(clientKey: string): Prisma.BookWhereInput {
+  return { clientKey, userId: null };
+}
+
+/**
+ * "My books": the signed-in parent's books plus this browser's anonymous ones. Books that moved
+ * to an account are not shown to someone else in the same browser (signed out, or another account).
+ */
+export function myBooksWhere(
+  clientKey: string,
+  userId?: string | null,
+): Prisma.BookWhereInput {
+  const anonymous = anonymousBooksOf(clientKey);
+  return userId ? { OR: [{ userId }, anonymous] } : anonymous;
+}
+
+/** The visitor may order (and see orders of) this book: made in this browser or in their account. */
+export function ownsBook(
+  book: { clientKey: string; userId: string | null },
+  clientKey: string,
+  userId?: string | null,
+): boolean {
+  if (book.userId === null) return book.clientKey === clientKey;
+  return !!userId && book.userId === userId;
+}
+
 /** What generation needs besides the story brief. */
 interface Job {
   brief: StoryBrief;
@@ -103,6 +130,7 @@ export class BooksService implements OnModuleInit {
     clientKey: string,
     demo: boolean,
     country: string | null = null,
+    userId: string | null = null,
   ): Promise<Book> {
     const { child } = input;
     const job: Job = input.template
@@ -134,6 +162,7 @@ export class BooksService implements OnModuleInit {
           : undefined,
         answers: input.answers,
         clientKey,
+        user: userId ? { connect: { id: userId } } : undefined,
         demo,
         country,
         toyName: input.toy?.name || null,
@@ -159,10 +188,10 @@ export class BooksService implements OnModuleInit {
     });
   }
 
-  /** Books made with this visitor key, newest first. */
-  async listMine(clientKey: string): Promise<MyBook[]> {
+  /** The signed-in parent's books and this browser's anonymous ones, newest first. */
+  async listMine(clientKey: string, userId?: string | null): Promise<MyBook[]> {
     const rows = await this.prisma.book.findMany({
-      where: { clientKey },
+      where: myBooksWhere(clientKey, userId),
       orderBy: { createdAt: 'desc' },
       take: 50,
     });

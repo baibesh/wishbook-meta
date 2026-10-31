@@ -1,0 +1,98 @@
+# Sign-in through the API's fake identity provider (AUTH_MOCK=true): the visitor's anonymous books
+# move to the account, the account sees them from any browser, the admin role opens the admin,
+# and signing out ends it all. Redirects are followed and the cookie jar carries the session.
+device: none
+tags: [api, auth]
+env:
+  visitor: "e2e-auth-visitor-${Date.now()}"
+  otherBrowser: "e2e-auth-other-${Date.now()}"
+  parentEmail: "parent-${Date.now()}@e2e.test"
+  adminEmail: "admin-${Date.now()}@e2e.test"
+http:
+  baseUrl: ${API}
+commands:
+  - request:
+      url: /auth/me
+      assert: { status: 200, json: { "$.enabled": true, "$.user": null } }
+
+  # An anonymous book made in this browser.
+  - request:
+      method: POST
+      url: /books
+      headers: { X-Client-Key: "${visitor}" }
+      json: { child: { name: Аккаунт, age: 5, gender: girl, interests: [мячи], city: Алматы } }
+      extract: { bookId: "$.id" }
+      assert: { status: 201 }
+
+  # Sign in: /auth/login → the fake provider (asked for JSON) → its button → callback → return.
+  - request:
+      url: /auth/login
+      query: { return: /api/auth/me, key: "${visitor}", lang: ru }
+      headers: { Accept: application/json }
+      extract: { state: "$.state" }
+      assert: { status: 200 }
+  - request:
+      url: /auth/mock/authorize
+      query: { state: "${state}", email: "${parentEmail}" }
+      extract: { signedIn: "$.user.email" }
+      assert: { status: 200, json: { "$.user.admin": false } }
+  - assertTrue: { equals: ["${signedIn}", "${parentEmail}"] }
+
+  # The book moved to the account: another browser of the same parent sees it.
+  - request:
+      url: /books
+      headers: { X-Client-Key: "${otherBrowser}" }
+      extract: { accountBook: "$[0].id" }
+      assert: { status: 200 }
+  - assertTrue: { equals: ["${accountBook}", "${bookId}"] }
+  - request:
+      url: /admin/stats
+      assert: { status: 401 }
+
+  - request:
+      method: POST
+      url: /auth/logout
+      assert: { status: 200, json: { "$.url": "/" } }
+  - request:
+      url: /auth/me
+      assert: { status: 200, json: { "$.user": null } }
+  # Signed out, the book stays with the account, not with the browser.
+  - request:
+      url: /books
+      headers: { X-Client-Key: "${visitor}" }
+      assert: { status: 200 }
+  - assertTrue: { equals: ["${response.body}", "[]"] }
+
+  # A forged state goes back to the return path (here /api/auth/me?auth=error), signed out.
+  - request:
+      url: /auth/login
+      query: { return: /api/auth/me }
+      headers: { Accept: application/json }
+      assert: { status: 200 }
+  - request:
+      url: /auth/callback
+      query: { state: forged, code: forged }
+      assert: { status: 200, json: { "$.user": null } }
+
+  # The realm role admin opens the admin.
+  - request:
+      url: /auth/login
+      query: { return: /api/admin/me }
+      headers: { Accept: application/json }
+      extract: { state: "$.state" }
+  - request:
+      url: /auth/mock/authorize
+      query: { state: "${state}", email: "${adminEmail}", admin: "on" }
+      assert: { status: 200, json: { "$.ok": true } }
+  - request:
+      url: /admin/stats
+      assert: { status: 200 }
+  - request:
+      method: POST
+      url: /auth/logout
+      assert: { status: 200 }
+  - request:
+      url: /admin/stats
+      assert: { status: 401 }
+after:
+  - request: { method: POST, url: /auth/logout }

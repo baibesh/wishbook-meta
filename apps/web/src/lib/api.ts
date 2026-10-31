@@ -10,12 +10,12 @@ import {
   ToyUploadResultSchema,
   VoicePrefillSchema,
   type Book,
-  type BookKind,
   type CreateBookInput,
   type CreateOrderInput,
   type ExampleBook,
   type Language,
   type Order,
+  type Purchase,
   type Quota,
   type ServiceStatus,
   type Template,
@@ -38,7 +38,7 @@ function stored(key: string): string | null {
 /** When storage is blocked: a key for this page only, never one shared between visitors. */
 let pageKey: string | null = null;
 
-function clientKey(): string {
+export function clientKey(): string {
   let key = stored(CLIENT_KEY);
   if (!key) {
     key = crypto.randomUUID();
@@ -171,9 +171,9 @@ export async function getQuota(): Promise<Quota> {
   return QuotaSchema.parse(await request("/api/quota"));
 }
 
-/** Demo checkout: one more book of this kind, nothing is charged. */
-export async function buyBook(kind: BookKind): Promise<Quota> {
-  return QuotaSchema.parse(await request("/api/quota/purchase", { method: "POST", body: JSON.stringify({ kind }) }));
+/** Demo checkout: one more book of this kind, nothing is charged. The receipt goes to `email`. */
+export async function buyBook(purchase: Purchase): Promise<Quota> {
+  return QuotaSchema.parse(await request("/api/quota/purchase", { method: "POST", body: JSON.stringify(purchase) }));
 }
 
 export async function createOrder(order: CreateOrderInput): Promise<Order> {

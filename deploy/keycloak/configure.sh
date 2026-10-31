@@ -12,6 +12,7 @@
 #   2. sets the secret of the OIDC client fabulka-web (KEYCLOAK_CLIENT_SECRET)
 #   3. sets the Google identity provider client id/secret and the auto-link-by-email flow
 #   4. sets the SMTP password (RESEND_API_KEY) when it is present
+#   5. creates the realm role admin and grants it to FABULKA_ADMINS (comma-separated emails), with 2FA
 set -euo pipefail
 cd "$(dirname "$0")"
 umask 077
@@ -167,5 +168,19 @@ if [[ -n $RESEND_API_KEY ]]; then
 else
     echo "smtp: RESEND_API_KEY empty, SMTP stays without password (emails will fail)" >&2
 fi
+
+# --- 5. admin role -----------------------------------------------------------------
+# Holders of the realm role "admin" get into fabulka.com/admin; each must set up an authenticator app.
+if ! kc get "realms/$REALM/roles/admin" >/dev/null 2>&1; then
+    kc create "realms/$REALM/roles" -s name=admin -s 'description=Fabulka admin panel' >/dev/null
+    echo "role: admin created"
+fi
+for user in $(env_get FABULKA_ADMINS | tr ',' ' '); do
+    uid=$(kc get "realms/$REALM/users" -q exact=true -q "email=$user" --fields id --format csv --noquotes | head -n 1)
+    if [[ -z $uid ]]; then echo "admin: $user has not signed up yet, skipped" >&2; continue; fi
+    kc add-roles -r "$REALM" --uid "$uid" --rolename admin >/dev/null
+    kc update "realms/$REALM/users/$uid" -s 'requiredActions=["CONFIGURE_TOTP"]' >/dev/null
+    echo "admin: role granted to $user, authenticator app required"
+done
 
 echo "done"

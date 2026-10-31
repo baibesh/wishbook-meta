@@ -11,6 +11,7 @@ import { getBook, wantPrint } from "@/lib/api";
 import { formatKzt } from "@/lib/format";
 import { BookReader } from "./book-reader";
 import { ErrorNotice } from "./error-notice";
+import { SavePrompt } from "./save-prompt";
 
 const finished = (status: BookStatus | undefined) => status === "done" || status === "failed";
 
@@ -83,6 +84,8 @@ export function BookView({ params }: { params: Promise<{ id: string }> }) {
           )}
         </div>
       )}
+
+      {done && <SavePrompt bookId={book.id} />}
 
       {book.toy && done && <ToyPipeline toy={book.toy} />}
 

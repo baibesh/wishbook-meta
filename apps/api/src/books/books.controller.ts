@@ -16,6 +16,7 @@ import {
   type ExampleBook,
   type MyBook,
 } from '@fabulka/shared';
+import { CurrentUser, type SessionUser } from '../auth/current-user';
 import { CurrentClient, type Client } from '../common/client';
 import { ZodPipe } from '../common/zod.pipe';
 import { GeoService } from '../geo/geo.service';
@@ -36,6 +37,7 @@ export class BooksController {
   async create(
     @Body(new ZodPipe(CreateBookSchema)) body: CreateBookInput,
     @CurrentClient() client: Client,
+    @CurrentUser() user: SessionUser | null,
   ): Promise<Book> {
     if (await this.settings.paused()) {
       throw new HttpException(
@@ -53,13 +55,17 @@ export class BooksController {
       client.key,
       this.quota.isDemo(client.demoCode),
       this.geo.country(client.ip),
+      user?.id ?? null,
     );
   }
 
-  /** "My books": everything made from this browser (its anonymous key). */
+  /** "My books": the signed-in parent's books plus this browser's anonymous ones. */
   @Get()
-  mine(@CurrentClient() client: Client): Promise<MyBook[]> {
-    return this.books.listMine(client.key);
+  mine(
+    @CurrentClient() client: Client,
+    @CurrentUser() user: SessionUser | null,
+  ): Promise<MyBook[]> {
+    return this.books.listMine(client.key, user?.id);
   }
 
   /** Books for every visitor to open; declared before :id so "examples" is not taken for an id. */

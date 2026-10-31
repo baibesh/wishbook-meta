@@ -6,6 +6,7 @@ function auth(env: Record<string, string> = {}) {
     ADMIN_EMAIL: 'Admin@Fabulka.com',
     ADMIN_PASSWORD: 'correct horse',
     ADMIN_SECRET: 'test-secret',
+    ADMIN_PASSWORD_LOGIN: 'true',
     ...env,
   };
   return new AdminAuthService({
@@ -61,6 +62,29 @@ describe('AdminAuthService', () => {
     expect(() =>
       service.login('admin@fabulka.com', 'correct horse', '3.3.3.3'),
     ).not.toThrow();
+  });
+
+  it('refuses the password sign-in unless ADMIN_PASSWORD_LOGIN=true', () => {
+    const service = auth({ ADMIN_PASSWORD_LOGIN: 'false' });
+    expect(service.passwordLoginReady).toBe(false);
+    expect(() =>
+      service.login('admin@fabulka.com', 'correct horse', '1.1.1.1'),
+    ).toThrow('Вход по паролю выключен');
+  });
+
+  it('issues sessions for Keycloak admins without a password configured', () => {
+    const service = auth({
+      ADMIN_PASSWORD_LOGIN: 'false',
+      ADMIN_EMAIL: '',
+      ADMIN_PASSWORD: '',
+      ADMIN_SECRET: '',
+      AUTH_SECRET: 'auth-secret',
+      NODE_ENV: 'production',
+    });
+    expect(service.verify(service.issue())).toBe(true);
+    expect(() =>
+      auth({ NODE_ENV: 'production', ADMIN_SECRET: '' }).issue(),
+    ).toThrow('not configured');
   });
 
   it('is off without credentials', () => {

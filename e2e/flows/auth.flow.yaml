@@ -1,0 +1,71 @@
+# Sign-in is optional: a book made anonymously, the offer to keep it, sign-in (the test OIDC
+# provider, AUTH_MOCK), the book moves to the account, sign-out.
+appId: ${WEB}
+tags: [smoke, auth]
+db: ${DATABASE_URL}
+params:
+  DATABASE_URL:
+    required: true
+    description: Postgres DSN of the e2e database (e2e/.env)
+env:
+  childName: "Аккаунт ${Date.now()}"
+  email: "parent+${Date.now()}@e2e.test"
+commands:
+  - launchApp: { appId: "${WEB}", clearState: true }
+  - openLink: "${WEB}/?lang=ru"
+  # The hero's covers render only after hydration, by when the page has saved the language.
+  - waitForVisible: { testId: hero-covers }
+  # Signed out: the header offers to sign in, nothing asks for it.
+  - waitForVisible: { testId: auth-login }
+
+  - openLink: "${WEB}/create"
+  - tapOn: { testId: voice-manual }
+  - tapOn: { testId: child-name }
+  - inputText: "${childName}"
+  - tapOn: { testId: child-interests }
+  - inputText: "облака"
+  - tapOn: { testId: wizard-next }
+  - tapOn: { testId: wizard-next }
+  - tapOn: { testId: wizard-next }
+  - tapOn: { testId: create-book }
+  - waitForVisible: { text: "Книга готова", timeout: 30000 }
+
+  # The first finished book: an offer to keep it in an account.
+  - waitForVisible: { testId: save-prompt }
+  - assertVisible: { text: "Сохраните книгу в аккаунте, чтобы открыть её с любого устройства" }
+  - copyText: { testId: book-title, into: bookTitle }
+  - tapOn: { testId: save-prompt-login }
+  - waitForVisible: { testId: mock-login-email, timeout: 10000 }
+  - tapOn: { testId: mock-login-email }
+  - inputText: "${email}"
+  - tapOn: { testId: mock-login-submit }
+
+  # Back on the same book, signed in; the offer is gone.
+  - waitForVisible: { testId: auth-account, timeout: 15000 }
+  - assertUrl: { contains: "/books/" }
+  - assertVisible: { text: "${bookTitle}" }
+  - assertNotVisible: { testId: save-prompt }
+  - sql:
+      query: >-
+        select count(*)::int as books from "Book" b join "User" u on u.id = b."userId"
+        where b.child->>'name' = $1 and u.sub = $2
+      params: ["${childName}", "mock:${email}"]
+      readOnly: true
+      assert:
+        first: { books: 1 }
+
+  # My books: in the account, with the book that moved there.
+  - tapOn: { testId: auth-account }
+  - assertVisible: { testId: auth-email, text: "${email}" }
+  - tapOn: { testId: nav-my }
+  - waitForVisible: { text: "Книги в аккаунте ${email}" }
+  - assertVisible: { contains: "${childName} и " }
+
+  # Sign-out ends the session: the header offers to sign in again.
+  - tapOn: { testId: auth-account }
+  - tapOn: { testId: auth-logout }
+  - waitForVisible: { testId: auth-login, timeout: 15000 }
+  - assertNotVisible: { testId: auth-account }
+after:
+  - sql: { exec: "delete from \"Book\" where child->>'name' = $1", params: ["${childName}"] }
+  - sql: { exec: "delete from \"User\" where sub = $1", params: ["mock:${email}"] }

@@ -8,6 +8,7 @@ params:
     description: Postgres DSN of the e2e database (e2e/.env)
 env:
   childName: "Заказ ${Date.now()}"
+  email: "order+${Date.now()}@e2e.test"
 commands:
   # Ordering is allowed only from the browser the book belongs to, so the book is made here.
   - launchApp: { appId: "${WEB}", clearState: true }
@@ -32,20 +33,28 @@ commands:
   - inputText: "Айгерим Сапарова"
   - tapOn: { testId: phone }
   - inputText: "701 123 45 67"
+  - tapOn: { testId: order-email }
+  - inputText: "${email}"
   - tapOn: { testId: address }
   - inputText: "ул. Абая, 10, кв. 5"
   - tapOn: { testId: place-order }
   - waitForVisible: { text: "Заказ оформлен", timeout: 10000 }
+  # The confirmation goes to the typed address (AUTH_MOCK keeps unsent mails for the test).
+  - request:
+      url: "${API}/test/mails"
+      query: { to: "${email}" }
+      retryUntil: { status: 200, json: { "$[0].subject": { contains: "принят" } } }
+      timeout: 10000
   - waitForVisible: { text: "Доставлен", timeout: 15000 }
   - assertVisible: { text: "Итого: 31 300 ₸" }
   - sql:
       query: >-
-        select o.cover::text as cover, o.quantity, o."totalKzt" as total, o.phone
+        select o.cover::text as cover, o.quantity, o."totalKzt" as total, o.phone, o.email = $2 as email, o.locale
         from "Order" o join "Book" b on b.id = o."bookId" where b.child->>'name' = $1
-      params: ["${childName}"]
+      params: ["${childName}", "${email}"]
       readOnly: true
       assert:
         rows: 1
-        first: { cover: hard, quantity: 2, total: 31300, phone: "+77011234567" }
+        first: { cover: hard, quantity: 2, total: 31300, phone: "+77011234567", email: true, locale: ru }
 after:
   - sql: { exec: "delete from \"Book\" where child->>'name' = $1", params: ["${childName}"] }

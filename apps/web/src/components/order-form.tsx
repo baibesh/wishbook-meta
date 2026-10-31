@@ -5,14 +5,14 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { COVER_PRICE_KZT, CreateOrderSchema, orderPrice, type CreateOrderInput } from "@fabulka/shared";
 import { Loader2, Printer } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { use } from "react";
+import { use, useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { createOrder, getBook } from "@/lib/api";
 import { useI18n } from "@/i18n/i18n";
 import { CITIES } from "@/lib/cities";
 import { formatKzt } from "@/lib/format";
-
+import { useMe } from "@/lib/auth";
 
 type FormValues = z.input<typeof CreateOrderSchema>;
 
@@ -26,9 +26,15 @@ export function OrderForm({ params }: { params: Promise<{ id: string }> }) {
   const book = useQuery({ queryKey: ["book", id], queryFn: () => getBook(id) });
   const form = useForm<FormValues, unknown, CreateOrderInput>({
     resolver: zodResolver(CreateOrderSchema),
-    defaultValues: { bookId: id, recipientName: "", phone: "+7 ", city: "Алматы", address: "", cover: "soft", quantity: 1 },
+    defaultValues: { bookId: id, recipientName: "", phone: "+7 ", email: "", city: "Алматы", address: "", cover: "soft", quantity: 1 },
   });
   const errors = form.formState.errors;
+
+  // Signed in: the account's email, unless the parent has typed one already.
+  const email = useMe().data?.user?.email;
+  useEffect(() => {
+    if (email && !form.getValues("email")) form.setValue("email", email);
+  }, [email, form]);
   const [cover, quantity, city] = useWatch({ control: form.control, name: ["cover", "quantity", "city"] });
   const price = orderPrice(cover, Number(quantity) || 1, city);
 
@@ -38,7 +44,7 @@ export function OrderForm({ params }: { params: Promise<{ id: string }> }) {
   });
 
   return (
-    <form data-testid="order-form" onSubmit={form.handleSubmit((values) => order.mutate(values))} className="flex flex-col gap-6">
+    <form data-testid="order-form" noValidate onSubmit={form.handleSubmit((values) => order.mutate({ ...values, locale }))} className="flex flex-col gap-6">
       <header className="flex flex-col gap-1">
         <h1 className="text-3xl font-extrabold">{t("order.title")}</h1>
         {book.data?.title && <p className="text-muted">«{book.data.title}»</p>}
@@ -66,6 +72,18 @@ export function OrderForm({ params }: { params: Promise<{ id: string }> }) {
           {t("order.phone")}
           <input data-testid="phone" className={field} inputMode="tel" {...form.register("phone")} />
           {errors.phone && <span className="text-red-600">{t("order.phone.error")}</span>}
+        </label>
+        <label className={`${label} sm:col-span-2`}>
+          {t("order.email")}
+          <input
+            data-testid="order-email"
+            type="email"
+            autoComplete="email"
+            className={field}
+            placeholder={t("order.email.placeholder")}
+            {...form.register("email")}
+          />
+          {errors.email && <span className="text-red-600">{t("order.email.error")}</span>}
         </label>
         <label className={label}>
           {t("order.city")}
