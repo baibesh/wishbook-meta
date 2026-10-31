@@ -30,11 +30,12 @@ export function OrderForm({ params }: { params: Promise<{ id: string }> }) {
   });
   const errors = form.formState.errors;
 
-  // Signed in: the account's email, unless the parent has typed one already.
-  const email = useMe().data?.user?.email;
+  // Signed in: the account's email and name, unless the parent has typed them already.
+  const user = useMe().data?.user;
   useEffect(() => {
-    if (email && !form.getValues("email")) form.setValue("email", email);
-  }, [email, form]);
+    if (user?.email && !form.getValues("email")) form.setValue("email", user.email);
+    if (user?.name && !form.getValues("recipientName")) form.setValue("recipientName", user.name);
+  }, [user, form]);
   const [cover, quantity, city] = useWatch({ control: form.control, name: ["cover", "quantity", "city"] });
   const price = orderPrice(cover, Number(quantity) || 1, city);
 

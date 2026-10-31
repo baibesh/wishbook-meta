@@ -348,7 +348,7 @@ export class AuthService {
     return {
       sub: id.sub,
       email: claimString(id, 'email'),
-      name: claimString(id, 'name') ?? claimString(id, 'preferred_username'),
+      name: personName(id),
       admin: realmRoles(id, access).has(ADMIN_ROLE),
       idToken,
     };
@@ -365,6 +365,17 @@ export class AuthService {
       path,
     });
   }
+}
+
+/** The person's name for the order form; the username is the email in this realm, so never that. */
+export function personName(claims: Claims): string | null {
+  const parts = [
+    claimString(claims, 'given_name'),
+    claimString(claims, 'family_name'),
+  ];
+  return (
+    claimString(claims, 'name') ?? (parts.filter(Boolean).join(' ') || null)
+  );
 }
 
 function claimString(claims: Claims, name: string): string | null {

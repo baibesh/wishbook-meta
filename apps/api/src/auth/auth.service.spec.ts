@@ -1,7 +1,7 @@
 import type { ConfigService } from '@nestjs/config';
 import { AdminAuthService } from '../admin/admin-auth.service';
 import type { PrismaService } from '../prisma/prisma.service';
-import { AuthService } from './auth.service';
+import { AuthService, personName } from './auth.service';
 
 function config(env: Record<string, string>) {
   return {
@@ -174,5 +174,20 @@ describe('AuthService (mock provider)', () => {
     expect(url.searchParams.get('ui_locales')).toBe('kk');
     expect(login.cookies[0]).toMatch(/^fabulka_auth=.+Path=\/api\/auth/);
     fetchMock.mockRestore();
+  });
+});
+
+describe('personName', () => {
+  it('takes the name claim, else given and family names, never the username', () => {
+    expect(personName({ sub: 's', name: 'Айгерим Сериккызы' })).toBe(
+      'Айгерим Сериккызы',
+    );
+    expect(
+      personName({ sub: 's', given_name: 'Айгерим', family_name: 'Сериккызы' }),
+    ).toBe('Айгерим Сериккызы');
+    expect(personName({ sub: 's', given_name: 'Айгерим' })).toBe('Айгерим');
+    expect(
+      personName({ sub: 's', preferred_username: 'mama@example.com' }),
+    ).toBeNull();
   });
 });

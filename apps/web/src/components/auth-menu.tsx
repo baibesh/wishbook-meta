@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { BookHeart, Loader2, LogIn, LogOut, UserRound, X } from "lucide-react";
+import { BookHeart, Loader2, LogIn, LogOut, ShieldCheck, UserRound, X } from "lucide-react";
 import { AUTH_ERROR } from "@fabulka/shared";
 import Link from "next/link";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
@@ -87,6 +87,18 @@ export function AuthMenu({ pathname }: { pathname: string }) {
             <BookHeart className="size-4 text-accent" />
             {t("auth.my")}
           </Link>
+          {user.admin && (
+            <Link
+              href="/admin"
+              role="menuitem"
+              data-testid="auth-admin"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold hover:bg-accent/10"
+            >
+              <ShieldCheck className="size-4 text-accent" />
+              {t("auth.admin")}
+            </Link>
+          )}
           <button
             type="button"
             role="menuitem"
